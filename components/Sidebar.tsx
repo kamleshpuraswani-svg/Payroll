@@ -104,7 +104,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
       id: 'hr-dash',
       label: 'Dashboard',
       icon: <LayoutDashboard size={20} />,
-      viewState: ViewState.HR_DASHBOARD
+      viewState: ViewState.HR_DASHBOARD,
+      hidden: true
     },
     {
       id: 'hr-dash-new',

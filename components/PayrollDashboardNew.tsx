@@ -26,7 +26,8 @@ import {
   X,
   ChevronRight,
   AlertCircle,
-  ArrowUpRight
+  ArrowUpRight,
+  Check
 } from 'lucide-react';
 import {
   ComposedChart,
@@ -43,7 +44,9 @@ import {
   ResponsiveContainer,
   PieChart as RechartsPieChart,
   Pie,
-  Cell
+  Cell,
+  Legend,
+  ReferenceLine
 } from 'recharts';
 
 const formatINR = (v: number) => `₹${v.toLocaleString('en-IN')}`;
@@ -414,12 +417,76 @@ const SALARY_COMPOSITION = [
   { name: 'Benefits & Perks', value: 6, fill: '#0ea5e9' },
 ];
 
-const COST_FORECAST = [
-  { month: 'Dec', actual: 185, forecast: null as number | null },
-  { month: 'Jan', actual: null, forecast: 187 },
-  { month: 'Feb', actual: null, forecast: 189 },
-  { month: 'Mar', actual: null, forecast: 196 },
-];
+// Each entry shows N months of actual (historical) payroll cost leading up to "today" (Nov),
+// then continues as a forecast for the next 3 months. The last actual month also carries the
+// same value under `forecast` so the dashed projection visually connects to the solid trend line.
+const COST_FORECAST_MAP: Record<string, Array<{ month: string; actual: number | null; forecast: number | null }>> = {
+  'Last 6 Months': [
+    { month: 'Jun', actual: 174, forecast: null },
+    { month: 'Jul', actual: 177, forecast: null },
+    { month: 'Aug', actual: 179, forecast: null },
+    { month: 'Sep', actual: 181, forecast: null },
+    { month: 'Oct', actual: 184, forecast: null },
+    { month: 'Nov', actual: 185, forecast: 185 },
+    { month: 'Dec', actual: null, forecast: 187 },
+    { month: 'Jan', actual: null, forecast: 189 },
+    { month: 'Feb', actual: null, forecast: 196 },
+  ],
+  'Last 12 Months': [
+    { month: 'Dec', actual: 160, forecast: null },
+    { month: 'Jan', actual: 163, forecast: null },
+    { month: 'Feb', actual: 165, forecast: null },
+    { month: 'Mar', actual: 168, forecast: null },
+    { month: 'Apr', actual: 170, forecast: null },
+    { month: 'May', actual: 172, forecast: null },
+    { month: 'Jun', actual: 174, forecast: null },
+    { month: 'Jul', actual: 177, forecast: null },
+    { month: 'Aug', actual: 179, forecast: null },
+    { month: 'Sep', actual: 181, forecast: null },
+    { month: 'Oct', actual: 184, forecast: null },
+    { month: 'Nov', actual: 185, forecast: 185 },
+    { month: 'Dec ', actual: null, forecast: 187 },
+    { month: 'Jan ', actual: null, forecast: 189 },
+    { month: 'Feb ', actual: null, forecast: 196 },
+  ],
+  'This Year': [
+    { month: 'Jan', actual: 163, forecast: null },
+    { month: 'Feb', actual: 165, forecast: null },
+    { month: 'Mar', actual: 168, forecast: null },
+    { month: 'Apr', actual: 170, forecast: null },
+    { month: 'May', actual: 172, forecast: null },
+    { month: 'Jun', actual: 174, forecast: null },
+    { month: 'Jul', actual: 177, forecast: null },
+    { month: 'Aug', actual: 179, forecast: null },
+    { month: 'Sep', actual: 181, forecast: null },
+    { month: 'Oct', actual: 184, forecast: null },
+    { month: 'Nov', actual: 185, forecast: 185 },
+    { month: 'Dec', actual: null, forecast: 187 },
+    { month: 'Jan ', actual: null, forecast: 189 },
+    { month: 'Feb ', actual: null, forecast: 196 },
+  ],
+  // Last Year is a fully closed period, so it's shown as pure historical trend with no forecast segment.
+  'Last Year': [
+    { month: 'Jan', actual: 140, forecast: null },
+    { month: 'Feb', actual: 142, forecast: null },
+    { month: 'Mar', actual: 144, forecast: null },
+    { month: 'Apr', actual: 146, forecast: null },
+    { month: 'May', actual: 148, forecast: null },
+    { month: 'Jun', actual: 150, forecast: null },
+    { month: 'Jul', actual: 152, forecast: null },
+    { month: 'Aug', actual: 154, forecast: null },
+    { month: 'Sep', actual: 156, forecast: null },
+    { month: 'Oct', actual: 158, forecast: null },
+    { month: 'Nov', actual: 159, forecast: null },
+    { month: 'Dec', actual: 160, forecast: null },
+  ],
+};
+
+const getCostForecastData = (range: string) => {
+  return COST_FORECAST_MAP[range] || COST_FORECAST_MAP['Last 6 Months'];
+};
+
+const COST_FORECAST = COST_FORECAST_MAP['Last 6 Months'];
 
 const TDS_TREND = [
   { month: 'Jun', tds: 16.2 },
@@ -445,59 +512,101 @@ const BONUS_SEASONALITY = [
   { month: 'Dec', bonus: 15 },
 ];
 
-const EXPENSE_TREND_DATA_MAP: Record<string, { month: string; amount: number; count: number; approved: number; pending: number }[]> = {
+const EXPENSE_TREND_DATA_MAP: Record<string, { month: string; amount: number; count: number; approved: number; pending: number; settled: number }[]> = {
   'This Year': [
-    { month: 'May 2025', amount: 16500, count: 3, approved: 13500, pending: 3000 },
-    { month: 'Jun 2025', amount: 32000, count: 5, approved: 27000, pending: 5000 },
-    { month: 'Jul 2025', amount: 18500, count: 3, approved: 15500, pending: 3000 },
-    { month: 'Aug 2025', amount: 22000, count: 4, approved: 18000, pending: 4000 },
-    { month: 'Sep 2025', amount: 19000, count: 3, approved: 16000, pending: 3000 },
-    { month: 'Oct 2025', amount: 26500, count: 4, approved: 22500, pending: 4000 },
-    { month: 'Nov 2025', amount: 21000, count: 3, approved: 17500, pending: 3500 },
-    { month: 'Dec 2025', amount: 29000, count: 5, approved: 24500, pending: 4500 },
-    { month: 'Jan 2026', amount: 14500, count: 2, approved: 12000, pending: 2500 },
-    { month: 'Feb 2026', amount: 24000, count: 4, approved: 20000, pending: 4000 },
-    { month: 'Mar 2026', amount: 22500, count: 3, approved: 19000, pending: 3500 },
-    { month: 'Apr 2026', amount: 15000, count: 2, approved: 12500, pending: 2500 },
+    { month: 'May 2025', amount: 16500, count: 3, approved: 13500, pending: 3000, settled: 11500 },
+    { month: 'Jun 2025', amount: 32000, count: 5, approved: 27000, pending: 5000, settled: 24000 },
+    { month: 'Jul 2025', amount: 18500, count: 3, approved: 15500, pending: 3000, settled: 13500 },
+    { month: 'Aug 2025', amount: 22000, count: 4, approved: 18000, pending: 4000, settled: 15500 },
+    { month: 'Sep 2025', amount: 19000, count: 3, approved: 16000, pending: 3000, settled: 14000 },
+    { month: 'Oct 2025', amount: 26500, count: 4, approved: 22500, pending: 4000, settled: 19000 },
+    { month: 'Nov 2025', amount: 21000, count: 3, approved: 17500, pending: 3500, settled: 14500 },
+    { month: 'Dec 2025', amount: 29000, count: 5, approved: 24500, pending: 4500, settled: 20500 },
+    { month: 'Jan 2026', amount: 14500, count: 2, approved: 12000, pending: 2500, settled: 9500 },
+    { month: 'Feb 2026', amount: 24000, count: 4, approved: 20000, pending: 4000, settled: 16500 },
+    { month: 'Mar 2026', amount: 22500, count: 3, approved: 19000, pending: 3500, settled: 15500 },
+    { month: 'Apr 2026', amount: 15000, count: 2, approved: 12500, pending: 2500, settled: 10000 },
   ],
   'This Month': [
-    { month: 'Nov 2025', amount: 21000, count: 3, approved: 17500, pending: 3500 },
+    { month: 'Nov 2025', amount: 21000, count: 3, approved: 17500, pending: 3500, settled: 14500 },
   ],
   'Last Month': [
-    { month: 'Oct 2025', amount: 26500, count: 4, approved: 22500, pending: 4000 },
+    { month: 'Oct 2025', amount: 26500, count: 4, approved: 22500, pending: 4000, settled: 19000 },
   ],
   'This Quarter': [
-    { month: 'Oct 2025', amount: 26500, count: 4, approved: 22500, pending: 4000 },
-    { month: 'Nov 2025', amount: 21000, count: 3, approved: 17500, pending: 3500 },
-    { month: 'Dec 2025', amount: 29000, count: 5, approved: 24500, pending: 4500 },
+    { month: 'Oct 2025', amount: 26500, count: 4, approved: 22500, pending: 4000, settled: 19000 },
+    { month: 'Nov 2025', amount: 21000, count: 3, approved: 17500, pending: 3500, settled: 14500 },
+    { month: 'Dec 2025', amount: 29000, count: 5, approved: 24500, pending: 4500, settled: 20500 },
   ],
   'Last Quarter': [
-    { month: 'Jul 2025', amount: 18500, count: 3, approved: 15500, pending: 3000 },
-    { month: 'Aug 2025', amount: 22000, count: 4, approved: 18000, pending: 4000 },
-    { month: 'Sep 2025', amount: 19000, count: 3, approved: 16000, pending: 3000 },
+    { month: 'Jul 2025', amount: 18500, count: 3, approved: 15500, pending: 3000, settled: 13500 },
+    { month: 'Aug 2025', amount: 22000, count: 4, approved: 18000, pending: 4000, settled: 15500 },
+    { month: 'Sep 2025', amount: 19000, count: 3, approved: 16000, pending: 3000, settled: 14000 },
   ],
   'Last Year': [
-    { month: 'May 2024', amount: 15000, count: 2, approved: 12500, pending: 2500 },
-    { month: 'Jun 2024', amount: 28000, count: 4, approved: 23500, pending: 4500 },
-    { month: 'Jul 2024', amount: 17500, count: 3, approved: 14500, pending: 3000 },
-    { month: 'Aug 2024', amount: 21000, count: 3, approved: 17500, pending: 3500 },
-    { month: 'Sep 2024', amount: 18000, count: 3, approved: 15000, pending: 3000 },
-    { month: 'Oct 2024', amount: 24500, count: 4, approved: 20500, pending: 4000 },
-    { month: 'Nov 2024', amount: 20000, count: 3, approved: 16500, pending: 3500 },
-    { month: 'Dec 2024', amount: 27000, count: 5, approved: 22500, pending: 4500 },
-    { month: 'Jan 2025', amount: 13500, count: 2, approved: 11000, pending: 2500 },
-    { month: 'Feb 2025', amount: 22000, count: 3, approved: 18500, pending: 3500 },
-    { month: 'Mar 2025', amount: 25000, count: 4, approved: 21000, pending: 4000 },
-    { month: 'Apr 2025', amount: 16000, count: 2, approved: 13500, pending: 2500 },
+    { month: 'May 2024', amount: 15000, count: 2, approved: 12500, pending: 2500, settled: 10500 },
+    { month: 'Jun 2024', amount: 28000, count: 4, approved: 23500, pending: 4500, settled: 20000 },
+    { month: 'Jul 2024', amount: 17500, count: 3, approved: 14500, pending: 3000, settled: 12000 },
+    { month: 'Aug 2024', amount: 21000, count: 3, approved: 17500, pending: 3500, settled: 15000 },
+    { month: 'Sep 2024', amount: 18000, count: 3, approved: 15000, pending: 3000, settled: 13000 },
+    { month: 'Oct 2024', amount: 24500, count: 4, approved: 20500, pending: 4000, settled: 17500 },
+    { month: 'Nov 2024', amount: 20000, count: 3, approved: 16500, pending: 3500, settled: 14000 },
+    { month: 'Dec 2024', amount: 27000, count: 5, approved: 22500, pending: 4500, settled: 19000 },
+    { month: 'Jan 2025', amount: 13500, count: 2, approved: 11000, pending: 2500, settled: 9000 },
+    { month: 'Feb 2025', amount: 22000, count: 3, approved: 18500, pending: 3500, settled: 15500 },
+    { month: 'Mar 2025', amount: 25000, count: 4, approved: 21000, pending: 4000, settled: 18000 },
+    { month: 'Apr 2025', amount: 16000, count: 2, approved: 13500, pending: 2500, settled: 11000 },
   ],
   'Custom': [
-    { month: 'Period 1', amount: 18500, count: 3, approved: 15500, pending: 3000 },
-    { month: 'Period 2', amount: 24000, count: 4, approved: 20000, pending: 4000 },
-    { month: 'Period 3', amount: 19500, count: 3, approved: 16500, pending: 3000 },
+    { month: 'Period 1', amount: 18500, count: 3, approved: 15500, pending: 3000, settled: 13500 },
+    { month: 'Period 2', amount: 24000, count: 4, approved: 20000, pending: 4000, settled: 17000 },
+    { month: 'Period 3', amount: 19500, count: 3, approved: 16500, pending: 3000, settled: 14000 },
   ],
 };
 
 const EXPENSE_TREND_DATA = EXPENSE_TREND_DATA_MAP['This Year'];
+
+const LOANS_ADVANCES_TREND_MAP: Record<string, Array<{
+  month: string;
+  disbursed: number;
+  recovered: number;
+  pending: number;
+  pendingRequests: number;
+  employees: number;
+}>> = {
+  'This Year': [
+    { month: 'Apr 2025', disbursed: 450000, recovered: 360000, pending: 80000, pendingRequests: 2, employees: 11 },
+    { month: 'May 2025', disbursed: 300000, recovered: 375000, pending: 65000, pendingRequests: 1, employees: 9 },
+    { month: 'Jun 2025', disbursed: 520000, recovered: 380000, pending: 95000, pendingRequests: 2, employees: 14 },
+    { month: 'Jul 2025', disbursed: 280000, recovered: 390000, pending: 50000, pendingRequests: 1, employees: 8 },
+    { month: 'Aug 2025', disbursed: 650000, recovered: 370000, pending: 110000, pendingRequests: 3, employees: 16 },
+    { month: 'Sep 2025', disbursed: 320000, recovered: 410000, pending: 70000, pendingRequests: 2, employees: 10 },
+    { month: 'Oct 2025', disbursed: 480000, recovered: 395000, pending: 85000, pendingRequests: 1, employees: 12 },
+    { month: 'Nov 2025', disbursed: 400000, recovered: 385000, pending: 205000, pendingRequests: 3, employees: 11 },
+  ],
+  'This Quarter': [
+    { month: 'Oct 2025', disbursed: 480000, recovered: 395000, pending: 85000, pendingRequests: 1, employees: 12 },
+    { month: 'Nov 2025', disbursed: 400000, recovered: 385000, pending: 205000, pendingRequests: 3, employees: 11 },
+    { month: 'Dec 2025', disbursed: 350000, recovered: 390000, pending: 120000, pendingRequests: 2, employees: 9 },
+  ],
+  'Last Quarter': [
+    { month: 'Jul 2025', disbursed: 280000, recovered: 390000, pending: 50000, pendingRequests: 1, employees: 8 },
+    { month: 'Aug 2025', disbursed: 650000, recovered: 370000, pending: 110000, pendingRequests: 3, employees: 16 },
+    { month: 'Sep 2025', disbursed: 320000, recovered: 410000, pending: 70000, pendingRequests: 2, employees: 10 },
+  ],
+  'This Month': [
+    { month: 'Nov 2025', disbursed: 400000, recovered: 385000, pending: 205000, pendingRequests: 6, employees: 11 },
+  ],
+  'Last Month': [
+    { month: 'Oct 2025', disbursed: 480000, recovered: 395000, pending: 85000, pendingRequests: 4, employees: 12 },
+  ],
+  'Last Year': [
+    { month: 'Q1 2024', disbursed: 1200000, recovered: 1050000, pending: 240000, pendingRequests: 5, employees: 28 },
+    { month: 'Q2 2024', disbursed: 1450000, recovered: 1120000, pending: 280000, pendingRequests: 7, employees: 34 },
+    { month: 'Q3 2024', disbursed: 1100000, recovered: 1180000, pending: 210000, pendingRequests: 4, employees: 26 },
+    { month: 'Q4 2024', disbursed: 1350000, recovered: 1220000, pending: 260000, pendingRequests: 6, employees: 30 },
+  ],
+};
 
 const TdsFullReportModal: React.FC<{ onClose: () => void; data: any[] }> = ({ onClose, data }) => {
   return (
@@ -911,6 +1020,26 @@ const Card: React.FC<{
   </div>
 );
 
+// Shows "Total Cost" for actual data points and "Forecast" for projected ones — kept separate
+// from the chart legend (which still reads "Actual") since only the tooltip label changes here.
+const CostForecastTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const point = payload.find((p: any) => p.value != null);
+    if (!point) return null;
+    const isActual = point.dataKey === 'actual';
+    return (
+      <div className="bg-white p-3 border border-slate-200 rounded-xl shadow-xl min-w-[170px] text-xs">
+        <p className="font-bold text-slate-800 mb-2 border-b border-slate-100 pb-1.5">{label}</p>
+        <div className="flex justify-between items-center gap-4" style={{ color: isActual ? '#4f46e5' : '#818cf8' }}>
+          <span className="font-semibold">{isActual ? 'Total Cost' : 'Forecast'}:</span>
+          <span className="font-bold">{formatLakhValueAsINR(point.value)}</span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 const MonthlyPayrollCostTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
@@ -1032,7 +1161,6 @@ const PayrollGrowthTooltip = ({ active, payload, label }: any) => {
       <div className="relative z-50 bg-white p-3.5 border border-slate-200 rounded-xl shadow-2xl min-w-[240px] text-xs">
         <p className="font-bold text-slate-800 mb-2 border-b border-slate-100 pb-1.5 flex items-center justify-between">
           <span className="font-extrabold text-sm text-slate-900">{data.month ? `${data.month} 2025` : (label || data.year || 'Period')}</span>
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Growth & Headcount</span>
         </p>
         <div className="space-y-2">
           {/* Details already shown */}
@@ -1101,7 +1229,6 @@ const CompensationRangeTooltip = ({ active, payload, label }: any) => {
       <div className="relative z-50 bg-white p-3 border border-slate-200 rounded-xl shadow-2xl min-w-[180px] text-xs">
         <p className="font-extrabold text-sm text-slate-900 mb-2 pb-1.5 border-b border-slate-100 flex items-center justify-between">
           <span>{label}</span>
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">CTC Band</span>
         </p>
         <div className="flex justify-between items-center text-slate-700">
           <span className="font-medium text-slate-600">Employees:</span>
@@ -1120,7 +1247,6 @@ const DeptHeadcountCostTooltip = ({ active, payload, label }: any) => {
       <div className="relative z-50 bg-white p-3.5 border border-slate-200 rounded-xl shadow-2xl min-w-[210px] text-xs">
         <p className="font-extrabold text-sm text-slate-900 mb-2 pb-1.5 border-b border-slate-100 flex items-center justify-between">
           <span>{label}</span>
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Department</span>
         </p>
         <div className="space-y-1.5">
           <div className="flex justify-between items-center text-slate-700">
@@ -1136,6 +1262,52 @@ const DeptHeadcountCostTooltip = ({ active, payload, label }: any) => {
               Headcount:
             </span>
             <span className="font-bold text-slate-900">{data.headcount} employees</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+const LoansAdvancesTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="relative z-50 bg-white p-3.5 border border-slate-200 rounded-xl shadow-2xl min-w-[210px] text-xs">
+        <p className="font-extrabold text-sm text-slate-900 mb-2 pb-1.5 border-b border-slate-100 flex items-center justify-between">
+          <span>{label || data.month}</span>
+        </p>
+        <div className="space-y-2">
+          <div className="flex justify-between items-center text-slate-700">
+            <span className="flex items-center gap-1.5 font-medium text-slate-600">
+              <span className="w-2.5 h-2.5 rounded-xs bg-[#4f46e5] shrink-0"></span>
+              Total Disbursed:
+            </span>
+            <span className="font-bold text-[#4f46e5]">{formatINR(data.disbursed)}</span>
+          </div>
+          <div className="flex justify-between items-center text-slate-700">
+            <span className="flex items-center gap-1.5 font-medium text-slate-600">
+              <span className="w-2.5 h-2.5 rounded-xs bg-[#10b981] shrink-0"></span>
+              Total Recovered:
+            </span>
+            <span className="font-bold text-[#10b981]">{formatINR(data.recovered)}</span>
+          </div>
+          {data.pending != null && (
+            <div className="flex justify-between items-center text-slate-700">
+              <span className="flex items-center gap-1.5 font-medium text-slate-600">
+                <span className="w-2.5 h-2.5 rounded-xs bg-amber-500 shrink-0"></span>
+                Pending Approval:
+              </span>
+              <span className="font-bold text-amber-600">{formatINR(data.pending)}</span>
+            </div>
+          )}
+          <div className="flex justify-between items-center text-slate-700 pt-1.5 border-t border-slate-100">
+            <span className="flex items-center gap-1.5 font-medium text-slate-600">
+              <Users size={13} className="text-slate-400 shrink-0" />
+              Employees:
+            </span>
+            <span className="font-bold text-slate-900">{data.employees}</span>
           </div>
         </div>
       </div>
@@ -1295,11 +1467,21 @@ const TaxRegimeDonutChart: React.FC = () => {
 const DateRangeFilterDropdown: React.FC<{
   value: string;
   onChange: (val: string) => void;
-}> = ({ value, onChange }) => {
+  presets?: string[];
+}> = ({
+  value,
+  onChange,
+  presets = ['This Month', 'Last Month', 'This Quarter', 'Last Quarter', 'This Year', 'Last Year'],
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState(value);
-  const [customRangeText, setCustomRangeText] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setSelectedPreset(value);
+  }, [value]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1317,23 +1499,41 @@ const DateRangeFilterDropdown: React.FC<{
 
   const handlePresetSelect = (preset: string) => {
     setSelectedPreset(preset);
+    setStartDate('');
+    setEndDate('');
     onChange(preset);
-    setCustomRangeText('');
     setIsOpen(false);
   };
 
-  const handleApply = () => {
-    if (customRangeText.trim()) {
-      onChange(customRangeText.trim());
-      setSelectedPreset('Custom');
+  const handleCustomApply = () => {
+    if (startDate && endDate) {
+      const d1 = new Date(startDate);
+      const d2 = new Date(endDate);
+      const opts: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: '2-digit' };
+      const formatted = `${d1.toLocaleDateString('en-GB', opts)} - ${d2.toLocaleDateString('en-GB', opts)}`;
+      setSelectedPreset(formatted);
+      onChange(formatted);
+    } else if (startDate) {
+      const d1 = new Date(startDate);
+      const formatted = `From ${d1.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}`;
+      setSelectedPreset(formatted);
+      onChange(formatted);
+    } else if (endDate) {
+      const d2 = new Date(endDate);
+      const formatted = `To ${d2.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}`;
+      setSelectedPreset(formatted);
+      onChange(formatted);
     } else {
-      onChange(selectedPreset);
+      setSelectedPreset('Custom Range');
+      onChange('Custom Range');
     }
     setIsOpen(false);
   };
 
+  const isCustomActive = !presets.includes(selectedPreset);
+
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative shrink-0" ref={dropdownRef}>
       <button
         type="button"
         onClick={() => setIsOpen(prev => !prev)}
@@ -1342,22 +1542,22 @@ const DateRangeFilterDropdown: React.FC<{
         }`}
       >
         <Calendar size={13} className="text-indigo-600 shrink-0" />
-        <span className="font-semibold text-slate-800 text-xs">{value}</span>
+        <span className="font-semibold text-slate-800 text-xs truncate max-w-[150px] sm:max-w-none">{value}</span>
         <ChevronDown size={13} className={`text-slate-400 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180 text-indigo-600' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-[320px] bg-white rounded-2xl border border-slate-200 shadow-2xl p-4 z-50 animate-in fade-in zoom-in-95 duration-150">
-          <p className="text-sm font-bold text-slate-800 mb-3">Date Range</p>
+        <div className="absolute right-0 top-full mt-2 w-[310px] bg-white rounded-2xl border border-slate-200 shadow-2xl p-4 z-50 animate-in fade-in zoom-in-95 duration-150 origin-top-right">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5">Date Range</p>
 
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            {['This Month', 'Last Month', 'This Quarter', 'Last Quarter', 'This Year', 'Last Year'].map((preset) => (
+          <div className={`grid ${presets.length <= 4 ? 'grid-cols-2' : 'grid-cols-3'} gap-1.5 mb-3`}>
+            {presets.map((preset) => (
               <button
                 key={preset}
                 type="button"
                 onClick={() => handlePresetSelect(preset)}
-                className={`py-2 px-2 text-xs font-semibold rounded-lg border transition-all text-center cursor-pointer ${
-                  selectedPreset === preset && !customRangeText.trim()
+                className={`py-1.5 px-2 text-xs font-semibold rounded-lg border transition-all text-center cursor-pointer ${
+                  selectedPreset === preset && !isCustomActive
                     ? 'bg-[#3e49e2] border-[#3e49e2] text-white shadow-xs'
                     : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
                 }`}
@@ -1365,27 +1565,53 @@ const DateRangeFilterDropdown: React.FC<{
                 {preset}
               </button>
             ))}
+          </div>
 
-            <div className="col-span-2 relative">
-              <input
-                type="text"
-                value={customRangeText}
-                onChange={(e) => {
-                  setCustomRangeText(e.target.value);
-                  setSelectedPreset('Custom');
-                }}
-                placeholder="Select custom range"
-                className="w-full pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-2xs"
-              />
-              <Calendar size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          {/* Custom Date Range Picker */}
+          <div className="pt-3 border-t border-slate-100 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className={`text-[10px] font-bold uppercase tracking-wider ${isCustomActive ? 'text-indigo-600' : 'text-slate-400'}`}>
+                Custom Date Range
+              </span>
+              {(startDate || endDate) && (
+                <button
+                  type="button"
+                  onClick={() => { setStartDate(''); setEndDate(''); }}
+                  className="text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[10px] font-semibold text-slate-500 block mb-1">From</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:border-indigo-500 focus:bg-white transition-all cursor-pointer"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold text-slate-500 block mb-1">To</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:border-indigo-500 focus:bg-white transition-all cursor-pointer"
+                />
+              </div>
             </div>
 
             <button
               type="button"
-              onClick={handleApply}
-              className="col-span-1 py-2 px-3 bg-[#bfdbfe] hover:bg-[#3e49e2] text-white font-bold text-xs rounded-lg transition-all text-center cursor-pointer shadow-2xs flex items-center justify-center active:scale-95"
+              onClick={handleCustomApply}
+              className="w-full py-2 px-3 bg-[#3e49e2] hover:bg-[#323bc0] text-white font-bold text-xs rounded-lg transition-all text-center cursor-pointer shadow-xs active:scale-95 flex items-center justify-center gap-1.5"
             >
-              Apply
+              <Check size={13} />
+              <span>Apply Custom Range</span>
             </button>
           </div>
         </div>
@@ -1733,37 +1959,6 @@ const CHART_TICK = { fontSize: 10, fill: '#64748b', fontWeight: 600 };
 
 const PayrollDashboardNew: React.FC = () => {
   const [timeRange, setTimeRange] = useState('This Month');
-  const [selectedPreset, setSelectedPreset] = useState('This Month');
-  const [customRangeText, setCustomRangeText] = useState('');
-  const [isFilterPopoverOpen, setIsFilterPopoverOpen] = useState(false);
-  const filterDropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
-      if (filterDropdownRef.current && !filterDropdownRef.current.contains(e.target as Node)) {
-        setIsFilterPopoverOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
-  }, []);
-
-  const handlePresetSelect = (preset: string) => {
-    setSelectedPreset(preset);
-    setTimeRange(preset);
-    setCustomRangeText('');
-    setIsFilterPopoverOpen(false);
-  };
-
-  const handleApply = () => {
-    if (customRangeText.trim()) {
-      setTimeRange(customRangeText.trim());
-      setSelectedPreset('Custom');
-    } else {
-      setTimeRange(selectedPreset);
-    }
-    setIsFilterPopoverOpen(false);
-  };
 
   const currentKpiBase = KPI_METRICS_MAP[timeRange] || KPI_METRICS_MAP['This Month'];
 
@@ -1806,9 +2001,10 @@ const PayrollDashboardNew: React.FC = () => {
 
   const [buTimeRange, setBuTimeRange] = useState('This Month');
   const [varPayTimeRange, setVarPayTimeRange] = useState('This Year');
-  const [growthTimeRange, setGrowthTimeRange] = useState('This Year');
+  const [growthTimeRange, setGrowthTimeRange] = useState('This Quarter');
   const [compRangeFilter, setCompRangeFilter] = useState('This Month');
   const [deptCostFilter, setDeptCostFilter] = useState('This Month');
+  const [forecastTimeRange, setForecastTimeRange] = useState('Last 6 Months');
 
   const currentBuData = COST_BY_BU_MAP[buTimeRange] || COST_BY_BU_MAP['This Month'];
 
@@ -1848,6 +2044,10 @@ const PayrollDashboardNew: React.FC = () => {
     }));
   }, [compRangeFilter, currentBuProfile]);
 
+  const totalCompEmployees = useMemo(() => {
+    return currentCompData.reduce((acc, d) => acc + (d.count || 0), 0);
+  }, [currentCompData]);
+
   const currentDeptHeadcountCost = useMemo(() => {
     const base = DEPT_HEADCOUNT_COST_MAP[deptCostFilter] || DEPT_HEADCOUNT_COST_MAP['This Month'] || DEPT_HEADCOUNT_COST;
     if (currentBuProfile.ratio === 1) return base;
@@ -1858,9 +2058,18 @@ const PayrollDashboardNew: React.FC = () => {
     }));
   }, [deptCostFilter, currentBuProfile]);
 
+  const currentCostForecastData = useMemo(() => {
+    const raw = getCostForecastData(forecastTimeRange);
+    if (currentBuProfile.ratio === 1) return raw;
+    return raw.map(d => ({
+      ...d,
+      actual: d.actual != null ? Math.round(d.actual * currentBuProfile.ratio * 10) / 10 : null,
+      forecast: d.forecast != null ? Math.round(d.forecast * currentBuProfile.ratio * 10) / 10 : null,
+    }));
+  }, [forecastTimeRange, currentBuProfile]);
+
   // TDS Dashboard State
   const [tdsTimeRange, setTdsTimeRange] = useState('This Year');
-  const [isTdsFilterPopoverOpen, setIsTdsFilterPopoverOpen] = useState(false);
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
   const [isTdsReportOpen, setIsTdsReportOpen] = useState(false);
 
@@ -1868,9 +2077,11 @@ const PayrollDashboardNew: React.FC = () => {
   const [isLoanModalOpen, setIsLoanModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
 
+  // Loans & Advances Trend State
+  const [loanTimeRange, setLoanTimeRange] = useState('This Year');
+
   // Expense & Reimbursement Trend State
   const [expenseTimeRange, setExpenseTimeRange] = useState('This Year');
-  const [isExpenseFilterPopoverOpen, setIsExpenseFilterPopoverOpen] = useState(false);
   const [hoveredExpenseIndex, setHoveredExpenseIndex] = useState<number | null>(null);
 
   const getGraphData = useMemo(() => {
@@ -1918,11 +2129,12 @@ const PayrollDashboardNew: React.FC = () => {
           { period: 'Mar 2025', tds: 16.0, employees: 1800, salaryTds: 14.5, perqTds: 1.5, gross: '₹ 1.60 Cr' },
         ];
       case 'Custom':
+      default:
         return [
-          { period: 'Custom 1', tds: 10.0, employees: 1800, salaryTds: 9.0, perqTds: 1.0, gross: '₹ 1.0 Cr' },
-          { period: 'Custom 2', tds: 12.0, employees: 1810, salaryTds: 11.0, perqTds: 1.0, gross: '₹ 1.2 Cr' }
+          { period: 'Period 1', tds: 18.5, employees: 1830, salaryTds: 16.5, perqTds: 2.0, gross: '₹ 1.78 Cr' },
+          { period: 'Period 2', tds: 20.2, employees: 1838, salaryTds: 18.2, perqTds: 2.0, gross: '₹ 1.82 Cr' },
+          { period: 'Period 3', tds: 22.4, employees: 1842, salaryTds: 20.1, perqTds: 2.3, gross: '₹ 1.85 Cr' },
         ];
-      default: return [];
     }
   }, [tdsTimeRange]);
 
@@ -1960,6 +2172,7 @@ const PayrollDashboardNew: React.FC = () => {
       amount: Math.round(d.amount * currentBuProfile.ratio),
       approved: Math.round(d.approved * currentBuProfile.ratio),
       pending: Math.round(d.pending * currentBuProfile.ratio),
+      settled: Math.round((d.settled ?? Math.round(d.approved * 0.85)) * currentBuProfile.ratio),
       count: Math.max(1, Math.round(d.count * currentBuProfile.ratio)),
     }));
   }, [expenseTimeRange, currentBuProfile]);
@@ -1975,6 +2188,35 @@ const PayrollDashboardNew: React.FC = () => {
     if (!currentExpenseData || currentExpenseData.length === 0) return { month: '-', amount: 0 };
     return [...currentExpenseData].sort((a, b) => a.amount - b.amount)[0];
   }, [currentExpenseData]);
+
+  const currentLoanTrendData = useMemo(() => {
+    const base = LOANS_ADVANCES_TREND_MAP[loanTimeRange] || LOANS_ADVANCES_TREND_MAP['This Year'];
+    if (currentBuProfile.ratio === 1) return base;
+    return base.map(d => ({
+      ...d,
+      disbursed: Math.round(d.disbursed * currentBuProfile.ratio),
+      recovered: Math.round(d.recovered * currentBuProfile.ratio),
+      pending: Math.round((d.pending || 0) * currentBuProfile.ratio),
+      pendingRequests: Math.max(1, Math.round((d.pendingRequests || 1) * currentBuProfile.ratio)),
+      employees: Math.max(1, Math.round(d.employees * currentBuProfile.ratio)),
+    }));
+  }, [loanTimeRange, currentBuProfile]);
+
+  const totalLoanDisbursed = useMemo(() => {
+    return currentLoanTrendData.reduce((acc, d) => acc + d.disbursed, 0);
+  }, [currentLoanTrendData]);
+
+  const totalLoanRecovered = useMemo(() => {
+    return currentLoanTrendData.reduce((acc, d) => acc + d.recovered, 0);
+  }, [currentLoanTrendData]);
+
+  const totalLoanPending = useMemo(() => {
+    return currentLoanTrendData.reduce((acc, d) => acc + (d.pending || 0), 0);
+  }, [currentLoanTrendData]);
+
+  const totalLoanPendingRequests = useMemo(() => {
+    return currentLoanTrendData.reduce((acc, d) => acc + (d.pendingRequests || 0), 0);
+  }, [currentLoanTrendData]);
 
   return (
     <div className="p-4 lg:p-8 w-full space-y-6 animate-in fade-in duration-300">
@@ -1995,66 +2237,7 @@ const PayrollDashboardNew: React.FC = () => {
             <p className="text-xs text-slate-500">Summary of payroll metrics and workforce costs</p>
           </div>
 
-          {/* Filter Popover in the Corner */}
-          <div className="relative" ref={filterDropdownRef}>
-            <button
-              type="button"
-              onClick={() => setIsFilterPopoverOpen(prev => !prev)}
-              className={`bg-white border text-slate-700 text-xs font-bold rounded-xl px-3.5 py-2 flex items-center gap-2 transition-all shadow-xs cursor-pointer ${
-                isFilterPopoverOpen ? 'border-indigo-500 ring-2 ring-indigo-100 bg-slate-50/50' : 'border-slate-200 hover:bg-slate-50 hover:border-slate-300'
-              }`}
-            >
-              <Calendar size={14} className="text-indigo-600 shrink-0" />
-              <span className="font-semibold text-slate-800">{timeRange}</span>
-              <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 shrink-0 ${isFilterPopoverOpen ? 'rotate-180 text-indigo-600' : ''}`} />
-            </button>
-
-            {isFilterPopoverOpen && (
-              <div className="absolute right-0 top-full mt-2 w-[340px] bg-white rounded-2xl border border-slate-200 shadow-2xl p-4 z-50 animate-in fade-in zoom-in-95 duration-150">
-                <p className="text-sm font-bold text-slate-800 mb-3">Date Range</p>
-
-                <div className="grid grid-cols-3 gap-2 mb-3">
-                  {['This Month', 'Last Month', 'This Quarter', 'Last Quarter', 'This Year', 'Last Year'].map((preset) => (
-                    <button
-                      key={preset}
-                      type="button"
-                      onClick={() => handlePresetSelect(preset)}
-                      className={`py-2 px-2.5 text-xs font-semibold rounded-lg border transition-all text-center cursor-pointer ${
-                        selectedPreset === preset && !customRangeText.trim()
-                          ? 'bg-[#3e49e2] border-[#3e49e2] text-white shadow-xs'
-                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
-                      }`}
-                    >
-                      {preset}
-                    </button>
-                  ))}
-
-                  {/* Row 3: Select custom range input (col-span-2) + Apply button (col-span-1) */}
-                  <div className="col-span-2 relative">
-                    <input
-                      type="text"
-                      value={customRangeText}
-                      onChange={(e) => {
-                        setCustomRangeText(e.target.value);
-                        setSelectedPreset('Custom');
-                      }}
-                      placeholder="Select custom range"
-                      className="w-full pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-2xs"
-                    />
-                    <Calendar size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleApply}
-                    className="col-span-1 py-2 px-3 bg-[#bfdbfe] hover:bg-[#3e49e2] text-white font-bold text-xs rounded-lg transition-all text-center cursor-pointer shadow-2xs flex items-center justify-center active:scale-95"
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          <DateRangeFilterDropdown value={timeRange} onChange={setTimeRange} />
         </div>
 
         {/* 4 KPI Cards Grid (Avg Cost / Employee removed) */}
@@ -2136,7 +2319,13 @@ const PayrollDashboardNew: React.FC = () => {
         <Card
           title="Payroll Growth vs Headcount Growth"
           icon={<TrendingUp size={16} className="text-indigo-600" />}
-          action={<DateRangeFilterDropdown value={growthTimeRange} onChange={setGrowthTimeRange} />}
+          action={
+            <DateRangeFilterDropdown
+              value={growthTimeRange}
+              onChange={setGrowthTimeRange}
+              presets={['This Quarter', 'Last Quarter', 'This Year', 'Last Year']}
+            />
+          }
         >
           <div className="h-56 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -2313,7 +2502,15 @@ const PayrollDashboardNew: React.FC = () => {
         <Card
           title="Compensation Range Distribution"
           icon={<Users size={16} className="text-indigo-600" />}
-          action={<DateRangeFilterDropdown value={compRangeFilter} onChange={setCompRangeFilter} />}
+          action={
+            <div className="flex items-center gap-2 flex-wrap justify-end">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50/80 border border-indigo-100 text-indigo-700 rounded-xl text-xs font-semibold whitespace-nowrap shadow-2xs">
+                <Users size={12} className="text-indigo-600 shrink-0" />
+                <span>Total Employees: <strong className="font-extrabold text-indigo-950">{totalCompEmployees}</strong></span>
+              </span>
+              <DateRangeFilterDropdown value={compRangeFilter} onChange={setCompRangeFilter} />
+            </div>
+          }
         >
           <div className="h-56 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -2322,7 +2519,7 @@ const PayrollDashboardNew: React.FC = () => {
                 <XAxis dataKey="band" axisLine={false} tickLine={false} tick={CHART_TICK} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={CHART_TICK} allowDecimals={false} />
                 <RechartsTooltip content={<CompensationRangeTooltip />} cursor={{ fill: '#f8fafc' }} />
-                <Bar dataKey="count" fill="#4f46e5" radius={[4, 4, 0, 0]} name="Employees" />
+                <Bar dataKey="count" fill="#4f46e5" radius={[4, 4, 0, 0]} name="Employees" maxBarSize={40} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -2340,7 +2537,7 @@ const PayrollDashboardNew: React.FC = () => {
                 <XAxis dataKey="dept" axisLine={false} tickLine={false} tick={CHART_TICK} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={CHART_TICK} tickFormatter={(v: any) => formatLakhValueAsINR(v)} width={90} />
                 <RechartsTooltip content={<DeptHeadcountCostTooltip />} cursor={{ fill: '#f8fafc' }} />
-                <Bar dataKey="cost" fill="#4f46e5" radius={[4, 4, 0, 0]} name="Total Cost" />
+                <Bar dataKey="cost" fill="#4f46e5" radius={[4, 4, 0, 0]} name="Total Cost" maxBarSize={40} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -2380,14 +2577,47 @@ const PayrollDashboardNew: React.FC = () => {
         </Card>
 
         {/* Upcoming Payroll Cost Forecast (Right side of Tax Regime Split) */}
-        <Card title="Upcoming Payroll Cost Forecast" icon={<TrendingUp size={16} className="text-indigo-600" />}>
+        <Card
+          title="Payroll Cost Projection"
+          icon={<TrendingUp size={16} className="text-indigo-600" />}
+          action={
+            <DateRangeFilterDropdown
+              value={forecastTimeRange}
+              onChange={setForecastTimeRange}
+              presets={['Last 6 Months', 'Last 12 Months', 'This Year', 'Last Year']}
+            />
+          }
+        >
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={COST_FORECAST} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
+              <LineChart data={currentCostForecastData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={CHART_TICK} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={CHART_TICK} tickFormatter={(v: any) => formatLakhValueAsINR(v)} domain={[170, 200]} width={95} />
-                <RechartsTooltip formatter={(v: any) => v != null ? formatLakhValueAsINR(v) : '-'} />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={CHART_TICK}
+                  tickFormatter={(v: any) => formatLakhValueAsINR(v)}
+                  domain={['auto', 'auto']}
+                  width={95}
+                />
+                <RechartsTooltip content={<CostForecastTooltip />} />
+                <Legend
+                  verticalAlign="top"
+                  height={28}
+                  formatter={(value: string) => <span style={{ color: '#475569', fontSize: 12, fontWeight: 600 }}>{value}</span>}
+                />
+                {(() => {
+                  const bridgeMonth = currentCostForecastData.find((d: any) => d.actual != null && d.forecast != null)?.month;
+                  return bridgeMonth ? (
+                    <ReferenceLine
+                      x={bridgeMonth}
+                      stroke="#cbd5e1"
+                      strokeDasharray="4 4"
+                      label={{ value: 'Today', position: 'insideTopRight', fill: '#94a3b8', fontSize: 10, fontWeight: 700 }}
+                    />
+                  ) : null;
+                })()}
                 <Line type="monotone" dataKey="actual" stroke="#4f46e5" strokeWidth={2.5} dot={{ r: 4 }} connectNulls name="Actual" />
                 <Line type="monotone" dataKey="forecast" stroke="#a5b4fc" strokeWidth={2.5} strokeDasharray="5 4" dot={{ r: 4 }} connectNulls name="Forecast" />
               </LineChart>
@@ -2412,74 +2642,24 @@ const PayrollDashboardNew: React.FC = () => {
               </div>
             </div>
 
-            <div className="relative shrink-0">
-              {/* Filter Popover */}
-              <button
-                onClick={() => setIsTdsFilterPopoverOpen(!isTdsFilterPopoverOpen)}
-                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs transition-colors"
-              >
-                <div className="flex items-center gap-1.5">
-                  <Filter size={13} className="text-purple-600" />
-                  <span>{tdsTimeRange}</span>
-                </div>
-                <ChevronDown size={13} className={`text-slate-400 transition-transform ${isTdsFilterPopoverOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {isTdsFilterPopoverOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setIsTdsFilterPopoverOpen(false)}
-                  />
-
-                  <div className="absolute right-0 mt-2 p-3.5 bg-white border border-slate-200 rounded-xl shadow-xl z-50 w-[290px] animate-in fade-in slide-in-from-top-2 origin-top-right">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-2.5 tracking-wider">Date Range</p>
-
-                    <div className="grid grid-cols-3 gap-1.5 mb-3">
-                      {['This Month', 'Last Month', 'This Quarter', 'Last Quarter', 'This Year', 'Last Year'].map(label => (
-                        <button
-                          key={label}
-                          onClick={() => {
-                            setTdsTimeRange(label);
-                            setIsTdsFilterPopoverOpen(false);
-                          }}
-                          className={`px-2 py-1.5 text-[10px] font-bold rounded-lg transition-all border ${
-                            tdsTimeRange === label
-                              ? 'bg-purple-600 border-purple-600 text-white shadow-xs'
-                              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="pt-2.5 border-t border-slate-100">
-                      <div className="relative">
-                        <Calendar size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input
-                          type="month"
-                          className="w-full pl-8 pr-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-600 focus:outline-none focus:border-purple-500 focus:bg-white transition-all cursor-pointer"
-                          onChange={(e) => {
-                            if (e.target.value) {
-                              setTdsTimeRange('Custom');
-                              setIsTdsFilterPopoverOpen(false);
-                            }
-                          }}
-                        />
-                        <p className="absolute left-8 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-slate-400 pointer-events-none">
-                          {tdsTimeRange === 'Custom' ? 'Selected' : 'Custom Month'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+            <DateRangeFilterDropdown
+              value={tdsTimeRange}
+              onChange={setTdsTimeRange}
+              presets={['This Quarter', 'Last Quarter', 'This Year', 'Last Year']}
+            />
           </div>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-center justify-between">
+              <div className="min-w-0 pr-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight truncate">Total TDS</p>
+                <p className="text-sm xl:text-base font-bold text-slate-800 mt-0.5 truncate">
+                  ₹ {Math.round(tdsGraphData.reduce((acc, curr) => acc + curr.tds, 0) * 100000).toLocaleString('en-IN')}
+                </p>
+              </div>
+            </div>
+
             <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-center justify-between">
               <div className="min-w-0 pr-1">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight truncate">Average Monthly TDS</p>
@@ -2610,49 +2790,7 @@ const PayrollDashboardNew: React.FC = () => {
               </div>
             </div>
 
-            <div className="relative shrink-0">
-              <button
-                onClick={() => setIsExpenseFilterPopoverOpen(!isExpenseFilterPopoverOpen)}
-                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs transition-colors"
-              >
-                <div className="flex items-center gap-1.5">
-                  <Filter size={13} className="text-blue-600" />
-                  <span>{expenseTimeRange}</span>
-                </div>
-                <ChevronDown size={13} className={`text-slate-400 transition-transform ${isExpenseFilterPopoverOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {isExpenseFilterPopoverOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setIsExpenseFilterPopoverOpen(false)}
-                  />
-
-                  <div className="absolute right-0 mt-2 p-3.5 bg-white border border-slate-200 rounded-xl shadow-xl z-50 w-[290px] animate-in fade-in slide-in-from-top-2 origin-top-right">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-2.5 tracking-wider">Date Range</p>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {['This Month', 'Last Month', 'This Quarter', 'Last Quarter', 'This Year', 'Last Year'].map(label => (
-                        <button
-                          key={label}
-                          onClick={() => {
-                            setExpenseTimeRange(label);
-                            setIsExpenseFilterPopoverOpen(false);
-                          }}
-                          className={`px-2 py-1.5 text-[10px] font-bold rounded-lg transition-all border ${
-                            expenseTimeRange === label
-                              ? 'bg-blue-600 border-blue-600 text-white shadow-xs'
-                              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+            <DateRangeFilterDropdown value={expenseTimeRange} onChange={setExpenseTimeRange} />
           </div>
 
           {/* Summary KPI Cards (Moved Above Graph) */}
@@ -2787,32 +2925,60 @@ const PayrollDashboardNew: React.FC = () => {
                     <div className="font-bold border-b border-slate-700 pb-1 mb-1 flex justify-between items-center">
                       <span className="text-slate-200 font-bold">{currentExpenseData[hoveredExpenseIndex].month}</span>
                     </div>
-                    <div className="space-y-1.5 text-[11px]">
-                      <div className="flex justify-between text-slate-300 gap-3">
-                        <span className="flex items-center gap-1.5 text-slate-300">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                          Approved:
-                        </span>
-                        <span className="font-semibold text-emerald-400">
-                          ₹ {(currentExpenseData[hoveredExpenseIndex].approved ?? Math.round(currentExpenseData[hoveredExpenseIndex].amount * 0.8)).toLocaleString('en-IN')}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-slate-300 gap-3">
-                        <span className="flex items-center gap-1.5 text-slate-300">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                          Pending:
-                        </span>
-                        <span className="font-semibold text-amber-300">
-                          ₹ {(currentExpenseData[hoveredExpenseIndex].pending ?? Math.round(currentExpenseData[hoveredExpenseIndex].amount * 0.2)).toLocaleString('en-IN')}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-slate-400 pt-1.5 border-t border-slate-700/80 gap-3">
-                        <span>Employees:</span>
-                        <span className="font-semibold text-slate-200">
-                          {currentExpenseData[hoveredExpenseIndex].count}
-                        </span>
-                      </div>
-                    </div>
+                    {(() => {
+                      const item = currentExpenseData[hoveredExpenseIndex];
+                      const approvedVal = item.approved ?? Math.round(item.amount * 0.8);
+                      const pendingVal = item.pending ?? Math.round(item.amount * 0.2);
+                      const settledVal = item.settled ?? Math.round(approvedVal * 0.85);
+                      const totalStatusVal = approvedVal + pendingVal + settledVal;
+
+                      return (
+                        <div className="space-y-1.5 text-[11px]">
+                          <div className="flex justify-between text-slate-300 gap-3">
+                            <span className="flex items-center gap-1.5 text-slate-300">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                              Approved:
+                            </span>
+                            <span className="font-semibold text-emerald-400">
+                              ₹ {approvedVal.toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-slate-300 gap-3">
+                            <span className="flex items-center gap-1.5 text-slate-300">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                              Pending:
+                            </span>
+                            <span className="font-semibold text-amber-300">
+                              ₹ {pendingVal.toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-slate-300 gap-3">
+                            <span className="flex items-center gap-1.5 text-slate-300">
+                              <span className="w-1.5 h-1.5 rounded-full bg-teal-400"></span>
+                              Settled:
+                            </span>
+                            <span className="font-semibold text-teal-300">
+                              ₹ {settledVal.toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-slate-200 pt-1.5 border-t border-slate-700/80 gap-3 font-semibold">
+                            <span className="flex items-center gap-1.5 text-slate-200 font-bold">
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                              Total:
+                            </span>
+                            <span className="font-extrabold text-white">
+                              ₹ {totalStatusVal.toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-slate-400 pt-1.5 border-t border-slate-700/80 gap-3">
+                            <span>Employees:</span>
+                            <span className="font-semibold text-slate-200">
+                              {item.count}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
                     <div
                       className="absolute -bottom-1 border-4 border-transparent border-t-slate-900"
                       style={{
@@ -2863,9 +3029,10 @@ const PayrollDashboardNew: React.FC = () => {
               </div>
               <div>
                 <h3 className="font-bold text-slate-800 text-base leading-tight">Loans & Advances Summary</h3>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">(Till Date)</p>
               </div>
             </div>
+
+            <DateRangeFilterDropdown value={loanTimeRange} onChange={setLoanTimeRange} />
           </div>
 
           {/* Primary Hero Section: Total Outstanding & Upcoming Payroll Deduction */}
@@ -2911,19 +3078,84 @@ const PayrollDashboardNew: React.FC = () => {
             </div>
           </div>
 
-          {/* Row: Pending Requests Block */}
-          <div className="bg-amber-50/60 border border-amber-100/90 rounded-xl p-3 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-amber-800">Pending Requests</p>
-              <div className="flex items-baseline gap-2 mt-0.5">
-                <span className="text-base font-black text-amber-950">6 requests</span>
-                <span className="text-xs font-semibold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-md border border-amber-200/60">
-                  Loan: 4 | Advance: 2
+
+          {/* Summary KPI Cards: Total Disbursed, Total Recovered, Net Change */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-center justify-between">
+              <div className="min-w-0 pr-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight truncate">Total Disbursed</p>
+                <p className="text-sm xl:text-base font-bold text-slate-800 mt-0.5 truncate">
+                  {formatINR(totalLoanDisbursed)}
+                </p>
+              </div>
+              <div className="h-8 w-8 shrink-0 rounded-full bg-white border border-slate-200 flex items-center justify-center text-indigo-600 shadow-xs">
+                <ArrowUpRight size={15} />
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-center justify-between">
+              <div className="min-w-0 pr-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight truncate">Total Recovered</p>
+                <p className="text-sm xl:text-base font-bold text-slate-800 mt-0.5 truncate">
+                  {formatINR(totalLoanRecovered)}
+                </p>
+              </div>
+              <div className="h-8 w-8 shrink-0 rounded-full bg-white border border-slate-200 flex items-center justify-center text-emerald-600 shadow-xs">
+                <CheckCircle2 size={15} />
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-center justify-between">
+              <div className="min-w-0 pr-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight truncate">Pending Approval</p>
+                <div className="flex items-baseline gap-1 mt-0.5">
+                  <p className="text-sm xl:text-base font-bold text-amber-600 truncate">
+                    {formatINR(totalLoanPending)}
+                  </p>
+                </div>
+                <p className="text-[10px] font-medium text-slate-500 mt-0.5 truncate">
+                  ({totalLoanPendingRequests} {totalLoanPendingRequests === 1 ? 'request' : 'requests'})
+                </p>
+              </div>
+              <div className="h-8 w-8 shrink-0 rounded-full bg-white border border-slate-200 flex items-center justify-center text-amber-600 shadow-xs">
+                <Clock size={15} />
+              </div>
+            </div>
+          </div>
+
+          {/* Stacked Bar Chart: Disbursed & Recovered Trend */}
+          <div className="w-full bg-white border border-slate-200 rounded-xl p-4 flex flex-col justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+              <span className="text-xs font-bold text-slate-700">Disbursed vs Recovered Trend</span>
+              <div className="flex items-center gap-4 text-xs font-semibold">
+                <span className="flex items-center gap-1.5 text-slate-600">
+                  <span className="w-2.5 h-2.5 rounded-xs bg-[#4f46e5]"></span>
+                  Disbursed
+                </span>
+                <span className="flex items-center gap-1.5 text-slate-600">
+                  <span className="w-2.5 h-2.5 rounded-xs bg-[#10b981]"></span>
+                  Recovered
                 </span>
               </div>
             </div>
-            <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold shrink-0">
-              <Clock size={16} />
+
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={currentLoanTrendData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={CHART_TICK} dy={10} />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={CHART_TICK}
+                    tickFormatter={(v: any) => v >= 100000 ? `₹${(v / 100000).toFixed(v % 100000 === 0 ? 0 : 1)}L` : `₹${v}`}
+                    width={70}
+                  />
+                  <RechartsTooltip content={<LoansAdvancesTooltip />} cursor={{ fill: '#f8fafc' }} />
+                  <Bar dataKey="recovered" stackId="loans" fill="#10b981" name="Total Recovered" maxBarSize={32} />
+                  <Bar dataKey="disbursed" stackId="loans" fill="#4f46e5" radius={[4, 4, 0, 0]} name="Total Disbursed" maxBarSize={32} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>

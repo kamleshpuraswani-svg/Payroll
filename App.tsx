@@ -94,7 +94,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 const App: React.FC = () => {
   // Super Admin role temporarily hidden - defaulting to HR_MANAGER
   const [userRole, setUserRole] = useState<UserRole>('HR_MANAGER');
-  const [currentView, setCurrentView] = useState<ViewState>(ViewState.HR_DASHBOARD);
+  const [currentView, setCurrentView] = useState<ViewState>(ViewState.HR_DASHBOARD_NEW);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -156,7 +156,7 @@ const App: React.FC = () => {
     setUserRole(role);
     // Reset view to appropriate dashboard when switching roles
     if (role === 'SUPER_ADMIN') setCurrentView(ViewState.DASHBOARD);
-    else if (role === 'HR_MANAGER') setCurrentView(ViewState.HR_DASHBOARD);
+    else if (role === 'HR_MANAGER') setCurrentView(ViewState.HR_DASHBOARD_NEW);
     else setCurrentView(ViewState.EMP_OVERVIEW);
   };
 
