@@ -19,8 +19,8 @@ import {
   Building,
   CreditCard,
   Calculator,
-  CheckCircle,
   ArrowUpRight,
+  ArrowDownRight,
   X,
   Printer,
   Share2,
@@ -288,25 +288,25 @@ interface EmployeeSalaryHistoryProps {
 
 const MOCK_HISTORY_ROWS: SalaryHistoryRow[] = [
   // 2025
-  { id: '1', period: 'Nov 2025', gross: 250000, net: 205000, status: 'Disbursed', date: '30 Nov 2025', bankAcc: 'XXXX1234', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 18000, tds: 25000, others: 2000 } },
-  { id: '2', period: 'Oct 2025', gross: 250000, net: 205200, status: 'Disbursed', date: '31 Oct 2025', bankAcc: 'XXXX1234', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 18000, tds: 24800, others: 2000 } },
-  { id: '3', period: 'Sep 2025', gross: 240000, net: 198000, status: 'Disbursed', date: '30 Sep 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'HR Admin', deductions: { pf: 17280, tds: 22720, others: 2000 } },
-  { id: '4', period: 'Aug 2025', gross: 240000, net: 198000, status: 'Disbursed', date: '31 Aug 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 17280, tds: 22720, others: 2000 } },
-  { id: '5', period: 'Jul 2025', gross: 240000, net: 198000, status: 'Disbursed', date: '31 Jul 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 17280, tds: 22720, others: 2000 } },
+  { id: '1', period: 'Nov 2025', gross: 245000, net: 201000, status: 'Disbursed', date: '30 Nov 2025', bankAcc: 'XXXX1234', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 17640, tds: 24360, others: 2000 } },
+  { id: '2', period: 'Oct 2025', gross: 245000, net: 201000, status: 'Disbursed', date: '31 Oct 2025', bankAcc: 'XXXX1234', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 17640, tds: 24360, others: 2000 } },
+  { id: '3', period: 'Sep 2025', gross: 215000, net: 178000, status: 'Disbursed', date: '30 Sep 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'HR Admin', deductions: { pf: 15480, tds: 19520, others: 2000 } },
+  { id: '4', period: 'Aug 2025', gross: 215000, net: 178000, status: 'Disbursed', date: '31 Aug 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 15480, tds: 19520, others: 2000 } },
+  { id: '5', period: 'Jul 2025', gross: 215000, net: 178000, status: 'Disbursed', date: '31 Jul 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 15480, tds: 19520, others: 2000 } },
   { id: '6', period: 'Jun 2025', gross: 230000, net: 189500, status: 'Disbursed', date: '30 Jun 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'HR Admin', deductions: { pf: 16560, tds: 21940, others: 2000 } },
   { id: '7', period: 'May 2025', gross: 230000, net: 189500, status: 'Disbursed', date: '31 May 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 16560, tds: 21940, others: 2000 } },
   { id: '8', period: 'Apr 2025', gross: 230000, net: 189500, status: 'Disbursed', date: '30 Apr 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 16560, tds: 21940, others: 2000 } },
-  { id: '9', period: 'Mar 2025', gross: 215000, net: 178000, status: 'Disbursed', date: '31 Mar 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'HR Admin', deductions: { pf: 15480, tds: 19520, others: 2000 } },
-  { id: '10', period: 'Feb 2025', gross: 215000, net: 178000, status: 'Disbursed', date: '28 Feb 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 15480, tds: 19520, others: 2000 } },
-  { id: '11', period: 'Jan 2025', gross: 215000, net: 178000, status: 'Disbursed', date: '31 Jan 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 15480, tds: 19520, others: 2000 } },
+  { id: '9', period: 'Mar 2025', gross: 210000, net: 174000, status: 'Disbursed', date: '31 Mar 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'HR Admin', deductions: { pf: 15120, tds: 18880, others: 2000 } },
+  { id: '10', period: 'Feb 2025', gross: 210000, net: 174000, status: 'Disbursed', date: '28 Feb 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 15120, tds: 18880, others: 2000 } },
+  { id: '11', period: 'Jan 2025', gross: 210000, net: 174000, status: 'Disbursed', date: '31 Jan 2025', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 15120, tds: 18880, others: 2000 } },
   
   // 2024
-  { id: '12', period: 'Dec 2024', gross: 200000, net: 165000, status: 'Disbursed', date: '31 Dec 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 14400, tds: 18600, others: 2000 } },
-  { id: '13', period: 'Nov 2024', gross: 200000, net: 165000, status: 'Disbursed', date: '30 Nov 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 14400, tds: 18600, others: 2000 } },
-  { id: '14', period: 'Oct 2024', gross: 200000, net: 165000, status: 'Disbursed', date: '31 Oct 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 14400, tds: 18600, others: 2000 } },
-  { id: '15', period: 'Sep 2024', gross: 190000, net: 157000, status: 'Disbursed', date: '30 Sep 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 13680, tds: 17320, others: 2000 } },
-  { id: '16', period: 'Aug 2024', gross: 190000, net: 157000, status: 'Disbursed', date: '31 Aug 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 13680, tds: 17320, others: 2000 } },
-  { id: '17', period: 'Jul 2024', gross: 190000, net: 157000, status: 'Disbursed', date: '31 Jul 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 13680, tds: 17320, others: 2000 } },
+  { id: '12', period: 'Dec 2024', gross: 185000, net: 153000, status: 'Disbursed', date: '31 Dec 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 13320, tds: 16680, others: 2000 } },
+  { id: '13', period: 'Nov 2024', gross: 185000, net: 153000, status: 'Disbursed', date: '30 Nov 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 13320, tds: 16680, others: 2000 } },
+  { id: '14', period: 'Oct 2024', gross: 185000, net: 153000, status: 'Disbursed', date: '31 Oct 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 13320, tds: 16680, others: 2000 } },
+  { id: '15', period: 'Sep 2024', gross: 195000, net: 161000, status: 'Disbursed', date: '30 Sep 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 14040, tds: 17960, others: 2000 } },
+  { id: '16', period: 'Aug 2024', gross: 195000, net: 161000, status: 'Disbursed', date: '31 Aug 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 14040, tds: 17960, others: 2000 } },
+  { id: '17', period: 'Jul 2024', gross: 195000, net: 161000, status: 'Disbursed', date: '31 Jul 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 14040, tds: 17960, others: 2000 } },
   { id: '18', period: 'Jun 2024', gross: 180000, net: 149000, status: 'Disbursed', date: '30 Jun 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 12960, tds: 16040, others: 2000 } },
   { id: '19', period: 'May 2024', gross: 180000, net: 149000, status: 'Disbursed', date: '31 May 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 12960, tds: 16040, others: 2000 } },
   { id: '20', period: 'Apr 2024', gross: 180000, net: 149000, status: 'Disbursed', date: '30 Apr 2024', bankAcc: 'XXXX5678', createdBy: 'System', lastModifiedBy: 'System', deductions: { pf: 12960, tds: 16040, others: 2000 } },
@@ -1119,10 +1119,17 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
     setProgress(0);
   };
 
-  // Helper to detect increment month
-  const isIncrementMonth = (index: number) => {
-    if (index >= MOCK_HISTORY_ROWS.length - 1) return false;
-    return MOCK_HISTORY_ROWS[index].gross > MOCK_HISTORY_ROWS[index + 1].gross;
+  // Helper to detect increment/decrement month
+  const isIncrementMonth = (row: SalaryHistoryRow) => {
+    const idx = MOCK_HISTORY_ROWS.findIndex(r => r.id === row.id);
+    if (idx === -1 || idx >= MOCK_HISTORY_ROWS.length - 1) return false;
+    return MOCK_HISTORY_ROWS[idx].gross > MOCK_HISTORY_ROWS[idx + 1].gross;
+  };
+
+  const isDecrementMonth = (row: SalaryHistoryRow) => {
+    const idx = MOCK_HISTORY_ROWS.findIndex(r => r.id === row.id);
+    if (idx === -1 || idx >= MOCK_HISTORY_ROWS.length - 1) return false;
+    return MOCK_HISTORY_ROWS[idx].gross < MOCK_HISTORY_ROWS[idx + 1].gross;
   };
 
   // Graph Data (Gross vs Net Pay Trend)
@@ -1164,6 +1171,44 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
     // On the X-axis and graph, show months when a revision (increment or decrement) occurred
     return mapped.filter(item => item.isIncrement || item.isDecrement);
   }, [salaryTrendDatePreset, salaryTrendCustomRange]);
+
+  // Gradient stops to indicate decrements in red along the line chart
+  const salaryTrendGradientStops = useMemo(() => {
+    const data = salaryTrendData;
+    const n = data.length;
+    if (n < 2) {
+      return [
+        { offset: '0%', stopColor: '#4338ca' },
+        { offset: '100%', stopColor: '#4338ca' }
+      ];
+    }
+
+    const stops: { offset: string; stopColor: string }[] = [];
+    const blueColor = '#4338ca';
+    const redColor = '#ef4444';
+
+    stops.push({ offset: '0%', stopColor: data[0]?.isDecrement ? redColor : blueColor });
+
+    for (let i = 1; i < n; i++) {
+      const prevPct = ((i - 1) / (n - 1)) * 100;
+      const currPct = (i / (n - 1)) * 100;
+      const isDec = data[i].isDecrement;
+
+      if (isDec) {
+        stops.push({ offset: `${Math.max(0, prevPct + 1).toFixed(2)}%`, stopColor: redColor });
+        stops.push({ offset: `${currPct.toFixed(2)}%`, stopColor: redColor });
+        const nextIsDec = i < n - 1 && data[i + 1]?.isDecrement;
+        if (!nextIsDec) {
+          stops.push({ offset: `${Math.min(100, currPct + 2.5).toFixed(2)}%`, stopColor: blueColor });
+        }
+      } else {
+        stops.push({ offset: `${currPct.toFixed(2)}%`, stopColor: blueColor });
+      }
+    }
+
+    stops.push({ offset: '100%', stopColor: data[n - 1]?.isDecrement ? redColor : blueColor });
+    return stops;
+  }, [salaryTrendData]);
 
   // LOP Trend Filtered Data
   const currentLopData = useMemo(() => {
@@ -1586,11 +1631,19 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                 <div className="h-72 w-full">
                   {salaryTrendData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
-                      <ComposedChart data={salaryTrendData} margin={{ top: 32, right: 30, left: 10, bottom: 8 }}>
+                      <ComposedChart data={salaryTrendData} margin={{ top: 38, right: 30, left: 10, bottom: 8 }}>
+                        <defs>
+                          <linearGradient id="salaryTrendLineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            {salaryTrendGradientStops.map((stop, i) => (
+                              <stop key={i} offset={stop.offset} stopColor={stop.stopColor} />
+                            ))}
+                          </linearGradient>
+                        </defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                         <XAxis dataKey="monthLabel" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} dy={10} />
                         <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} allowDecimals={false} domain={[0, 'auto']} />
                         <RechartsTooltip
+                          cursor={{ fill: 'rgba(241, 245, 249, 0.6)' }}
                           content={({ active, payload }) => {
                             if (active && payload && payload.length) {
                               const row = payload[0].payload;
@@ -1622,10 +1675,17 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                             return null;
                           }}
                         />
+                        <Bar
+                          dataKey="gross"
+                          barSize={36}
+                          radius={[6, 6, 0, 0]}
+                          fill="#4f46e5"
+                          fillOpacity={0.85}
+                        />
                         <Line
                           type="monotone"
                           dataKey="gross"
-                          stroke="#4f46e5"
+                          stroke="url(#salaryTrendLineGradient)"
                           strokeWidth={2.5}
                           dot={(props: any) => {
                             const { cx, cy, payload, key } = props;
@@ -1638,6 +1698,7 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                                   <text x={cx} y={cy - 12} fill="#dc2626" fontSize="10" fontWeight="bold" textAnchor="middle">
                                     {badgeLabel}
                                   </text>
+                                  <circle cx={cx} cy={cy} r={7} fill="#ef4444" fillOpacity={0.25} />
                                   <circle cx={cx} cy={cy} r={4.5} fill="#ef4444" stroke="#fff" strokeWidth={1.5} />
                                 </g>
                               );
@@ -2319,7 +2380,8 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                       {paginatedRows.map((row, index) => {
                         const isExpanded = expandedRow === row.id;
                         const totalDeduct = row.deductions.pf + row.deductions.tds + row.deductions.others;
-                        const isIncrement = isIncrementMonth(index);
+                        const isIncrement = isIncrementMonth(row);
+                        const isDecrement = isDecrementMonth(row);
 
                         return (
                           <React.Fragment key={row.id}>
@@ -2336,6 +2398,11 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                                   {isIncrement && (
                                     <span className="flex items-center gap-1 text-[10px] font-black text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100 mt-1 uppercase tracking-tighter">
                                       <ArrowUpRight size={10} /> Increment
+                                    </span>
+                                  )}
+                                  {isDecrement && (
+                                    <span className="flex items-center gap-1 text-[10px] font-black text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100 mt-1 uppercase tracking-tighter">
+                                      <ArrowDownRight size={10} /> Decrement
                                     </span>
                                   )}
                                 </div>

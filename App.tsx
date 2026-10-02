@@ -316,6 +316,7 @@ const App: React.FC = () => {
                     onNavigateToTaxPlanning={() => setCurrentView(ViewState.EMP_TAX_PLANNING)}
                     onNavigateToReimbursements={() => setCurrentView(ViewState.EMP_REIMBURSEMENTS)}
                     onNavigateToSalaryBreakdown={() => setCurrentView(ViewState.EMP_SALARY_BREAKDOWN)}
+                    onNavigateToPayslips={() => setCurrentView(ViewState.EMP_SALARY_BREAKDOWN)}
                   />
                 )}
                 {currentView === ViewState.EMP_PAYROLL_CORNER && (
@@ -324,11 +325,16 @@ const App: React.FC = () => {
                     onNavigateToTaxPlanning={() => setCurrentView(ViewState.EMP_TAX_PLANNING)}
                     onNavigateToReimbursements={() => setCurrentView(ViewState.EMP_REIMBURSEMENTS)}
                     onNavigateToSalaryBreakdown={() => setCurrentView(ViewState.EMP_SALARY_BREAKDOWN)}
+                    onNavigateToPayslips={() => setCurrentView(ViewState.EMP_SALARY_BREAKDOWN)}
                   />
                 )}
-                {currentView === ViewState.EMP_PAYSLIPS && <SalarySlips />}
+                {currentView === ViewState.EMP_PAYSLIPS && (
+                  <SalaryBreakdown onNavigateToOverview={() => setCurrentView(ViewState.EMP_OVERVIEW)} />
+                )}
                 {currentView === ViewState.EMP_TAX_PLANNING && <TaxPlanning />}
-                {currentView === ViewState.EMP_SALARY_BREAKDOWN && <SalaryBreakdown />}
+                {currentView === ViewState.EMP_SALARY_BREAKDOWN && (
+                  <SalaryBreakdown onNavigateToOverview={() => setCurrentView(ViewState.EMP_OVERVIEW)} />
+                )}
                 {currentView === ViewState.EMP_REIMBURSEMENTS && <Reimbursements />}
                 {currentView === ViewState.EMP_TAX_DOCUMENTS && <TaxDocuments onNavigateToPlanning={() => setCurrentView(ViewState.EMP_TAX_PLANNING)} />}
                 {currentView === ViewState.EMP_LOANS_ADVANCES && <LoansAdvances userRole={userRole} currentEmployeeId="TF00912" />}

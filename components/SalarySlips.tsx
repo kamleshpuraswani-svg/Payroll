@@ -59,6 +59,8 @@ const MONTH_ORDER = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 const MOCK_PAYSLIPS_DATA: Record<string, PayslipData> = {
   // ── 2026 ──────────────────────────────────────────────
+  'Aug 2026': { month: 'Aug', year: '2026', creditedDate: '31/08/2026', netPay: 194000, netPayWords: 'One Lakh Ninety-Four Thousand Only', trend: 'up', totalWorkingDays: 31, processedDays: 31, earnings: [{ name: 'Basic Salary', amount: 95000 }, { name: 'HRA', amount: 48000 }, { name: 'Special Allowance', amount: 45000 }, { name: 'Statutory Bonus', amount: 37000 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }, { name: 'Income Tax (TDS)', amount: 29000 }], reimbursements: [], taxDonut: [] },
+  'Jul 2026': { month: 'Jul', year: '2026', creditedDate: '31/07/2026', netPay: 194000, netPayWords: 'One Lakh Ninety-Four Thousand Only', trend: 'up', totalWorkingDays: 31, processedDays: 31, earnings: [{ name: 'Basic Salary', amount: 95000 }, { name: 'HRA', amount: 48000 }, { name: 'Special Allowance', amount: 45000 }, { name: 'Statutory Bonus', amount: 37000 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }, { name: 'Income Tax (TDS)', amount: 29000 }], reimbursements: [], taxDonut: [] },
   'Mar 2026': { month: 'Mar', year: '2026', creditedDate: '07/03/2026', netPay: 81500, netPayWords: 'Eighty-One Thousand Five Hundred Only', trend: 'up', totalWorkingDays: 31, processedDays: 31, earnings: [{ name: 'Basic Salary', amount: 43000 }, { name: 'HRA', amount: 21000 }, { name: 'Special Allowance', amount: 16000 }, { name: 'Statutory Bonus', amount: 5000 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }, { name: 'Income Tax (TDS)', amount: 4500 }], reimbursements: [{ name: 'Fuel Reimbursement', amount: 2500 }], taxDonut: [] },
   'Feb 2026': { month: 'Feb', year: '2026', creditedDate: '07/02/2026', netPay: 80200, netPayWords: 'Eighty Thousand Two Hundred Only', trend: 'up', totalWorkingDays: 28, processedDays: 28, earnings: [{ name: 'Basic Salary', amount: 43000 }, { name: 'HRA', amount: 21000 }, { name: 'Special Allowance', amount: 16000 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }, { name: 'Income Tax (TDS)', amount: 4400 }], reimbursements: [], taxDonut: [] },
   'Jan 2026': { month: 'Jan', year: '2026', creditedDate: '07/01/2026', netPay: 79800, netPayWords: 'Seventy-Nine Thousand Eight Hundred Only', trend: 'up', totalWorkingDays: 31, processedDays: 31, earnings: [{ name: 'Basic Salary', amount: 43000 }, { name: 'HRA', amount: 21000 }, { name: 'Special Allowance', amount: 15500 }], deductions: [{ name: 'PF Contribution', amount: 1800 }, { name: 'Professional Tax', amount: 200 }, { name: 'Income Tax (TDS)', amount: 4300 }], reimbursements: [], taxDonut: [] },
@@ -125,7 +127,7 @@ Certified that this is a valid TDS certificate generated for ${part}.`;
   // Date Picker Popover State
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [pickerYear, setPickerYear] = useState<number>(2026);
-  const [pickerMonth, setPickerMonth] = useState<string>('Mar');
+  const [pickerMonth, setPickerMonth] = useState<string>('Aug');
   const datePickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -157,9 +159,9 @@ Certified that this is a valid TDS certificate generated for ${part}.`;
 
   const handleClearFilter = () => {
     setPickerYear(2026);
-    setPickerMonth('Mar');
+    setPickerMonth('Aug');
     setSelectedYear('2026');
-    setActiveMonth('Mar 2026');
+    setActiveMonth('Aug 2026');
     setIsDatePickerOpen(false);
   };
 
@@ -206,7 +208,7 @@ Certified that this is a valid TDS certificate generated for ${part}.`;
         } else {
           // Fallback to mock data if no data found
           setPayslipsMap(MOCK_PAYSLIPS_DATA);
-          setActiveMonth('Mar 2026');
+          setActiveMonth('Aug 2026');
         }
     } catch (err) {
       console.error('Error fetching payslips:', err);

@@ -20,7 +20,10 @@ import {
   Eye,
   EyeOff,
   Lock,
-  X
+  X,
+  ShieldCheck,
+  KeyRound,
+  Home
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { SalarySlipsModule } from './SalarySlips';
@@ -61,9 +64,22 @@ const BASE_DONUT_DATA = [
   { name: 'Employer Contributions', value: 96000, color: '#3B82F6' },
 ];
 
-export const SalaryBreakdownModule: React.FC = () => {
+interface SalaryBreakdownProps {
+  onNavigateToOverview?: () => void;
+}
+
+export const SalaryBreakdownModule: React.FC<SalaryBreakdownProps> = ({
+  onNavigateToOverview
+}) => {
+  // Screen-level Password Protection
+  const [isScreenUnlocked, setIsScreenUnlocked] = useState(false);
+  const [screenPasswordInput, setScreenPasswordInput] = useState('');
+  const [screenPasswordError, setScreenPasswordError] = useState('');
+  const [showPasswordPlaintext, setShowPasswordPlaintext] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // Visibility State
-  const [showValues, setShowValues] = useState(false);
+  const [showValues, setShowValues] = useState(true);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -139,13 +155,26 @@ export const SalaryBreakdownModule: React.FC = () => {
   const panelTotalCTC = Math.round(BASE_DONUT_DATA.reduce((s, i) => s + i.value, 0) * panelMultiplier);
 
   const handleToggleVisibility = () => {
-    if (showValues) {
-      setShowValues(false);
+    setShowValues(prev => !prev);
+  };
+
+  const handleUnlockScreenSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setScreenPasswordError('');
+    if (!screenPasswordInput.trim()) {
+      setScreenPasswordError('Please enter your password.');
+      return;
+    }
+    if (screenPasswordInput === '1234') {
+      setIsSubmitting(true);
+      setTimeout(() => {
+        setIsSubmitting(false);
+        setIsScreenUnlocked(true);
+        setShowValues(true);
+        setScreenPasswordInput('');
+      }, 200);
     } else {
-      setIsPasswordModalOpen(true);
-      setPasswordInput('');
-      setPasswordError('');
-      setUnlockStep('password');
+      setScreenPasswordError('Incorrect password. Default password is 1234.');
     }
   };
 
@@ -255,6 +284,111 @@ export const SalaryBreakdownModule: React.FC = () => {
       window.URL.revokeObjectURL(url);
   };
 
+  if (!isScreenUnlocked) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[560px] h-full py-12 px-4 animate-in fade-in duration-300">
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xl max-w-md w-full p-8 relative overflow-hidden">
+          {/* Subtle background glow */}
+          <div className="absolute -top-20 -right-20 w-44 h-44 bg-indigo-50/70 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -bottom-20 -left-20 w-44 h-44 bg-blue-50/70 rounded-full blur-2xl pointer-events-none" />
+
+          {/* Lock Icon with Shield */}
+          <div className="relative mx-auto w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mb-5 shadow-xs">
+            <Lock size={30} className="stroke-[2.2]" />
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center border-2 border-white shadow-xs">
+              <ShieldCheck size={13} />
+            </div>
+          </div>
+
+          <div className="text-center mb-6">
+            <h2 className="text-xl font-black text-slate-900 tracking-tight">Payslips Access Protected</h2>
+            <p className="text-xs text-slate-500 font-medium mt-1.5 leading-relaxed">
+              This screen contains confidential payslip and salary records. Please enter your portal password to continue.
+            </p>
+          </div>
+
+          <form onSubmit={handleUnlockScreenSubmit} className="space-y-4">
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2">
+                Portal Password <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type={showPasswordPlaintext ? 'text' : 'password'}
+                  value={screenPasswordInput}
+                  onChange={(e) => {
+                    setScreenPasswordInput(e.target.value);
+                    if (screenPasswordError) setScreenPasswordError('');
+                  }}
+                  placeholder="Enter password (e.g. 1234)"
+                  autoFocus
+                  className={`w-full pl-10 pr-11 py-3 bg-slate-50/60 border ${
+                    screenPasswordError
+                      ? 'border-red-300 ring-2 ring-red-100 bg-red-50/30'
+                      : 'border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100'
+                  } rounded-xl text-sm font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white transition-all`}
+                />
+                <KeyRound size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordPlaintext(!showPasswordPlaintext)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                  title={showPasswordPlaintext ? 'Hide password' : 'Show password'}
+                >
+                  {showPasswordPlaintext ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+
+              {screenPasswordError && (
+                <div className="mt-2.5 p-2.5 bg-red-50/90 border border-red-200/80 rounded-lg flex items-center gap-2 text-xs text-red-600 font-semibold animate-in fade-in">
+                  <AlertTriangle size={14} className="shrink-0 text-red-500" />
+                  <span>{screenPasswordError}</span>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-md shadow-indigo-100 cursor-pointer disabled:opacity-60"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Verifying...</span>
+                </>
+              ) : (
+                <>
+                  <Lock size={15} />
+                  <span>Unlock Payslips</span>
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Quick Helper for user / tester */}
+          <div className="mt-5 pt-4 border-t border-slate-100 text-center flex flex-col items-center gap-3">
+            <span className="text-[11px] text-slate-400 font-medium inline-flex items-center gap-1.5 bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+              <span>Default PIN:</span> <strong className="text-slate-700 font-bold">1234</strong>
+            </span>
+
+            {onNavigateToOverview && (
+              <button
+                type="button"
+                onClick={onNavigateToOverview}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-200 transition-all cursor-pointer shadow-2xs"
+              >
+                <Home size={13} />
+                <span>Go to Home</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-3 h-full animate-fade-in pb-10">
 
@@ -275,10 +409,22 @@ export const SalaryBreakdownModule: React.FC = () => {
             <span className="hidden bg-emerald-50 text-emerald-600 text-xs font-bold px-3 py-1.5 rounded-full border border-emerald-100">UAN Active</span>
             <button
               onClick={handleToggleVisibility}
-              className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition-all border border-slate-100"
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition-all border border-slate-100 cursor-pointer"
               title={showValues ? "Hide amounts" : "Show amounts"}
             >
               {showValues ? <EyeOff size={16}/> : <Eye size={16}/>}
+            </button>
+            <button
+              onClick={() => {
+                setIsScreenUnlocked(false);
+                setScreenPasswordInput('');
+                setScreenPasswordError('');
+              }}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-red-600 hover:bg-red-50 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 transition-all cursor-pointer"
+              title="Lock Payslips Screen"
+            >
+              <Lock size={13} />
+              <span>Lock Screen</span>
             </button>
           </div>
         </div>

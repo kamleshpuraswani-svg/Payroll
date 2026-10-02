@@ -13,7 +13,8 @@ import {
   Heart,
   Fuel,
   BookOpen,
-  Plane
+  Plane,
+  Download
 } from 'lucide-react';
 import {
   BarChart,
@@ -24,7 +25,8 @@ import {
   YAxis,
   Tooltip as RechartsTooltip,
   CartesianGrid,
-  ResponsiveContainer
+  ResponsiveContainer,
+  Cell
 } from 'recharts';
 
 const REVISION_YEAR_OPTIONS = ['2024', '2025', '2026', '2027'];
@@ -136,19 +138,19 @@ const ALL_REVISION_DATA: RevisionItem[] = [
     monthLabel: 'Jul',
     year: 2026,
     prevGross: 215000,
-    gross: 225000,
-    incrementAmount: 10000,
-    decrementAmount: 0,
-    isIncrement: true,
-    isDecrement: false
+    gross: 205000,
+    incrementAmount: 0,
+    decrementAmount: 10000,
+    isIncrement: false,
+    isDecrement: true
   },
   {
     period: 'October 2026',
     monthLabel: 'Oct',
     year: 2026,
-    prevGross: 225000,
-    gross: 235000,
-    incrementAmount: 10000,
+    prevGross: 205000,
+    gross: 225000,
+    incrementAmount: 20000,
     decrementAmount: 0,
     isIncrement: true,
     isDecrement: false
@@ -167,10 +169,13 @@ interface OverviewProps {
   onNavigateToTaxPlanning?: () => void;
   onNavigateToReimbursements?: () => void;
   onNavigateToSalaryBreakdown?: () => void;
+  onNavigateToPayslips?: () => void;
 }
 
 const Overview: React.FC<OverviewProps> = ({
-  onNavigateToTaxPlanning
+  onNavigateToTaxPlanning,
+  onNavigateToSalaryBreakdown,
+  onNavigateToPayslips
 }) => {
   // Salary Revision filter dropdown state matching HR Manager Compensation -> Salary Insights (Screenshot 2)
   const [revisionPreset, setRevisionPreset] = useState<string>('THIS_YEAR');
@@ -217,6 +222,44 @@ const Overview: React.FC<OverviewProps> = ({
     }
     return ALL_REVISION_DATA;
   }, [revisionPreset, customRangeText]);
+
+  // Gradient stops to indicate decrements in red along the line chart
+  const overviewSalaryTrendGradientStops = useMemo(() => {
+    const data = salaryTrendData;
+    const n = data.length;
+    if (n < 2) {
+      return [
+        { offset: '0%', stopColor: '#4338ca' },
+        { offset: '100%', stopColor: '#4338ca' }
+      ];
+    }
+
+    const stops: { offset: string; stopColor: string }[] = [];
+    const blueColor = '#4338ca';
+    const redColor = '#ef4444';
+
+    stops.push({ offset: '0%', stopColor: data[0]?.isDecrement ? redColor : blueColor });
+
+    for (let i = 1; i < n; i++) {
+      const prevPct = ((i - 1) / (n - 1)) * 100;
+      const currPct = (i / (n - 1)) * 100;
+      const isDec = data[i].isDecrement;
+
+      if (isDec) {
+        stops.push({ offset: `${Math.max(0, prevPct + 1).toFixed(2)}%`, stopColor: redColor });
+        stops.push({ offset: `${currPct.toFixed(2)}%`, stopColor: redColor });
+        const nextIsDec = i < n - 1 && data[i + 1]?.isDecrement;
+        if (!nextIsDec) {
+          stops.push({ offset: `${Math.min(100, currPct + 2.5).toFixed(2)}%`, stopColor: blueColor });
+        }
+      } else {
+        stops.push({ offset: `${currPct.toFixed(2)}%`, stopColor: blueColor });
+      }
+    }
+
+    stops.push({ offset: '100%', stopColor: data[n - 1]?.isDecrement ? redColor : blueColor });
+    return stops;
+  }, [salaryTrendData]);
 
   const revisionFilterLabel = useMemo(() => {
     if (revisionPreset === 'CUSTOM') {
@@ -365,6 +408,37 @@ const Overview: React.FC<OverviewProps> = ({
           </div>
         </div>
 
+        {/* Payslip Summary Card (Width same as Next Payout: w-full sm:w-64 lg:w-72) */}
+        <div className="w-full sm:w-64 lg:w-72 bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-blue-300 transition-all shrink-0">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Payslip</p>
+              <h3 className="text-base font-bold text-slate-800 mt-1 tracking-tight">
+                August 2026
+              </h3>
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+              <FileText size={16} />
+            </div>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              Disbursed
+            </span>
+
+            <button
+              onClick={onNavigateToPayslips || onNavigateToSalaryBreakdown}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200/70 px-2.5 py-1 rounded-lg transition-all cursor-pointer whitespace-nowrap shadow-2xs"
+              title="Download Payslip"
+            >
+              <Download size={13} />
+              <span>Download</span>
+            </button>
+          </div>
+        </div>
+
       </div>
 
       {/* ROW 2: Salary Revision History */}
@@ -475,11 +549,19 @@ const Overview: React.FC<OverviewProps> = ({
         <div className="h-72 w-full">
           {salaryTrendData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={salaryTrendData} margin={{ top: 32, right: 30, left: 10, bottom: 8 }}>
+              <ComposedChart data={salaryTrendData} margin={{ top: 38, right: 30, left: 10, bottom: 8 }}>
+                <defs>
+                  <linearGradient id="overviewSalaryTrendLineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    {overviewSalaryTrendGradientStops.map((stop, i) => (
+                      <stop key={i} offset={stop.offset} stopColor={stop.stopColor} />
+                    ))}
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="monthLabel" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} allowDecimals={false} domain={[0, 'auto']} />
                 <RechartsTooltip
+                  cursor={{ fill: 'rgba(241, 245, 249, 0.6)' }}
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const row = payload[0].payload as RevisionItem;
@@ -511,10 +593,17 @@ const Overview: React.FC<OverviewProps> = ({
                     return null;
                   }}
                 />
+                <Bar
+                  dataKey="gross"
+                  barSize={36}
+                  radius={[6, 6, 0, 0]}
+                  fill="#4f46e5"
+                  fillOpacity={0.85}
+                />
                 <Line
                   type="monotone"
                   dataKey="gross"
-                  stroke="#4f46e5"
+                  stroke="url(#overviewSalaryTrendLineGradient)"
                   strokeWidth={2.5}
                   dot={(props: any) => {
                     const { cx, cy, payload, key } = props;
@@ -527,6 +616,7 @@ const Overview: React.FC<OverviewProps> = ({
                           <text x={cx} y={cy - 12} fill="#dc2626" fontSize="10" fontWeight="bold" textAnchor="middle">
                             {badgeLabel}
                           </text>
+                          <circle cx={cx} cy={cy} r={7} fill="#ef4444" fillOpacity={0.25} />
                           <circle cx={cx} cy={cy} r={4.5} fill="#ef4444" stroke="#fff" strokeWidth={1.5} />
                         </g>
                       );
