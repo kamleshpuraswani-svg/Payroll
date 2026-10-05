@@ -438,8 +438,8 @@ const Overview: React.FC<OverviewProps> = ({
           </div>
         </div>
 
-        {/* Tax & Investment Summary (Width reduced by ~50%) */}
-        <div className="w-full sm:w-[440px] lg:w-[480px] bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-indigo-300 transition-all shrink-0">
+        {/* Tax & Investment Summary */}
+        <div className="w-full sm:w-[480px] lg:w-[520px] bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-indigo-300 transition-all shrink-0">
           <div>
             <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
@@ -465,17 +465,22 @@ const Overview: React.FC<OverviewProps> = ({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+            <div className="grid grid-cols-3 gap-2.5">
+              <div className="p-2.5 sm:p-3 bg-slate-50 border border-slate-100 rounded-xl">
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Tax Regime</span>
-                <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-black inline-block">
+                <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-black inline-block whitespace-nowrap">
                   New Regime
                 </span>
               </div>
 
-              <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Declared Investments</span>
-                <p className="text-base font-black text-slate-900">₹ 1,50,000</p>
+              <div className="p-2.5 sm:p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5 whitespace-nowrap">Declared Amount</span>
+                <p className="text-sm sm:text-base font-black text-slate-900 whitespace-nowrap">₹ 1,50,000</p>
+              </div>
+
+              <div className="p-2.5 sm:p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5 whitespace-nowrap">Approved Amount</span>
+                <p className="text-sm sm:text-base font-black text-slate-900 whitespace-nowrap">₹ 1,20,000</p>
               </div>
             </div>
           </div>
@@ -495,12 +500,7 @@ const Overview: React.FC<OverviewProps> = ({
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              Disbursed
-            </span>
-
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-end">
             <button
               onClick={onNavigateToPayslips || onNavigateToSalaryBreakdown}
               className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200/70 px-2.5 py-1 rounded-lg transition-all cursor-pointer whitespace-nowrap shadow-2xs"
