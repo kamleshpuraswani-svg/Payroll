@@ -6,6 +6,8 @@ import {
   Download,
   Search,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   FileText,
   Eye,
   ShieldCheck,
@@ -56,6 +58,52 @@ const SALARY_BREAKDOWN_DATA = [
   { name: 'Gross Earnings', value: 250000, fill: '#4f46e5' }, 
   { name: 'Employee Deductions', value: 25000, fill: '#ef4444' }, 
   { name: 'Employer Deductions', value: 15000, fill: '#f97316' }
+];
+
+const MOCK_LOANS = [
+  {
+    id: 'loan-1',
+    name: 'Home Appliance Loan',
+    totalAmount: 250000,
+    repaidAmount: 150000,
+    remainingBalance: 100000,
+    emiAmount: 10000,
+    paidMonths: 15,
+    totalMonths: 25,
+  },
+  {
+    id: 'loan-2',
+    name: 'Personal Loan',
+    totalAmount: 150000,
+    repaidAmount: 76667,
+    remainingBalance: 73333,
+    emiAmount: 8333,
+    paidMonths: 10,
+    totalMonths: 18,
+  },
+];
+
+const MOCK_ADVANCES = [
+  {
+    id: 'adv-1',
+    name: 'Festival Advance',
+    totalAmount: 40000,
+    repaidAmount: 30000,
+    remainingBalance: 10000,
+    emiAmount: 10000,
+    paidMonths: 3,
+    totalMonths: 4,
+  },
+  {
+    id: 'adv-2',
+    name: 'Medical Advance',
+    totalAmount: 20000,
+    repaidAmount: 10000,
+    remainingBalance: 10000,
+    emiAmount: 5000,
+    paidMonths: 2,
+    totalMonths: 4,
+  },
 ];
 
 const ALL_LOP_DATA = [
@@ -703,6 +751,8 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
   const [lopYear, setLopYear] = useState('2025');
   const [reimbursementYear, setReimbursementYear] = useState('2025');
   const [expenseCategoryStatusYear, setExpenseCategoryStatusYear] = useState('2025');
+  const [activeLoanIndex, setActiveLoanIndex] = useState(0);
+  const [activeAdvanceIndex, setActiveAdvanceIndex] = useState(0);
 
   const [structureComponents, setStructureComponents] = useState<{ earnings: any[]; deductions: any[] }>({ earnings: [], deductions: [] });
   const [statutoryDeductions, setStatutoryDeductions] = useState<any>({
@@ -1250,6 +1300,30 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
     return data;
   }, [lopDatePreset, lopCustomRange]);
 
+  // Active Loan & Advance Data Selection
+  const currentLoan = MOCK_LOANS[activeLoanIndex] || MOCK_LOANS[0];
+  const currentAdvance = MOCK_ADVANCES[activeAdvanceIndex] || MOCK_ADVANCES[0];
+  const loanProgress = Math.min(100, Math.round((currentLoan.repaidAmount / currentLoan.totalAmount) * 100));
+  const advanceProgress = Math.min(100, Math.round((currentAdvance.repaidAmount / currentAdvance.totalAmount) * 100));
+
+  const totalOutstandingAll = useMemo(() => {
+    const loansRemaining = MOCK_LOANS.reduce((acc, l) => acc + l.remainingBalance, 0);
+    const advancesRemaining = MOCK_ADVANCES.reduce((acc, a) => acc + a.remainingBalance, 0);
+    return loansRemaining + advancesRemaining;
+  }, []);
+
+  const totalPaidAll = useMemo(() => {
+    const loansPaid = MOCK_LOANS.reduce((acc, l) => acc + l.repaidAmount, 0);
+    const advancesPaid = MOCK_ADVANCES.reduce((acc, a) => acc + a.repaidAmount, 0);
+    return loansPaid + advancesPaid;
+  }, []);
+
+  const totalUpcomingEmiAll = useMemo(() => {
+    const loansEmi = MOCK_LOANS.reduce((acc, l) => acc + l.emiAmount, 0);
+    const advancesEmi = MOCK_ADVANCES.reduce((acc, a) => acc + a.emiAmount, 0);
+    return loansEmi + advancesEmi;
+  }, []);
+
   // Expense Claims Filtered Data
   const currentExpenseClaimsData = useMemo(() => {
     if (expenseDatePreset === 'THIS_QUARTER') {
@@ -1784,33 +1858,89 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
                   </div>
                 </div>
 
-                {/* Loan */}
-                <div className="mb-3">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Loan</span>
-                    <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">2 loans</span>
+                {/* 3 Summary Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-4">
+                  <div className="bg-rose-50/60 border border-rose-100 rounded-lg p-2.5 flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Outstanding</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                    </div>
+                    <span className="text-base sm:text-lg font-black text-rose-600">{formatINR(totalOutstandingAll)}</span>
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-8 sm:items-center ml-6">
-                    <div>
-                      <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Remaining Balance</div>
-                      <span className="text-2xl font-black text-slate-800">₹1,73,333</span>
+                  <div className="bg-emerald-50/60 border border-emerald-100 rounded-lg p-2.5 flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Paid</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    </div>
+                    <span className="text-base sm:text-lg font-black text-emerald-600">{formatINR(totalPaidAll)}</span>
+                  </div>
+                  <div className="bg-blue-50/60 border border-blue-100 rounded-lg p-2.5 flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Upcoming EMI</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                    </div>
+                    <span className="text-base sm:text-lg font-black text-blue-600">
+                      {formatINR(totalUpcomingEmiAll)} <span className="text-[11px] font-semibold text-slate-400">/ mo</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Loan */}
+                <div className="mb-3.5">
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Loan</span>
+                      <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
+                        2 loans
+                      </span>
+                    </div>
+                    {MOCK_LOANS.length > 1 && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] font-bold text-slate-500 mr-0.5">
+                          {activeLoanIndex + 1} of {MOCK_LOANS.length}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setActiveLoanIndex(prev => Math.max(0, prev - 1))}
+                          disabled={activeLoanIndex === 0}
+                          title="Previous Loan"
+                          className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded border border-slate-200 bg-white text-slate-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                        >
+                          <ChevronLeft size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveLoanIndex(prev => Math.min(MOCK_LOANS.length - 1, prev + 1))}
+                          disabled={activeLoanIndex === MOCK_LOANS.length - 1}
+                          title="Next Loan"
+                          className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded border border-slate-200 bg-white text-slate-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                        >
+                          <ChevronRight size={13} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-6 sm:items-center ml-2 sm:ml-4">
+                    <div className="min-w-[130px]">
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Remaining Balance</div>
+                      <span className="text-xl sm:text-2xl font-black text-slate-800">{formatINR(currentLoan.remainingBalance)}</span>
                     </div>
                     <div className="flex-1 flex flex-col gap-2">
                       <div className="flex justify-between text-xs font-bold text-slate-600">
-                        <span>Amount Repaid (₹2,26,667)</span>
-                        <span>Total: ₹4,00,000</span>
+                        <span>Amount Repaid ({formatINR(currentLoan.repaidAmount)})</span>
+                        <span>Total: {formatINR(currentLoan.totalAmount)}</span>
                       </div>
                       <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                        <div className="bg-blue-500 h-2.5 rounded-full" style={{ width: '56.7%' }}></div>
+                        <div className="bg-blue-500 h-2.5 rounded-full transition-all duration-300" style={{ width: `${loanProgress}%` }}></div>
                       </div>
-                      <div className="flex justify-between text-xs font-semibold text-slate-500 mt-1">
+                      <div className="flex justify-between text-xs font-semibold text-slate-500 mt-0.5">
                         <span className="flex items-center gap-1.5 text-slate-600">
                           <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
-                          EMI: <strong className="text-slate-800">₹13,333</strong> / month
+                          EMI: <strong className="text-slate-800">{formatINR(currentLoan.emiAmount)}</strong> / month
                         </span>
                         <span className="flex items-center gap-1.5 text-slate-600">
                           <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                          <strong className="text-slate-800">17</strong> of 30 paid
+                          <strong className="text-slate-800">{currentLoan.paidMonths}</strong> of {currentLoan.totalMonths} paid
                         </span>
                       </div>
                     </div>
@@ -1821,31 +1951,60 @@ const EmployeeSalaryHistory: React.FC<EmployeeSalaryHistoryProps> = ({ onBack, e
 
                 {/* Salary Advance */}
                 <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Salary Advance</span>
-                    <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">2 advances</span>
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Salary Advance</span>
+                      <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+                        2 advances
+                      </span>
+                    </div>
+                    {MOCK_ADVANCES.length > 1 && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] font-bold text-slate-500 mr-0.5">
+                          {activeAdvanceIndex + 1} of {MOCK_ADVANCES.length}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setActiveAdvanceIndex(prev => Math.max(0, prev - 1))}
+                          disabled={activeAdvanceIndex === 0}
+                          title="Previous Advance"
+                          className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded border border-slate-200 bg-white text-slate-600 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                        >
+                          <ChevronLeft size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveAdvanceIndex(prev => Math.min(MOCK_ADVANCES.length - 1, prev + 1))}
+                          disabled={activeAdvanceIndex === MOCK_ADVANCES.length - 1}
+                          title="Next Advance"
+                          className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded border border-slate-200 bg-white text-slate-600 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                        >
+                          <ChevronRight size={13} />
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-8 sm:items-center ml-6">
-                    <div>
-                      <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Remaining Balance</div>
-                      <span className="text-2xl font-black text-slate-800">₹20,000</span>
+                  <div className="flex flex-col sm:flex-row gap-6 sm:items-center ml-2 sm:ml-4">
+                    <div className="min-w-[130px]">
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Remaining Balance</div>
+                      <span className="text-xl sm:text-2xl font-black text-slate-800">{formatINR(currentAdvance.remainingBalance)}</span>
                     </div>
                     <div className="flex-1 flex flex-col gap-2">
                       <div className="flex justify-between text-xs font-bold text-slate-600">
-                        <span>Amount Repaid (₹40,000)</span>
-                        <span>Total: ₹60,000</span>
+                        <span>Amount Repaid ({formatINR(currentAdvance.repaidAmount)})</span>
+                        <span>Total: {formatINR(currentAdvance.totalAmount)}</span>
                       </div>
                       <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                        <div className="bg-amber-500 h-2.5 rounded-full" style={{ width: '66.7%' }}></div>
+                        <div className="bg-amber-500 h-2.5 rounded-full transition-all duration-300" style={{ width: `${advanceProgress}%` }}></div>
                       </div>
-                      <div className="flex justify-between text-xs font-semibold text-slate-500 mt-1">
+                      <div className="flex justify-between text-xs font-semibold text-slate-500 mt-0.5">
                         <span className="flex items-center gap-1.5 text-slate-600">
                           <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
-                          EMI: <strong className="text-slate-800">₹10,000</strong> / month
+                          EMI: <strong className="text-slate-800">{formatINR(currentAdvance.emiAmount)}</strong> / month
                         </span>
                         <span className="flex items-center gap-1.5 text-slate-600">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                          <strong className="text-slate-800">4</strong> of 6 paid
+                          <strong className="text-slate-800">{currentAdvance.paidMonths}</strong> of {currentAdvance.totalMonths} paid
                         </span>
                       </div>
                     </div>
