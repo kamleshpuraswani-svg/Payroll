@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { generateTaxSlipPDF } from './taxSlipGenerator';
+import { downloadForm16PartA, downloadForm16PartB } from './form16PdfGenerator';
 
 // --- Types & Data ---
 
@@ -103,25 +104,22 @@ export const SalarySlipsModule: React.FC<{ currentEmployeeId?: string; showValue
   const showHeaderDownloadButton = false; // Hidden for now, per request. Set to true to bring it back.
 
   const handleDownloadForm16Part = (part: string) => {
-    const docTitle = `Form 16 - ${part} (FY ${form16FY})`;
-    const content = `COLLABCRM SYSTEMS PVT LTD
-FORM 16 (${part.toUpperCase()})
-Assessment Year: 2026-27 | Financial Year: ${form16FY}
---------------------------------------------------
-Employee: Priya Sharma (TF00123)
-Designation: Senior Engineer
-PAN: ABCDE1234F
-Gross Salary: ₹ 12,00,000.00
-Total TDS Deducted: ₹ 1,01,800.00
---------------------------------------------------
-Certified that this is a valid TDS certificate generated for ${part}.`;
-    const element = document.createElement("a");
-    const file = new Blob([content], { type: 'text/plain' });
-    element.href = URL.createObjectURL(file);
-    element.download = `${docTitle.replace(/\s+/g, '_')}.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    const record = {
+      id: 'F16-001',
+      empId: currentEmployeeId || 'TF00912',
+      empName: 'Priya Sharma',
+      department: 'Engineering',
+      pan: 'ABCPS1234F',
+      financialYear: form16FY,
+      assessmentYear: `${parseInt(form16FY.split('-')[0]) + 1}-${parseInt(form16FY.split('-')[1]) + 1}`,
+      grossSalary: 1850000,
+      tdsDeducted: 145000
+    };
+    if (part === 'Part A') {
+      downloadForm16PartA(record);
+    } else {
+      downloadForm16PartB(record);
+    }
   };
 
   // Date Picker Popover State
@@ -540,7 +538,8 @@ Certified that this is a valid TDS certificate generated for ${part}.`;
                   key={part}
                   type="button"
                   onClick={() => handleDownloadForm16Part(part)}
-                  className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-blue-100 cursor-pointer"
+                  style={{ backgroundColor: '#444CE7' }}
+                  className="flex-1 h-12 bg-[#444CE7] hover:bg-[#3538CD] text-white rounded-xl font-bold text-base flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-indigo-100 cursor-pointer"
                 >
                   <Download size={18} /> {part}
                 </button>

@@ -7,6 +7,7 @@ import {
   Filter,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
   Eye,
   FileText,
   Check,
@@ -25,8 +26,14 @@ import {
   Info,
   FileUp,
   ArrowLeft,
-  RotateCcw
+  RotateCcw,
+  Send
 } from 'lucide-react';
+import {
+  downloadForm16PartA,
+  downloadForm16PartB,
+  downloadForm16BothZip
+} from './form16PdfGenerator';
 
 interface Form16Record {
   id: string;
@@ -357,8 +364,8 @@ const MOCK_MAPPING_DATA: Form16MappingItem[] = [
     empCode: 'TF00882',
     empName: 'Kavita Iyer',
     panProfile: '', // Missing in Profile
-    panForm16: 'GHKI6789M',
-    matchedFiles: ['GHKI6789M_PartA.pdf', 'GHKI6789M_PartB.pdf'],
+    panForm16: '',
+    matchedFiles: [],
     status: 'PAN_MISSING_PROFILE'
   },
   {
@@ -375,8 +382,8 @@ const MOCK_MAPPING_DATA: Form16MappingItem[] = [
     empCode: 'AC99367',
     empName: 'Vikram Singh',
     panProfile: 'FGVS2345L',
-    panForm16: 'FGVS9876X',
-    matchedFiles: ['FGVS9876X_PartA.pdf'],
+    panForm16: '',
+    matchedFiles: [],
     status: 'UNMATCHED'
   }
 ];
@@ -401,27 +408,38 @@ export const UploadForm16: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Bulk Upload State
-  const [bulkModalStep, setBulkModalStep] = useState<1 | 2>(1);
+  const [bulkModalStep, setBulkModalStep] = useState<1 | 2 | 3>(1);
   const [bulkUploadType, setBulkUploadType] = useState<'ZIP' | 'TRACES_MERGED'>('ZIP');
   const [bulkFY, setBulkFY] = useState('2024-25');
   const [bulkFile, setBulkFile] = useState<File | null>(null);
   const bulkFileInputRef = useRef<HTMLInputElement>(null);
+  const processingTimersRef = useRef<NodeJS.Timeout[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [autoSign, setAutoSign] = useState(true);
   const [autoPublish, setAutoPublish] = useState(true);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [overrideExisting, setOverrideExisting] = useState(false);
+  const [bulkTargetScope, setBulkTargetScope] = useState<'ALL' | 'PENDING'>('ALL');
+
+  useEffect(() => {
+    return () => {
+      processingTimersRef.current.forEach(clearTimeout);
+    };
+  }, []);
 
   // Mapping Preview State (Step 2)
   const [mappingRecords, setMappingRecords] = useState<Form16MappingItem[]>(MOCK_MAPPING_DATA);
   const [mappingFilter, setMappingFilter] = useState<'ALL' | 'MATCHED' | 'ERRORS'>('ALL');
   const [mappingSearch, setMappingSearch] = useState('');
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [simulateAllFail, setSimulateAllFail] = useState(false);
 
   // Single Upload State
   const [singleEmpId, setSingleEmpId] = useState('');
   const [singlePartAFile, setSinglePartAFile] = useState<File | null>(null);
   const [singlePartBFile, setSinglePartBFile] = useState<File | null>(null);
+  const [singleZipFile, setSingleZipFile] = useState<File | null>(null);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -430,8 +448,6 @@ export const UploadForm16: React.FC = () => {
   // --- Dynamic Lookup Filter States (Same as Employees Compensation) ---
   const FIELDS = [
     { name: 'Status', icon: CheckSquare },
-    { name: 'Financial Year', icon: Calendar },
-    { name: 'Assessment Year', icon: Calendar },
     { name: 'Department', icon: Building },
     { name: 'Employee', icon: Users }
   ];
@@ -664,20 +680,77 @@ export const UploadForm16: React.FC = () => {
   const handleBulkUploadSubmit = () => {
     setIsProcessing(true);
     setUploadProgress(15);
-    const timer1 = setTimeout(() => setUploadProgress(50), 400);
-    const timer2 = setTimeout(() => setUploadProgress(85), 800);
+    
+    // Clear any previous running timers
+    processingTimersRef.current.forEach(clearTimeout);
+    processingTimersRef.current = [];
+
+    const timer1 = setTimeout(() => setUploadProgress(45), 600);
+    const timer2 = setTimeout(() => setUploadProgress(85), 1300);
     const timer3 = setTimeout(() => {
       setUploadProgress(100);
       setIsProcessing(false);
       setBulkModalStep(2);
       setUploadProgress(0);
-    }, 1200);
+    }, 2200);
 
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
+    processingTimersRef.current.push(timer1, timer2, timer3);
+  };
+
+  const importSummary = useMemo(() => {
+    const failedList = mappingRecords.filter((m) => m.status !== 'MATCHED');
+    const matchedList = mappingRecords.filter((m) => m.status === 'MATCHED');
+
+    const newlyImported = matchedList.filter((m) => !existingUploadedEmpCodes.has(m.empCode));
+    const successCount = overrideExisting
+      ? matchedList.length
+      : newlyImported.length > 0
+      ? newlyImported.length
+      : matchedList.length > 0
+      ? 1
+      : 0;
+
+    const failureCount = failedList.length;
+
+    return {
+      successCount: matchedList.length === 0 ? 0 : successCount,
+      failureCount,
+      failedList,
+      matchedList
     };
+  }, [mappingRecords, existingUploadedEmpCodes, overrideExisting]);
+
+  const handleStep2ConfirmAndUpload = () => {
+    setBulkModalStep(3);
+  };
+
+  const handleDownloadFailedRecords = () => {
+    const failedList = mappingRecords.filter((m) => m.status !== 'MATCHED');
+    if (failedList.length === 0) return;
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      ['Employee Code,Employee Name,PAN (Profile),PAN (Form-16),Error Reason']
+        .concat(
+          failedList.map(
+            (m) =>
+              `"${m.empCode}","${m.empName}","${m.panProfile}","${m.panForm16}","${
+                m.status === 'PAN_MISSING_PROFILE'
+                  ? 'Error: PAN missing in profile'
+                  : m.status === 'PAN_MISSING_FILE'
+                  ? 'Error: No file found for this PAN number'
+                  : 'Error: PAN not matching with the profile'
+              }"`
+          )
+        )
+        .join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `failed_form16_records_${bulkFY}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Downloaded failed records CSV');
   };
 
   const handleConfirmMappingUpload = () => {
@@ -722,11 +795,8 @@ export const UploadForm16: React.FC = () => {
       })
     );
 
-    if (!overrideExisting) {
-      showToast(`Upload completed. Already present Form-16 files were kept without changes.`);
-    } else {
-      showToast(`Form-16 processed! Files uploaded and overridden for FY ${bulkFY}.`);
-    }
+    const successCount = mappingRecords.filter((m) => m.status === 'MATCHED').length;
+    showToast(`Form-16 successfully pushed to ${successCount} employees' accounts!`);
   };
 
   return (
@@ -798,7 +868,7 @@ export const UploadForm16: React.FC = () => {
           {/* Table Header / Title with FY Dropdown and Action Buttons on Top of Filter */}
           <div className="px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white">
             <div>
-              <h2 className="text-base font-bold text-slate-800">Form-16 History</h2>
+              <h2 className="text-base font-bold text-slate-800">Employees Form-16 Records</h2>
             </div>
 
             {/* Action Buttons with Financial Year Dropdown to the left */}
@@ -883,7 +953,7 @@ export const UploadForm16: React.FC = () => {
                 className="px-5 py-2 bg-indigo-600 text-white font-bold text-sm rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all flex items-center gap-2"
               >
                 <FileArchive size={17} />
-                Bulk Upload Form-16
+                Upload Form-16
               </button>
             </div>
           </div>
@@ -1141,7 +1211,7 @@ export const UploadForm16: React.FC = () => {
                   <th className="py-4 px-4">Financial Year</th>
                   <th className="py-4 px-4">Assessment Year</th>
                   <th className="py-4 px-4 text-center">Status</th>
-                  <th className="py-4 px-4">Last Updated by</th>
+                  <th className="py-4 px-4">Last Modified by</th>
                   <th className="py-4 px-6 text-right">Actions</th>
                 </tr>
               </thead>
@@ -1269,26 +1339,36 @@ export const UploadForm16: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
           <div
             className={`bg-white rounded-lg w-full border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] transition-all duration-200 ${
-              bulkModalStep === 2 ? 'max-w-5xl' : 'max-w-3xl'
+              bulkModalStep >= 2 || isProcessing ? 'w-full sm:w-[92vw] lg:w-[1024px] max-w-5xl' : 'max-w-3xl'
             }`}
           >
             {/* Modal Header */}
             <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg border border-indigo-100">
+                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg border border-indigo-100 shrink-0">
                   <FileArchive size={22} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-base font-bold text-slate-800">
-                      {bulkModalStep === 1 ? 'Bulk Upload Form-16' : 'Form-16 File & PAN Mapping Preview'}
+                      {isProcessing
+                        ? 'Bulk Upload Form-16'
+                        : bulkModalStep === 1
+                        ? 'Bulk Upload Form-16'
+                        : bulkModalStep === 2
+                        ? 'Form-16 File & PAN Mapping Preview'
+                        : 'Bulk Upload Form-16'}
                     </h3>
                     <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-extrabold rounded-full uppercase tracking-wider">
-                      Step {bulkModalStep} of 2
+                      {isProcessing || bulkModalStep === 3
+                        ? 'Step 2 of 2'
+                        : `Step ${bulkModalStep} of 3`}
                     </span>
                   </div>
                   <p className="text-xs text-slate-500">
-                    {bulkModalStep === 1
+                    {isProcessing || bulkModalStep === 3
+                      ? 'Review the results of your import and download any failed records.'
+                      : bulkModalStep === 1
                       ? 'Upload multiple Form-16 PDFs (Part A & Part B) in bulk'
                       : `Review employee PAN mappings and matched files for FY ${bulkFY}`}
                   </p>
@@ -1297,21 +1377,100 @@ export const UploadForm16: React.FC = () => {
               <button
                 onClick={() => {
                   if (!isProcessing) {
+                    processingTimersRef.current.forEach(clearTimeout);
+                    processingTimersRef.current = [];
+                    setIsProcessing(false);
                     setIsBulkUploadModalOpen(false);
                     setBulkModalStep(1);
                     setBulkFile(null);
                   }
                 }}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100"
+                disabled={isProcessing}
+                className={`text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors ${
+                  isProcessing ? 'opacity-30 cursor-not-allowed pointer-events-none' : ''
+                }`}
               >
                 <X size={18} />
               </button>
             </div>
 
             {bulkModalStep === 1 ? (
-              // ================= STEP 1: UPLOAD SCREEN =================
-              <>
-                <div className="p-6 space-y-5 overflow-y-auto">
+              isProcessing ? (
+                // ================= STEP 1: PROCESSING / LOADING SCREEN (MATCHING SCREENSHOT 2) =================
+                <>
+                  {/* Stepper matching Screenshot 2 */}
+                  <div className="border-b border-slate-100 py-5 bg-white select-none">
+                    <div className="flex items-center justify-between max-w-2xl mx-auto px-6 relative">
+                      {/* Connecting Line */}
+                      <div className="absolute left-8 right-8 top-3 h-[2px] bg-slate-100 -translate-y-1/2 -z-0">
+                        <div className="h-full bg-[#444CE7] w-full transition-all duration-300" />
+                      </div>
+
+                      {/* Step 1: Upload File (Completed) */}
+                      <div className="flex flex-col items-center relative z-10">
+                        <div className="w-6 h-6 rounded-full border-2 border-[#444CE7] flex items-center justify-center bg-white text-[#444CE7]">
+                          <Check size={12} strokeWidth={3} className="text-[#444CE7]" />
+                        </div>
+                        <span className="text-[11px] mt-2 font-bold text-slate-400">
+                          Upload File
+                        </span>
+                      </div>
+
+                      {/* Step 2: Import Results (Active) */}
+                      <div className="flex flex-col items-center relative z-10">
+                        <div className="w-6 h-6 rounded-full border-2 border-[#444CE7] flex items-center justify-center bg-white text-[#444CE7]">
+                          <div className="w-2.5 h-2.5 bg-[#444CE7] rounded-full" />
+                        </div>
+                        <span className="text-[11px] mt-2 font-bold text-[#444CE7]">
+                          Import Results
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Body: Centered Loader & Status Message */}
+                  <div className="p-8 flex-grow overflow-y-auto min-h-[350px] bg-white flex flex-col justify-center items-center">
+                    <div className="flex flex-col items-center justify-center h-full min-h-[250px] animate-in fade-in duration-200 space-y-4">
+                      {/* Circular loader with document icon */}
+                      <div className="relative w-16 h-16 flex items-center justify-center">
+                        {/* Outer circle */}
+                        <div className="absolute inset-0 rounded-full border-[3px] border-slate-100" />
+                        {/* Spinning arc */}
+                        <div className="absolute inset-0 rounded-full border-[3px] border-t-[#444CE7] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+                        {/* Document icon */}
+                        <FileUp size={20} className="text-[#444CE7]" />
+                      </div>
+
+                      {/* Status message */}
+                      <div className="text-center space-y-1.5">
+                        <h4 className="text-sm font-bold text-slate-800">Processing your import...</h4>
+                        <p className="text-xs text-slate-400 font-semibold">This may take a moment. Please do not close this window.</p>
+                      </div>
+
+                      {/* Bouncing dots loading indicator */}
+                      <div className="flex gap-1.5 justify-center pt-2">
+                        <div className="w-2 h-2 bg-[#444CE7] rounded-full animate-bounce [animation-delay:-0.3s]" />
+                        <div className="w-2 h-2 bg-[#444CE7] rounded-full animate-bounce [animation-delay:-0.15s]" />
+                        <div className="w-2 h-2 bg-[#444CE7] rounded-full animate-bounce" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer matching screenshot 2: Disabled Done button */}
+                  <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end">
+                    <button
+                      type="button"
+                      disabled
+                      className="px-6 py-2 bg-indigo-200 text-white font-bold text-xs rounded-lg cursor-not-allowed select-none opacity-80"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </>
+              ) : (
+                // ================= STEP 1: UPLOAD SCREEN =================
+                <>
+                  <div className="p-6 space-y-5 overflow-y-auto">
                   {/* Financial Year Selection */}
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
@@ -1340,6 +1499,37 @@ export const UploadForm16: React.FC = () => {
                     <p className="text-xs text-amber-900 leading-relaxed font-medium">
                       Upload a ZIP with separate Part A and Part B PDFs per employee, named using their PAN.
                     </p>
+                  </div>
+
+                  {/* Upload Scope Block: Radio Buttons */}
+                  <div className="bg-slate-50/70 border border-slate-200 rounded-lg p-3 sm:px-4 flex flex-wrap items-center gap-6 sm:gap-8">
+                    <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                      <input
+                        type="radio"
+                        name="bulkTargetScope"
+                        value="ALL"
+                        checked={bulkTargetScope === 'ALL'}
+                        onChange={() => setBulkTargetScope('ALL')}
+                        className="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500 cursor-pointer"
+                      />
+                      <span className="text-xs font-semibold text-slate-800">
+                        Upload for all employees
+                      </span>
+                    </label>
+
+                    <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                      <input
+                        type="radio"
+                        name="bulkTargetScope"
+                        value="PENDING"
+                        checked={bulkTargetScope === 'PENDING'}
+                        onChange={() => setBulkTargetScope('PENDING')}
+                        className="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500 cursor-pointer"
+                      />
+                      <span className="text-xs font-semibold text-slate-800">
+                        Upload for pending employees
+                      </span>
+                    </label>
                   </div>
 
                   {/* Two-Column Layout: Dropzone (Left) & Instructions (Right) */}
@@ -1464,71 +1654,50 @@ export const UploadForm16: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Override Checkbox */}
-                      <label className="flex items-center gap-2.5 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100/70 transition-all select-none">
-                        <input
-                          type="checkbox"
-                          checked={overrideExisting}
-                          onChange={(e) => setOverrideExisting(e.target.checked)}
-                          className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500 cursor-pointer"
-                        />
-                        <span className="text-xs font-semibold text-slate-700">
-                          Override existing file if any.
-                        </span>
-                      </label>
+                      {/* Override Checkbox (Hidden if Upload for pending employees is selected) */}
+                      {bulkTargetScope !== 'PENDING' && (
+                        <label className="flex items-center gap-2.5 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100/70 transition-all select-none">
+                          <input
+                            type="checkbox"
+                            checked={overrideExisting}
+                            onChange={(e) => setOverrideExisting(e.target.checked)}
+                            className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500 cursor-pointer"
+                          />
+                          <span className="text-xs font-semibold text-slate-700">
+                            Override existing file if any.
+                          </span>
+                        </label>
+                      )}
                     </div>
                   </div>
 
-                  {isProcessing && (
-                    <div className="space-y-2 pt-2">
-                      <div className="flex justify-between text-xs font-bold text-slate-700">
-                        <span className="flex items-center gap-2">
-                          <Loader2 size={14} className="animate-spin text-indigo-600" />
-                          Parsing and matching employee PAN files...
-                        </span>
-                        <span>{uploadProgress}%</span>
-                      </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                        <div
-                          className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${uploadProgress}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-3">
                   <button
                     type="button"
-                    disabled={isProcessing}
                     onClick={() => {
+                      processingTimersRef.current.forEach(clearTimeout);
+                      processingTimersRef.current = [];
+                      setIsProcessing(false);
                       setIsBulkUploadModalOpen(false);
                       setBulkFile(null);
                     }}
-                    className="px-4 py-2 border border-slate-200 text-slate-600 font-bold text-xs rounded-lg hover:bg-white transition-all disabled:opacity-50"
+                    className="px-4 py-2 border border-slate-200 text-slate-600 font-bold text-xs rounded-lg hover:bg-white transition-all cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
-                    disabled={isProcessing}
                     onClick={handleBulkUploadSubmit}
-                    className="px-6 py-2 bg-indigo-600 text-white font-bold text-xs rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all flex items-center gap-2 disabled:opacity-70 cursor-pointer"
+                    className="px-6 py-2 bg-indigo-600 text-white font-bold text-xs rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all flex items-center gap-2 cursor-pointer"
                   >
-                    {isProcessing ? (
-                      <>
-                        <Loader2 size={14} className="animate-spin" /> Uploading & Parsing...
-                      </>
-                    ) : (
-                      <>
-                        <Upload size={14} /> Upload
-                      </>
-                    )}
+                    <Upload size={14} /> Upload
                   </button>
                 </div>
               </>
-            ) : (
+            )
+            ) : bulkModalStep === 2 ? (
               // ================= STEP 2: MAPPING PREVIEW SCREEN =================
               <>
                 <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(92vh-140px)]">
@@ -1542,8 +1711,47 @@ export const UploadForm16: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Search Bar */}
-                  <div className="flex items-center justify-end">
+                  {/* Simulation Toggle & Search Bar */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Test Scenario:</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (simulateAllFail) {
+                            setMappingRecords(MOCK_MAPPING_DATA);
+                            setSimulateAllFail(false);
+                          } else {
+                            setMappingRecords(
+                              MOCK_MAPPING_DATA.map((item) => ({
+                                ...item,
+                                status: item.status === 'MATCHED' ? 'UNMATCHED' : item.status
+                              }))
+                            );
+                            setSimulateAllFail(true);
+                          }
+                        }}
+                        className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1.5 shadow-xs ${
+                          simulateAllFail
+                            ? 'bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100'
+                            : 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100'
+                        }`}
+                        title="Click to switch between Partial Failure (Image 2) and All Failed (Image 3)"
+                      >
+                        {simulateAllFail ? (
+                          <>
+                            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                            Simulating: All Failed (Image 3)
+                          </>
+                        ) : (
+                          <>
+                            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                            Simulating: Partial Success (Image 2)
+                          </>
+                        )}
+                      </button>
+                    </div>
+
                     <div className="relative w-full sm:w-72">
                       <input
                         type="text"
@@ -1574,7 +1782,7 @@ export const UploadForm16: React.FC = () => {
                             <th className="py-3 px-4">Employee Name</th>
                             <th className="py-3 px-4">PAN Number (Profile)</th>
                             <th className="py-3 px-4">PAN Number (Form-16)</th>
-                            <th className="py-3 px-4">Matched File</th>
+                            <th className="py-3 px-4">Matched File Name</th>
                             <th className="py-3 px-4 text-right">Mapping Status</th>
                           </tr>
                         </thead>
@@ -1622,21 +1830,25 @@ export const UploadForm16: React.FC = () => {
 
                                 {/* PAN Number (Form-16) */}
                                 <td className="py-3 px-4">
-                                  {item.panForm16 ? (
+                                  {!item.panProfile || item.status === 'UNMATCHED' ? (
+                                    <span className="text-slate-400 font-bold text-sm tracking-wider">--</span>
+                                  ) : item.panForm16 ? (
                                     <span className="px-2 py-1 bg-indigo-50 border border-indigo-200 text-indigo-900 rounded font-mono font-bold text-xs tracking-wider">
                                       {item.panForm16}
                                     </span>
                                   ) : (
                                     <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 rounded text-[11px] font-semibold">
                                       <AlertCircle size={12} className="text-amber-600 shrink-0" />
-                                      Missing in File
+                                      File not found
                                     </span>
                                   )}
                                 </td>
 
                                 {/* Matched File */}
                                 <td className="py-3 px-4">
-                                  {item.matchedFiles.length > 0 ? (
+                                  {!item.panProfile || item.status === 'UNMATCHED' || item.matchedFiles.length === 0 ? (
+                                    <span className="text-slate-400 font-bold text-sm tracking-wider">--</span>
+                                  ) : (
                                     <div className="flex flex-col gap-1 max-w-[220px]">
                                       {item.matchedFiles.map((file, idx) => (
                                         <span
@@ -1649,8 +1861,6 @@ export const UploadForm16: React.FC = () => {
                                         </span>
                                       ))}
                                     </div>
-                                  ) : (
-                                    <span className="text-slate-400 text-xs italic">No file attached</span>
                                   )}
                                 </td>
 
@@ -1664,7 +1874,7 @@ export const UploadForm16: React.FC = () => {
                                           title="Form-16 is already present in employee profile. No changes made because override is disabled."
                                         >
                                           <Info size={13} className="text-sky-600" />
-                                          Already Present (No changes)
+                                          Skipped (File Exists)
                                         </span>
                                       ) : (
                                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-bold text-[11px]">
@@ -1688,13 +1898,13 @@ export const UploadForm16: React.FC = () => {
                                   {item.status === 'PAN_MISSING_FILE' && (
                                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full font-bold text-[11px]">
                                       <AlertCircle size={13} className="text-amber-600" />
-                                      Error: PAN missing in file
+                                      Error: No file found for this PAN number.
                                     </span>
                                   )}
                                   {item.status === 'UNMATCHED' && (
                                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-full font-bold text-[11px]">
-                                      <X size={13} className="text-rose-600" />
-                                      Unmatched
+                                      <AlertCircle size={13} className="text-rose-600" />
+                                      Error: PAN not matching with the profile.
                                     </span>
                                   )}
                                 </td>
@@ -1738,15 +1948,306 @@ export const UploadForm16: React.FC = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={handleConfirmMappingUpload}
-                      className="px-6 py-2.5 bg-indigo-600 text-white font-bold text-sm rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all flex items-center gap-2 cursor-pointer"
+                      onClick={handleStep2ConfirmAndUpload}
+                      style={{ backgroundColor: '#444CE7' }}
+                      className="px-6 py-2.5 bg-[#444CE7] hover:bg-[#3538CD] text-white font-bold text-sm rounded-lg shadow-md shadow-indigo-100 transition-all flex items-center gap-2 cursor-pointer"
                     >
                       <CheckCircle2 size={16} /> Confirm & Upload
                     </button>
                   </div>
                 </div>
               </>
+            ) : (
+              // ================= STEP 3: IMPORT RESULTS SCREEN (MATCHING SCREENSHOT 2 & 3) =================
+              <>
+                {/* Stepper Bar across top matching Screenshot 2 & 3 */}
+                <div className="border-b border-slate-100 py-5 bg-white select-none">
+                  <div className="flex items-center justify-between max-w-2xl mx-auto px-6 relative">
+                    {/* Connecting Line */}
+                    <div className="absolute left-8 right-8 top-3 h-[2px] bg-slate-100 -translate-y-1/2 -z-0">
+                      <div className="h-full bg-[#444CE7] w-full transition-all duration-300" />
+                    </div>
+
+                    {/* Step 1: Upload File (Completed) */}
+                    <div className="flex flex-col items-center relative z-10">
+                      <div className="w-6 h-6 rounded-full border-2 border-[#444CE7] flex items-center justify-center bg-white text-[#444CE7]">
+                        <Check size={12} strokeWidth={3} className="text-[#444CE7]" />
+                      </div>
+                      <span className="text-[11px] mt-2 font-bold text-slate-400">
+                        Upload File
+                      </span>
+                    </div>
+
+                    {/* Step 2: Import Results (Active) */}
+                    <div className="flex flex-col items-center relative z-10">
+                      <div className="w-6 h-6 rounded-full border-2 border-[#444CE7] flex items-center justify-center bg-white text-[#444CE7]">
+                        <div className="w-2.5 h-2.5 bg-[#444CE7] rounded-full" />
+                      </div>
+                      <span className="text-[11px] mt-2 font-bold text-[#444CE7]">
+                        Import Results
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Body Content */}
+                <div className="p-8 space-y-6 overflow-y-auto flex-grow flex flex-col justify-center min-h-[380px] bg-slate-50/20">
+                  {importSummary.failureCount > 0 && importSummary.successCount === 0 ? (
+                    // ---------------- CASE 2: ALL RECORDS FAILED (SCREENSHOT 3) ----------------
+                    <div className="w-full max-w-2xl mx-auto space-y-6 animate-in fade-in duration-200">
+                      {/* Red Alert Banner */}
+                      <div className="w-full bg-rose-50/70 border border-rose-200/80 rounded-md p-3.5 flex items-center gap-3 shadow-xs">
+                        <div className="p-1 bg-rose-100 rounded-full text-rose-600 shrink-0">
+                          <AlertCircle size={16} />
+                        </div>
+                        <span className="text-xs font-semibold text-rose-900">
+                          All records failed to import. Please review your file, correct the errors, and re-upload.
+                        </span>
+                      </div>
+
+                      {/* Single Centered Failure Card */}
+                      <div className="max-w-lg mx-auto w-full">
+                        <div className="border border-rose-100 bg-white rounded-xl p-6 shadow-xs flex flex-col justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 border border-rose-100 shrink-0">
+                              <X size={18} strokeWidth={2.5} />
+                            </div>
+                            <div>
+                              <div className="text-3xl font-black text-slate-800 leading-none">
+                                {importSummary.failureCount}
+                              </div>
+                              <div className="text-xs text-slate-500 font-semibold mt-1">
+                                Record(s) failed to import
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 mt-6">
+                            <button
+                              type="button"
+                              onClick={handleDownloadFailedRecords}
+                              style={{ backgroundColor: '#444CE7' }}
+                              className="flex-1 py-2.5 px-4 bg-[#444CE7] hover:bg-[#3538CD] text-white text-xs font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
+                            >
+                              <Download size={13} /> Download Failed Records
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowErrorModal(true)}
+                              className="py-2.5 px-4 bg-indigo-50/70 hover:bg-indigo-100 text-[#444CE7] border border-indigo-100 text-xs font-bold rounded-lg transition-all cursor-pointer text-center whitespace-nowrap"
+                            >
+                              View Error Messages
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : importSummary.failureCount > 0 ? (
+                    // ---------------- CASE 1: PARTIAL FAILED & PARTIAL SUCCESS (SCREENSHOT 2) ----------------
+                    <div className="w-full max-w-2xl mx-auto space-y-6 animate-in fade-in duration-200">
+                      {/* Amber Alert Banner */}
+                      <div className="w-full bg-amber-50/60 border border-amber-200/80 rounded-md p-3.5 flex items-center gap-3 shadow-xs">
+                        <div className="p-1 bg-amber-100 rounded-full text-amber-600 shrink-0">
+                          <AlertTriangle size={16} />
+                        </div>
+                        <span className="text-xs font-semibold text-amber-900">
+                          Some records failed to import. Please review and correct them, then re-upload.
+                        </span>
+                      </div>
+
+                      {/* 2 Summary Cards Side by Side */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-1">
+                        {/* Success Card */}
+                        <div className="border border-slate-200 bg-white rounded-xl p-6 flex items-center gap-5 shadow-xs">
+                          <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 border border-emerald-100/60 shrink-0">
+                            <Check size={24} strokeWidth={2.5} />
+                          </div>
+                          <div>
+                            <div className="text-3xl font-black text-slate-800 leading-none">
+                              {importSummary.successCount}
+                            </div>
+                            <div className="text-xs text-slate-500 font-semibold mt-1">
+                              Record(s) imported successfully
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Failure Card */}
+                        <div className="border border-rose-100 bg-white rounded-xl p-6 shadow-xs flex flex-col justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 border border-rose-100 shrink-0">
+                              <X size={18} strokeWidth={2.5} />
+                            </div>
+                            <div>
+                              <div className="text-2xl font-black text-slate-800 leading-none">
+                                {importSummary.failureCount}
+                              </div>
+                              <div className="text-xs text-slate-500 font-semibold mt-1">
+                                Record(s) failed to import
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-2 mt-4">
+                            <button
+                              type="button"
+                              onClick={handleDownloadFailedRecords}
+                              style={{ backgroundColor: '#444CE7' }}
+                              className="w-full py-2 px-3 bg-[#444CE7] hover:bg-[#3538CD] text-white text-xs font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
+                            >
+                              <Download size={13} /> Download Failed Records
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowErrorModal(true)}
+                              className="w-full py-2 px-3 bg-indigo-50/70 hover:bg-indigo-100 text-[#444CE7] border border-indigo-100 text-xs font-bold rounded-lg transition-all cursor-pointer text-center"
+                            >
+                              View Error Messages
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    // ---------------- CASE 3: ALL RECORDS SUCCESSFUL ----------------
+                    <div className="w-full max-w-2xl mx-auto space-y-6 animate-in fade-in duration-200">
+                      {/* Green Alert Banner */}
+                      <div className="w-full bg-emerald-50/70 border border-emerald-200/80 rounded-md p-3.5 flex items-center gap-3 shadow-xs">
+                        <div className="p-1 bg-emerald-100 rounded-full text-emerald-600 shrink-0">
+                          <CheckCircle2 size={16} />
+                        </div>
+                        <span className="text-xs font-semibold text-emerald-900">
+                          All records imported successfully!
+                        </span>
+                      </div>
+
+                      {/* Centered Success Card */}
+                      <div className="max-w-md mx-auto w-full pt-2">
+                        <div className="border border-slate-200 bg-white rounded-xl p-6 flex items-center gap-5 shadow-xs">
+                          <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 border border-emerald-100/60 shrink-0">
+                            <Check size={26} strokeWidth={3} />
+                          </div>
+                          <div>
+                            <div className="text-3xl font-black text-slate-800 leading-none">
+                              {importSummary.successCount}
+                            </div>
+                            <div className="text-xs text-slate-500 font-semibold mt-1.5">
+                              Record(s) imported successfully
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Step 3 Footer: Restored Original Buttons */}
+                <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end">
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsBulkUploadModalOpen(false);
+                        setBulkModalStep(1);
+                        setBulkFile(null);
+                        setSimulateAllFail(false);
+                        setMappingRecords(MOCK_MAPPING_DATA);
+                      }}
+                      className="px-5 py-2.5 border border-slate-200 text-slate-600 font-bold text-sm rounded-lg hover:bg-white transition-all cursor-pointer shadow-xs"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBulkModalStep(1);
+                        setBulkFile(null);
+                        setSimulateAllFail(false);
+                        setMappingRecords(MOCK_MAPPING_DATA);
+                      }}
+                      className="px-5 py-2.5 border border-indigo-200 bg-indigo-50 text-indigo-700 font-bold text-sm rounded-lg hover:bg-indigo-100 transition-all flex items-center gap-2 cursor-pointer shadow-xs"
+                    >
+                      <RotateCcw size={15} /> Re-upload
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleConfirmMappingUpload}
+                      className="px-6 py-2.5 bg-indigo-600 text-white font-bold text-sm rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all flex items-center gap-2 cursor-pointer"
+                    >
+                      <Send size={15} /> Push to Employee's account
+                    </button>
+                  </div>
+                </div>
+              </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Error Messages Modal from "View Error Messages" */}
+      {showErrorModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-xl max-w-xl w-full border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-rose-50 text-rose-600 rounded-lg border border-rose-100">
+                  <AlertCircle size={18} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-800">Import Error Messages</h4>
+                  <p className="text-[11px] text-slate-500">Details of Form-16 records that failed to import</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowErrorModal(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-4 overflow-y-auto max-h-[60vh]">
+              <div className="border border-slate-200 rounded-lg overflow-hidden bg-white">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <tr>
+                      <th className="py-2.5 px-3">Emp Code</th>
+                      <th className="py-2.5 px-3">Employee Name</th>
+                      <th className="py-2.5 px-3">Error Reason</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {importSummary.failedList.map((item) => (
+                      <tr key={item.id} className="hover:bg-slate-50/50">
+                        <td className="py-2.5 px-3 font-mono font-bold text-slate-700">{item.empCode}</td>
+                        <td className="py-2.5 px-3 font-medium text-slate-800">{item.empName}</td>
+                        <td className="py-2.5 px-3">
+                          <span className="inline-flex items-center gap-1.5 text-rose-600 font-semibold text-[11px] bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100">
+                            <AlertCircle size={12} className="shrink-0" />
+                            {item.status === 'PAN_MISSING_PROFILE'
+                              ? 'PAN missing in profile'
+                              : item.status === 'PAN_MISSING_FILE'
+                              ? 'No file found for this PAN number'
+                              : 'PAN not matching with profile'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="p-3 border-t border-slate-100 bg-slate-50 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setShowErrorModal(false)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg transition-all cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1804,10 +2305,12 @@ export const UploadForm16: React.FC = () => {
                   type="button"
                   onClick={() => {
                     const emp = downloadRecord.empName;
+                    downloadForm16PartA(downloadRecord);
                     setDownloadRecord(null);
-                    showToast(`Downloaded Form-16 Part A for ${emp}`);
+                    showToast(`Downloaded Form-16 Part A PDF for ${emp}`);
                   }}
-                  className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg shadow-sm transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+                  style={{ backgroundColor: '#444CE7' }}
+                  className="px-3.5 py-1.5 bg-[#444CE7] hover:bg-[#3538CD] text-white font-bold text-xs rounded-lg shadow-sm hover:shadow transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
                 >
                   <Download size={13} /> Part A
                 </button>
@@ -1835,10 +2338,12 @@ export const UploadForm16: React.FC = () => {
                   type="button"
                   onClick={() => {
                     const emp = downloadRecord.empName;
+                    downloadForm16PartB(downloadRecord);
                     setDownloadRecord(null);
-                    showToast(`Downloaded Form-16 Part B for ${emp}`);
+                    showToast(`Downloaded Form-16 Part B PDF for ${emp}`);
                   }}
-                  className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-lg shadow-sm transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+                  style={{ backgroundColor: '#444CE7' }}
+                  className="px-3.5 py-1.5 bg-[#444CE7] hover:bg-[#3538CD] text-white font-bold text-xs rounded-lg shadow-sm hover:shadow transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
                 >
                   <Download size={13} /> Part B
                 </button>
@@ -1856,12 +2361,14 @@ export const UploadForm16: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
                   const emp = downloadRecord.empName;
+                  await downloadForm16BothZip(downloadRecord);
                   setDownloadRecord(null);
-                  showToast(`Downloaded Form-16 (Part A & Part B) for ${emp}`);
+                  showToast(`Downloaded Form-16 (Part A & B) ZIP for ${emp}`);
                 }}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-lg shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                style={{ backgroundColor: '#444CE7' }}
+                className="px-4 py-2 bg-[#444CE7] hover:bg-[#3538CD] text-white font-bold text-xs rounded-lg shadow-sm hover:shadow transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <Download size={13} /> Download Both (Part A & B)
               </button>
@@ -1873,14 +2380,16 @@ export const UploadForm16: React.FC = () => {
       {/* Modal 2: Single Employee Form-16 Upload */}
       {isSingleUploadModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white rounded-2xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden flex flex-col">
+          <div className="bg-white rounded-lg max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-purple-50 text-purple-600 rounded-xl border border-purple-100">
                   <Upload size={20} />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-800">Upload Form-16 for Employee</h3>
+                  <h3 className="text-base font-bold text-slate-800">
+                    Upload Form-16 - {records.find((r) => r.empId === singleEmpId)?.empName || 'Employee'}
+                  </h3>
                   <p className="text-xs text-slate-500">Upload Part A (TRACES) and Part B (Salary breakdown)</p>
                 </div>
               </div>
@@ -1892,8 +2401,9 @@ export const UploadForm16: React.FC = () => {
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
-              <div>
+            <div className="p-6 space-y-4 overflow-y-auto">
+              {/* Select Employee Dropdown (Hidden as specific employee is selected from row) */}
+              <div className="hidden">
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Select Employee
                 </label>
@@ -1914,7 +2424,6 @@ export const UploadForm16: React.FC = () => {
               <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-bold text-slate-800">Part A (TRACES Certificate)</span>
-                  <span className="text-[10px] font-bold text-slate-400">PDF Only</span>
                 </div>
                 <input
                   type="file"
@@ -1922,12 +2431,14 @@ export const UploadForm16: React.FC = () => {
                   onChange={(e) => setSinglePartAFile(e.target.files?.[0] || null)}
                   className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
                 />
+                <p className="text-[11px] text-slate-400 mt-1.5 font-medium">
+                  Supported format: .PDF • Max file size: 2MB
+                </p>
               </div>
 
               <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-bold text-slate-800">Part B (Annexure & Computations)</span>
-                  <span className="text-[10px] font-bold text-slate-400">PDF Only</span>
                 </div>
                 <input
                   type="file"
@@ -1935,6 +2446,33 @@ export const UploadForm16: React.FC = () => {
                   onChange={(e) => setSinglePartBFile(e.target.files?.[0] || null)}
                   className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
                 />
+                <p className="text-[11px] text-slate-400 mt-1.5 font-medium">
+                  Supported format: .PDF • Max file size: 2MB
+                </p>
+              </div>
+
+              {/* OR Divider */}
+              <div className="relative flex items-center justify-center my-1">
+                <div className="border-t border-slate-200 w-full" />
+                <span className="bg-white px-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider absolute">
+                  OR
+                </span>
+              </div>
+
+              {/* Upload ZIP Block */}
+              <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold text-slate-800">Form-16 (ZIP File)</span>
+                </div>
+                <input
+                  type="file"
+                  accept=".zip"
+                  onChange={(e) => setSingleZipFile(e.target.files?.[0] || null)}
+                  className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
+                />
+                <p className="text-[11px] text-slate-400 mt-1.5 font-medium">
+                  Supported format: .ZIP • Max file size: 5MB
+                </p>
               </div>
             </div>
 
@@ -1942,7 +2480,7 @@ export const UploadForm16: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsSingleUploadModalOpen(false)}
-                className="px-4 py-2 border border-slate-200 text-slate-600 font-bold text-xs rounded-xl hover:bg-white transition-all"
+                className="px-4 py-2 border border-slate-200 text-slate-600 font-bold text-xs rounded-md hover:bg-white transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -1968,9 +2506,10 @@ export const UploadForm16: React.FC = () => {
                   setIsSingleUploadModalOpen(false);
                   showToast('Form-16 uploaded successfully for employee!');
                 }}
-                className="px-6 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all flex items-center gap-2"
+                style={{ backgroundColor: '#444CE7' }}
+                className="px-6 py-2 bg-[#444CE7] hover:bg-[#3538CD] text-white font-bold text-xs rounded-md shadow-md shadow-indigo-100 transition-all flex items-center gap-2 cursor-pointer"
               >
-                <Upload size={14} /> Upload & Save
+                <Upload size={14} /> Upload
               </button>
             </div>
           </div>
