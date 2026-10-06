@@ -1505,22 +1505,27 @@ const DateRangeFilterDropdown: React.FC<{
     setIsOpen(false);
   };
 
+  const formatMonthYearStr = (ym: string) => {
+    if (!ym) return '';
+    const [y, m] = ym.split('-');
+    if (!y || !m) return ym;
+    const date = new Date(parseInt(y, 10), parseInt(m, 10) - 1, 1);
+    return date.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+  };
+
   const handleCustomApply = () => {
     if (startDate && endDate) {
-      const d1 = new Date(startDate);
-      const d2 = new Date(endDate);
-      const opts: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: '2-digit' };
-      const formatted = `${d1.toLocaleDateString('en-GB', opts)} - ${d2.toLocaleDateString('en-GB', opts)}`;
+      const formatted = startDate === endDate
+        ? formatMonthYearStr(startDate)
+        : `${formatMonthYearStr(startDate)} - ${formatMonthYearStr(endDate)}`;
       setSelectedPreset(formatted);
       onChange(formatted);
     } else if (startDate) {
-      const d1 = new Date(startDate);
-      const formatted = `From ${d1.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}`;
+      const formatted = formatMonthYearStr(startDate);
       setSelectedPreset(formatted);
       onChange(formatted);
     } else if (endDate) {
-      const d2 = new Date(endDate);
-      const formatted = `To ${d2.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}`;
+      const formatted = `Up to ${formatMonthYearStr(endDate)}`;
       setSelectedPreset(formatted);
       onChange(formatted);
     } else {
@@ -1588,7 +1593,7 @@ const DateRangeFilterDropdown: React.FC<{
               <div>
                 <label className="text-[10px] font-semibold text-slate-500 block mb-1">From</label>
                 <input
-                  type="date"
+                  type="month"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:border-indigo-500 focus:bg-white transition-all cursor-pointer"
@@ -1597,7 +1602,7 @@ const DateRangeFilterDropdown: React.FC<{
               <div>
                 <label className="text-[10px] font-semibold text-slate-500 block mb-1">To</label>
                 <input
-                  type="date"
+                  type="month"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:border-indigo-500 focus:bg-white transition-all cursor-pointer"
@@ -1611,7 +1616,7 @@ const DateRangeFilterDropdown: React.FC<{
               className="w-full py-2 px-3 bg-[#3e49e2] hover:bg-[#323bc0] text-white font-bold text-xs rounded-lg transition-all text-center cursor-pointer shadow-xs active:scale-95 flex items-center justify-center gap-1.5"
             >
               <Check size={13} />
-              <span>Apply Custom Range</span>
+              <span>Apply</span>
             </button>
           </div>
         </div>
@@ -1621,7 +1626,6 @@ const DateRangeFilterDropdown: React.FC<{
 };
 
 const BUSINESS_UNITS_LIST = [
-  'All Business Units',
   'CollabCRM',
   '300 Minds',
   'MindInventory',
@@ -1720,9 +1724,69 @@ const BU_PROFILES: Record<string, {
   },
 };
 
+const getCombinedBuProfile = (selectedBus: string[]) => {
+  const activeBus = selectedBus.length > 0 ? selectedBus : BUSINESS_UNITS_LIST;
+
+  if (activeBus.length === BUSINESS_UNITS_LIST.length) {
+    return BU_PROFILES['All Business Units'];
+  }
+
+  if (activeBus.length === 1 && BU_PROFILES[activeBus[0]]) {
+    return BU_PROFILES[activeBus[0]];
+  }
+
+  let totalRatio = 0;
+  let totalEmployees = 0;
+  let totalProcessed = 0;
+  let totalOnHold = 0;
+  let totalApprovedTax = 0;
+  let totalPendingTax = 0;
+  let totalNotSubmittedTax = 0;
+  let weightedGrowthPayroll = 0;
+  let weightedGrowthHeadcount = 0;
+
+  activeBus.forEach(bu => {
+    const prof = BU_PROFILES[bu];
+    if (!prof) return;
+    totalRatio += prof.ratio;
+    totalEmployees += prof.employees;
+    totalProcessed += prof.processed;
+    totalOnHold += prof.onHold;
+    totalApprovedTax += prof.approvedTax;
+    totalPendingTax += prof.pendingTax;
+    totalNotSubmittedTax += prof.notSubmittedTax;
+    weightedGrowthPayroll += prof.growthPayroll * prof.employees;
+    weightedGrowthHeadcount += prof.growthHeadcount * prof.employees;
+  });
+
+  const totalTax = totalApprovedTax + totalPendingTax + totalNotSubmittedTax;
+  const taxApprovedPct = totalTax > 0 ? Math.round((totalApprovedTax / totalTax) * 100) : 0;
+  const taxPendingPct = totalTax > 0 ? Math.round((totalPendingTax / totalTax) * 100) : 0;
+  const taxNotSubmittedPct = totalTax > 0 ? Math.max(0, 100 - taxApprovedPct - taxPendingPct) : 0;
+
+  const growthPayroll = totalEmployees > 0 ? Math.round(weightedGrowthPayroll / totalEmployees) : 18;
+  const growthHeadcount = totalEmployees > 0 ? Math.round(weightedGrowthHeadcount / totalEmployees) : 11;
+
+  return {
+    name: activeBus.join(', '),
+    ratio: Math.min(1.0, Math.round(totalRatio * 1000) / 1000),
+    employees: totalEmployees,
+    processed: totalProcessed,
+    onHold: totalOnHold,
+    approvedTax: totalApprovedTax,
+    pendingTax: totalPendingTax,
+    notSubmittedTax: totalNotSubmittedTax,
+    taxApprovedPct,
+    taxPendingPct,
+    taxNotSubmittedPct,
+    growthPayroll,
+    growthHeadcount,
+  };
+};
+
 const BusinessUnitDropdown: React.FC<{
-  value: string;
-  onChange: (bu: string) => void;
+  value: string[];
+  onChange: (bus: string[]) => void;
 }> = ({ value, onChange }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -1741,43 +1805,125 @@ const BusinessUnitDropdown: React.FC<{
     };
   }, [isOpen]);
 
+  const handleToggle = (bu: string) => {
+    if (value.includes(bu)) {
+      if (value.length > 1) {
+        onChange(value.filter(item => item !== bu));
+      }
+    } else {
+      onChange([...value, bu]);
+    }
+  };
+
+  const getButtonLabel = () => {
+    if (value.length === 0) return 'Select Business Unit';
+    if (value.length === BUSINESS_UNITS_LIST.length) return 'All Business Units';
+    if (value.length === 1) return value[0];
+    if (value.length === 2) return `${value[0]}, ${value[1]}`;
+    return `${value[0]} +${value.length - 1} more`;
+  };
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         type="button"
         onClick={() => setIsOpen(prev => !prev)}
-        className={`bg-white border text-slate-700 text-xs font-bold rounded-xl px-3.5 py-2 flex items-center gap-2.5 transition-all shadow-2xs cursor-pointer ${
+        className={`bg-white border text-slate-700 text-xs font-bold rounded-xl px-3.5 py-2 flex items-center gap-2 transition-all shadow-2xs cursor-pointer ${
           isOpen ? 'border-indigo-500 ring-2 ring-indigo-100 bg-slate-50/50' : 'border-slate-200 hover:bg-slate-50 hover:border-slate-300'
         }`}
       >
         <Building2 size={15} className="text-indigo-600 shrink-0" />
-        <span className="font-semibold text-slate-800 text-xs">{value}</span>
+        <span className="font-semibold text-slate-800 text-xs max-w-[200px] truncate">{getButtonLabel()}</span>
+        {value.length > 0 && (
+          <span className="inline-flex items-center justify-center min-w-4 h-4 px-1.5 text-[10px] font-black rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 shrink-0">
+            {value.length}
+          </span>
+        )}
         <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180 text-indigo-600' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-[220px] bg-white rounded-xl border border-slate-200 shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 py-1.5">Business Unit</p>
+        <div className="absolute right-0 top-full mt-2 w-[240px] bg-white rounded-xl border border-slate-200 shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+          <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-slate-100 mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Business Unit ({value.length}/{BUSINESS_UNITS_LIST.length})
+            </span>
+            {value.length < BUSINESS_UNITS_LIST.length ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChange([...BUSINESS_UNITS_LIST]);
+                }}
+                className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer"
+              >
+                Select All
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChange([BUSINESS_UNITS_LIST[0]]);
+                }}
+                className="text-[10px] font-bold text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              >
+                Reset
+              </button>
+            )}
+          </div>
+
           <div className="space-y-0.5">
             {BUSINESS_UNITS_LIST.map((bu) => {
-              const isSelected = value === bu;
+              const isSelected = value.includes(bu);
               return (
-                <button
+                <div
                   key={bu}
-                  type="button"
-                  onClick={() => {
-                    onChange(bu);
-                    setIsOpen(false);
-                  }}
-                  className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-lg flex items-center justify-between transition-colors cursor-pointer ${
-                    isSelected ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-700 hover:bg-slate-50'
+                  onClick={() => handleToggle(bu)}
+                  className={`w-full text-left px-2.5 py-2 text-xs font-semibold rounded-lg flex items-center justify-between transition-colors cursor-pointer group select-none ${
+                    isSelected ? 'bg-indigo-50/80 text-indigo-900 font-bold' : 'text-slate-700 hover:bg-slate-50'
                   }`}
                 >
-                  <span className="truncate">{bu}</span>
-                  {isSelected && <CheckCircle2 size={14} className="text-indigo-600 shrink-0" />}
-                </button>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className={`w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0 ${
+                        isSelected
+                          ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xs'
+                          : 'border-slate-300 bg-white group-hover:border-slate-400'
+                      }`}
+                    >
+                      {isSelected && <Check size={11} strokeWidth={3} />}
+                    </div>
+                    <span className="truncate">{bu}</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onChange([bu]);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 text-[10px] font-bold text-slate-400 hover:text-indigo-600 px-1.5 py-0.5 rounded hover:bg-white transition-all shrink-0 cursor-pointer"
+                    title={`Select only ${bu}`}
+                  >
+                    Only
+                  </button>
+                </div>
               );
             })}
+          </div>
+
+          <div className="mt-1.5 pt-1.5 border-t border-slate-100 flex items-center justify-between px-2">
+            <span className="text-[10px] text-slate-400 font-semibold">
+              {value.length} of {BUSINESS_UNITS_LIST.length} selected
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="px-2 py-0.5 text-[11px] font-bold text-indigo-600 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
+            >
+              Done
+            </button>
           </div>
         </div>
       )}
@@ -1962,8 +2108,8 @@ const PayrollDashboardNew: React.FC = () => {
 
   const currentKpiBase = KPI_METRICS_MAP[timeRange] || KPI_METRICS_MAP['This Month'];
 
-  const [selectedBu, setSelectedBu] = useState('All Business Units');
-  const currentBuProfile = BU_PROFILES[selectedBu] || BU_PROFILES['All Business Units'];
+  const [selectedBus, setSelectedBus] = useState<string[]>(BUSINESS_UNITS_LIST);
+  const currentBuProfile = useMemo(() => getCombinedBuProfile(selectedBus), [selectedBus]);
 
   const displayKpi = useMemo(() => {
     const base = currentKpiBase;
@@ -2225,7 +2371,7 @@ const PayrollDashboardNew: React.FC = () => {
           <h1 className="text-2xl font-bold text-slate-800">Payroll Dashboard</h1>
           <p className="text-sm text-slate-500">Company-wide payroll health, compliance, and cost insights</p>
         </div>
-        <BusinessUnitDropdown value={selectedBu} onChange={setSelectedBu} />
+        <BusinessUnitDropdown value={selectedBus} onChange={setSelectedBus} />
       </div>
 
       {/* ===================== SECTION A: Executive Summary KPI Cards ===================== */}
