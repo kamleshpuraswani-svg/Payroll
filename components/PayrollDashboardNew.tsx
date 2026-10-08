@@ -2516,14 +2516,14 @@ const PayrollDashboardNew: React.FC = () => {
           </Card>
 
           <Card
-            title="Tax Declaration Funnel"
+            title="Tax Proof Submission Funnel"
             subtitle="(FY 2026-27)"
             icon={<ShieldCheck size={16} className="text-indigo-600" />}
             className="flex flex-col justify-start"
           >
-            <div className="flex flex-col items-center gap-2">
-              {/* Donut Chart with Center Metric */}
-              <div className="relative w-16 h-16 shrink-0 flex items-center justify-center">
+            <div className="flex items-center gap-3 sm:gap-4 my-auto">
+              {/* Donut Chart with Center Metric (Left) */}
+              <div className="relative w-20 h-20 shrink-0 flex items-center justify-center">
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0">
                   <span className="text-xs font-black text-slate-800 leading-none">{currentBuProfile.taxApprovedPct}%</span>
                   <span className="text-[7px] font-bold text-emerald-600 uppercase tracking-tight mt-0.5">Approved</span>
@@ -2534,8 +2534,8 @@ const PayrollDashboardNew: React.FC = () => {
                       data={currentTaxDeclarationData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={20}
-                      outerRadius={28}
+                      innerRadius={24}
+                      outerRadius={34}
                       paddingAngle={3}
                       dataKey="value"
                     >
@@ -2548,38 +2548,38 @@ const PayrollDashboardNew: React.FC = () => {
                 </ResponsiveContainer>
               </div>
 
-              {/* Status Breakdown */}
-              <div className="w-full space-y-1">
-                <div className="flex items-center justify-between p-1 px-1.5 rounded-lg bg-emerald-50/70 border border-emerald-100">
-                  <div className="flex items-center gap-1 min-w-0">
+              {/* Status Breakdown (Right) */}
+              <div className="flex-1 min-w-0 space-y-1.5">
+                <div className="flex items-center justify-between p-1.5 px-2 rounded-lg bg-emerald-50/70 border border-emerald-100">
+                  <div className="flex items-center gap-1.5 min-w-0">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
                     <span className="text-[10px] font-semibold text-slate-700 truncate">Approved</span>
                   </div>
                   <div className="text-right shrink-0">
                     <span className="text-[10px] font-bold text-emerald-700">{currentBuProfile.approvedTax}</span>
-                    <span className="text-[9px] text-emerald-600 ml-0.5 font-medium">({currentBuProfile.taxApprovedPct}%)</span>
+                    <span className="text-[9px] text-emerald-600 ml-1 font-medium">({currentBuProfile.taxApprovedPct}%)</span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-1 px-1.5 rounded-lg bg-amber-50/70 border border-amber-100">
-                  <div className="flex items-center gap-1 min-w-0">
+                <div className="flex items-center justify-between p-1.5 px-2 rounded-lg bg-amber-50/70 border border-amber-100">
+                  <div className="flex items-center gap-1.5 min-w-0">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
                     <span className="text-[10px] font-semibold text-slate-700 truncate" title="Proof Verification Pending">Pending</span>
                   </div>
                   <div className="text-right shrink-0">
                     <span className="text-[10px] font-bold text-amber-700">{currentBuProfile.pendingTax}</span>
-                    <span className="text-[9px] text-amber-600 ml-0.5 font-medium">({currentBuProfile.taxPendingPct}%)</span>
+                    <span className="text-[9px] text-amber-600 ml-1 font-medium">({currentBuProfile.taxPendingPct}%)</span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-1 px-1.5 rounded-lg bg-rose-50/70 border border-rose-100">
-                  <div className="flex items-center gap-1 min-w-0">
+                <div className="flex items-center justify-between p-1.5 px-2 rounded-lg bg-rose-50/70 border border-rose-100">
+                  <div className="flex items-center gap-1.5 min-w-0">
                     <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
                     <span className="text-[10px] font-semibold text-slate-700 truncate">Not Submitted</span>
                   </div>
                   <div className="text-right shrink-0">
                     <span className="text-[10px] font-bold text-rose-700">{currentBuProfile.notSubmittedTax}</span>
-                    <span className="text-[9px] text-rose-600 ml-0.5 font-medium">({currentBuProfile.taxNotSubmittedPct}%)</span>
+                    <span className="text-[9px] text-rose-600 ml-1 font-medium">({currentBuProfile.taxNotSubmittedPct}%)</span>
                   </div>
                 </div>
               </div>
