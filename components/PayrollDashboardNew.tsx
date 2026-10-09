@@ -24,6 +24,7 @@ import {
   FileText,
   Download,
   X,
+  ChevronLeft,
   ChevronRight,
   AlertCircle,
   ArrowUpRight,
@@ -1638,6 +1639,7 @@ const BU_PROFILES: Record<string, {
   employees: number;
   processed: number;
   onHold: number;
+  fnfSettlement: number;
   approvedTax: number;
   pendingTax: number;
   notSubmittedTax: number;
@@ -1653,6 +1655,7 @@ const BU_PROFILES: Record<string, {
     employees: 452,
     processed: 400,
     onHold: 52,
+    fnfSettlement: 11,
     approvedTax: 352,
     pendingTax: 68,
     notSubmittedTax: 32,
@@ -1668,6 +1671,7 @@ const BU_PROFILES: Record<string, {
     employees: 152,
     processed: 136,
     onHold: 16,
+    fnfSettlement: 4,
     approvedTax: 122,
     pendingTax: 20,
     notSubmittedTax: 10,
@@ -1683,6 +1687,7 @@ const BU_PROFILES: Record<string, {
     employees: 118,
     processed: 104,
     onHold: 14,
+    fnfSettlement: 3,
     approvedTax: 91,
     pendingTax: 18,
     notSubmittedTax: 9,
@@ -1698,6 +1703,7 @@ const BU_PROFILES: Record<string, {
     employees: 100,
     processed: 88,
     onHold: 12,
+    fnfSettlement: 2,
     approvedTax: 76,
     pendingTax: 17,
     notSubmittedTax: 7,
@@ -1713,6 +1719,7 @@ const BU_PROFILES: Record<string, {
     employees: 82,
     processed: 72,
     onHold: 10,
+    fnfSettlement: 2,
     approvedTax: 63,
     pendingTax: 13,
     notSubmittedTax: 6,
@@ -1739,6 +1746,7 @@ const getCombinedBuProfile = (selectedBus: string[]) => {
   let totalEmployees = 0;
   let totalProcessed = 0;
   let totalOnHold = 0;
+  let totalFnfSettlement = 0;
   let totalApprovedTax = 0;
   let totalPendingTax = 0;
   let totalNotSubmittedTax = 0;
@@ -1752,6 +1760,7 @@ const getCombinedBuProfile = (selectedBus: string[]) => {
     totalEmployees += prof.employees;
     totalProcessed += prof.processed;
     totalOnHold += prof.onHold;
+    totalFnfSettlement += prof.fnfSettlement || 0;
     totalApprovedTax += prof.approvedTax;
     totalPendingTax += prof.pendingTax;
     totalNotSubmittedTax += prof.notSubmittedTax;
@@ -1773,6 +1782,7 @@ const getCombinedBuProfile = (selectedBus: string[]) => {
     employees: totalEmployees,
     processed: totalProcessed,
     onHold: totalOnHold,
+    fnfSettlement: totalFnfSettlement,
     approvedTax: totalApprovedTax,
     pendingTax: totalPendingTax,
     notSubmittedTax: totalNotSubmittedTax,
@@ -2110,6 +2120,16 @@ const PayrollDashboardNew: React.FC = () => {
 
   const [selectedBus, setSelectedBus] = useState<string[]>(BUSINESS_UNITS_LIST);
   const currentBuProfile = useMemo(() => getCombinedBuProfile(selectedBus), [selectedBus]);
+
+  const [runStatusBuIndex, setRunStatusBuIndex] = useState(0);
+
+  const safeRunIndex = useMemo(() => {
+    if (selectedBus.length === 0) return 0;
+    return Math.min(Math.max(0, runStatusBuIndex), selectedBus.length - 1);
+  }, [selectedBus.length, runStatusBuIndex]);
+
+  const activeRunBu = selectedBus[safeRunIndex] || BUSINESS_UNITS_LIST[0];
+  const activeRunBuProfile = BU_PROFILES[activeRunBu] || BU_PROFILES['CollabCRM'];
 
   const displayKpi = useMemo(() => {
     const base = currentKpiBase;
@@ -2493,24 +2513,55 @@ const PayrollDashboardNew: React.FC = () => {
             title="Payroll Run Status"
             icon={<CheckCircle2 size={16} className="text-emerald-600" />}
             action={
-              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-                Current Cycle
-              </span>
+              <div className="flex items-center gap-2 flex-wrap justify-end">
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md shrink-0 whitespace-nowrap">
+                  Payroll Period: July 2026
+                </span>
+                {selectedBus.length > 1 && (
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-[11px] font-bold text-slate-500 mr-0.5 select-none whitespace-nowrap">
+                      {safeRunIndex + 1} of {selectedBus.length}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setRunStatusBuIndex(Math.max(0, safeRunIndex - 1))}
+                      disabled={safeRunIndex === 0}
+                      title="Previous Business Unit"
+                      className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded border border-slate-200 bg-white text-slate-600 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                    >
+                      <ChevronLeft size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRunStatusBuIndex(Math.min(selectedBus.length - 1, safeRunIndex + 1))}
+                      disabled={safeRunIndex === selectedBus.length - 1}
+                      title="Next Business Unit"
+                      className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded border border-slate-200 bg-white text-slate-600 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                    >
+                      <ChevronRight size={13} />
+                    </button>
+                  </div>
+                )}
+              </div>
             }
             className="flex flex-col justify-start"
           >
             <div className="space-y-2">
               <div className="flex justify-between items-center text-xs text-slate-500 font-semibold pb-1.5 border-b border-slate-100 mb-1">
-                <span>Cycle: <strong className="text-slate-800">Nov 2025</strong></span>
-                <span className="text-emerald-600 font-bold">{currentBuProfile.processed}/{currentBuProfile.employees} Done</span>
+                <span className="font-bold text-slate-800 text-xs">{activeRunBu}</span>
+                <span className="text-emerald-600 font-bold">{activeRunBuProfile.processed}/{activeRunBuProfile.employees} Done</span>
               </div>
               <div className="flex justify-between items-center bg-emerald-50 rounded-lg px-2.5 py-1.5">
                 <span className="text-xs font-bold text-emerald-800 flex items-center gap-1.5"><CheckCircle2 size={13} /> Processed</span>
-                <span className="text-xs font-black text-emerald-800">{currentBuProfile.processed}</span>
+                <span className="text-xs font-black text-emerald-800">{activeRunBuProfile.processed}</span>
               </div>
               <div className="flex justify-between items-center bg-amber-50 rounded-lg px-2.5 py-1.5">
                 <span className="text-xs font-bold text-amber-800 flex items-center gap-1.5"><Clock size={13} /> On Hold</span>
-                <span className="text-xs font-black text-amber-800">{currentBuProfile.onHold}</span>
+                <span className="text-xs font-black text-amber-800">{activeRunBuProfile.onHold}</span>
+              </div>
+              <div className="flex justify-between items-center bg-blue-50 rounded-lg px-2.5 py-1.5">
+                <span className="text-xs font-bold text-blue-800 flex items-center gap-1.5"><FileText size={13} /> F&amp;F Settlement</span>
+                <span className="text-xs font-black text-blue-800">{activeRunBuProfile.fnfSettlement}</span>
               </div>
             </div>
           </Card>
