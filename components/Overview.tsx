@@ -17,6 +17,7 @@ import {
   Plane,
   Download
 } from 'lucide-react';
+import { DateRangeFilterDropdown } from './DateRangeFilterDropdown';
 import {
   BarChart,
   Bar,
@@ -212,6 +213,56 @@ const formatINR = (val: number) => {
   }).format(val);
 };
 
+interface ExpenseItemData {
+  id: string;
+  name: string;
+  claimed: number;
+  limit: number;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  iconColor: string;
+  iconBg: string;
+  barColor: string;
+}
+
+const OVERVIEW_EXPENSE_DATA_MAP: Record<string, ExpenseItemData[]> = {
+  'This Month': [
+    { id: 'med', name: 'Medical', claimed: 1250, limit: 15000, icon: Heart, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600' },
+    { id: 'fuel', name: 'Fuel and conveyance', claimed: 2000, limit: 24000, icon: Fuel, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600' },
+    { id: 'books', name: 'Books and periodicals', claimed: 0, limit: 6000, icon: BookOpen, iconColor: 'text-slate-500', iconBg: 'bg-slate-50', barColor: 'bg-blue-600' },
+    { id: 'lta', name: 'LTA (travel)', claimed: 0, limit: 45000, icon: Plane, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-amber-500' },
+  ],
+  'Last Month': [
+    { id: 'med', name: 'Medical', claimed: 2100, limit: 15000, icon: Heart, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600' },
+    { id: 'fuel', name: 'Fuel and conveyance', claimed: 3600, limit: 24000, icon: Fuel, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600' },
+    { id: 'books', name: 'Books and periodicals', claimed: 1000, limit: 6000, icon: BookOpen, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600' },
+    { id: 'lta', name: 'LTA (travel)', claimed: 0, limit: 45000, icon: Plane, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-amber-500' },
+  ],
+  'This Quarter': [
+    { id: 'med', name: 'Medical', claimed: 3800, limit: 15000, icon: Heart, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600' },
+    { id: 'fuel', name: 'Fuel and conveyance', claimed: 6000, limit: 24000, icon: Fuel, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600' },
+    { id: 'books', name: 'Books and periodicals', claimed: 1500, limit: 6000, icon: BookOpen, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600' },
+    { id: 'lta', name: 'LTA (travel)', claimed: 12000, limit: 45000, icon: Plane, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-amber-500' },
+  ],
+  'Last Quarter': [
+    { id: 'med', name: 'Medical', claimed: 4200, limit: 15000, icon: Heart, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600' },
+    { id: 'fuel', name: 'Fuel and conveyance', claimed: 7200, limit: 24000, icon: Fuel, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600' },
+    { id: 'books', name: 'Books and periodicals', claimed: 2000, limit: 6000, icon: BookOpen, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600' },
+    { id: 'lta', name: 'LTA (travel)', claimed: 20000, limit: 45000, icon: Plane, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-amber-500' },
+  ],
+  'This Year': [
+    { id: 'med', name: 'Medical', claimed: 5200, limit: 15000, icon: Heart, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600' },
+    { id: 'fuel', name: 'Fuel and conveyance', claimed: 8000, limit: 24000, icon: Fuel, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600' },
+    { id: 'books', name: 'Books and periodicals', claimed: 0, limit: 6000, icon: BookOpen, iconColor: 'text-slate-500', iconBg: 'bg-slate-50', barColor: 'bg-blue-600' },
+    { id: 'lta', name: 'LTA (travel)', claimed: 32000, limit: 45000, icon: Plane, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-amber-500' },
+  ],
+  'Last Year': [
+    { id: 'med', name: 'Medical', claimed: 14200, limit: 15000, icon: Heart, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600' },
+    { id: 'fuel', name: 'Fuel and conveyance', claimed: 22500, limit: 24000, icon: Fuel, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600' },
+    { id: 'books', name: 'Books and periodicals', claimed: 5400, limit: 6000, icon: BookOpen, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600' },
+    { id: 'lta', name: 'LTA (travel)', claimed: 42000, limit: 45000, icon: Plane, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-amber-500' },
+  ],
+};
+
 interface OverviewProps {
   onNavigateToTaxPlanning?: () => void;
   onNavigateToReimbursements?: () => void;
@@ -232,7 +283,12 @@ const Overview: React.FC<OverviewProps> = ({
   const [isRevisionDropdownOpen, setIsRevisionDropdownOpen] = useState(false);
   const [activeLoanIndex, setActiveLoanIndex] = useState(0);
   const [activeAdvanceIndex, setActiveAdvanceIndex] = useState(0);
+  const [expenseTimeRange, setExpenseTimeRange] = useState<string>('This Month');
   const revisionDropdownRef = useRef<HTMLDivElement>(null);
+
+  const currentExpenseItems = useMemo(() => {
+    return OVERVIEW_EXPENSE_DATA_MAP[expenseTimeRange] || OVERVIEW_EXPENSE_DATA_MAP['This Month'] || OVERVIEW_EXPENSE_DATA_MAP['This Year'];
+  }, [expenseTimeRange]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -957,87 +1013,40 @@ const Overview: React.FC<OverviewProps> = ({
 
       </div>
 
-      {/* ROW 4: Expense & Reimbursement Summary (Reference Screenshot 4 - without Remaining & without percentage) */}
+      {/* ROW 4: Expense & Reimbursement Summary */}
       <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
           <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
             <Wallet size={18} className="text-blue-600" />
             Expense & Reimbursement Summary
           </h3>
+
+          <DateRangeFilterDropdown value={expenseTimeRange} onChange={setExpenseTimeRange} />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card 1: Medical */}
-          <div className="p-4 rounded-xl border border-slate-200/90 bg-white hover:border-blue-300 transition-all flex flex-col justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                  <Heart size={18} />
+          {currentExpenseItems.map((item) => {
+            const Icon = item.icon;
+            const percentage = item.limit > 0 ? Math.min(100, (item.claimed / item.limit) * 100) : 0;
+            return (
+              <div key={item.id} className="p-4 rounded-xl border border-slate-200/90 bg-white hover:border-blue-300 transition-all flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`w-9 h-9 rounded-xl ${item.iconBg} ${item.iconColor} flex items-center justify-center shrink-0`}>
+                      <Icon size={18} />
+                    </div>
+                    <span className="text-sm font-semibold text-slate-800">{item.name}</span>
+                  </div>
+                  <p className="text-sm font-bold text-slate-700 mb-2.5">
+                    {formatINR(item.claimed)} of {formatINR(item.limit)}
+                  </p>
                 </div>
-                <span className="text-sm font-semibold text-slate-800">Medical</span>
-              </div>
-              <p className="text-sm font-bold text-slate-700 mb-2.5">
-                ₹5,200 of ₹15,000
-              </p>
-            </div>
-            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-              <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: '34.7%' }}></div>
-            </div>
-          </div>
-
-          {/* Card 2: Fuel and conveyance */}
-          <div className="p-4 rounded-xl border border-slate-200/90 bg-white hover:border-blue-300 transition-all flex flex-col justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                  <Fuel size={18} />
+                <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                  <div className={`${item.barColor} h-1.5 rounded-full`} style={{ width: `${percentage.toFixed(1)}%` }}></div>
                 </div>
-                <span className="text-sm font-semibold text-slate-800">Fuel and conveyance</span>
               </div>
-              <p className="text-sm font-bold text-slate-700 mb-2.5">
-                ₹8,000 of ₹24,000
-              </p>
-            </div>
-            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-              <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: '33.3%' }}></div>
-            </div>
-          </div>
-
-          {/* Card 3: Books and periodicals */}
-          <div className="p-4 rounded-xl border border-slate-200/90 bg-white hover:border-blue-300 transition-all flex flex-col justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-9 h-9 rounded-xl bg-slate-50 text-slate-500 flex items-center justify-center shrink-0">
-                  <BookOpen size={18} />
-                </div>
-                <span className="text-sm font-semibold text-slate-800">Books and periodicals</span>
-              </div>
-              <p className="text-sm font-bold text-slate-700 mb-2.5">
-                ₹0 of ₹6,000
-              </p>
-            </div>
-            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-              <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: '0%' }}></div>
-            </div>
-          </div>
-
-          {/* Card 4: LTA (travel) */}
-          <div className="p-4 rounded-xl border border-slate-200/90 bg-white hover:border-blue-300 transition-all flex flex-col justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                  <Plane size={18} />
-                </div>
-                <span className="text-sm font-semibold text-slate-800">LTA (travel)</span>
-              </div>
-              <p className="text-sm font-bold text-slate-700 mb-2.5">
-                ₹32,000 of ₹45,000
-              </p>
-            </div>
-            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-              <div className="bg-amber-500 h-1.5 rounded-full" style={{ width: '71.1%' }}></div>
-            </div>
-          </div>
+            );
+          })}
         </div>
       </div>
 
