@@ -64,7 +64,14 @@ const MOCK_DATA: Record<string, any[]> = {
         { id: 'dt-1', name: 'Standard Payslip Template', type: 'Payslip', is_default: true, status: 'Active' }
     ],
     audit_logs: [],
-    payslips: []
+    payslips: [],
+    expense_categories: [
+        { id: 'cat-1', name: 'Travel Reimbursement', status: 'Active', frequency: 'Monthly', max_limit: 15000, applicable_to: [{ type: 'Department', id: 'Engineering', max_limit: 15000 }] },
+        { id: 'cat-2', name: 'Medical', status: 'Active', frequency: 'Yearly', reset_cycle: 'Financial Year', max_limit: 15000, applicable_to: [{ type: 'Department', id: 'Engineering', max_limit: 15000 }] },
+        { id: 'cat-3', name: 'Fuel and conveyance', status: 'Active', frequency: 'Monthly', max_limit: 24000, applicable_to: [{ type: 'Department', id: 'Engineering', max_limit: 24000 }] },
+        { id: 'cat-4', name: 'Books and periodicals', status: 'Active', frequency: 'Monthly', reset_cycle: 'Calendar Year (Jan-Dec)', max_limit: 6000, applicable_to: [{ type: 'Department', id: 'Engineering', max_limit: 6000 }] },
+        { id: 'cat-5', name: 'LTA (travel)', status: 'Active', frequency: 'Once per tenure', max_limit: 45000, applicable_to: [{ type: 'Department', id: 'Engineering', max_limit: 45000 }] }
+    ]
 };
 
 // Mock data for operational_config keys
@@ -177,6 +184,12 @@ function wrapQueryBuilder(builder: any, tableName: string, state: { configKey?: 
         get(target, prop, receiver) {
             if (prop === 'single' || prop === 'maybeSingle') {
                 state.isSingle = true;
+                return () => {
+                    const next = typeof target[prop] === 'function' 
+                        ? target[prop]() 
+                        : (typeof target.single === 'function' ? target.single() : target);
+                    return wrapQueryBuilder(next, tableName, state);
+                };
             }
             if (prop === 'insert') {
                 state.isWrite = true;

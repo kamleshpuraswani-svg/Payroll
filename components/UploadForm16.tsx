@@ -50,7 +50,10 @@ interface Form16Record {
   tdsDeducted: number;
   uploadedAt: string;
   uploadedBy: string;
+  businessUnit?: string;
 }
+
+const BUSINESS_UNITS_LIST = ['CollabCRM', '300 Minds', 'MindInventory', 'BlueWhale Tech'];
 
 const INITIAL_RECORDS: Form16Record[] = [
   // FY 2024-25 Records
@@ -308,7 +311,77 @@ const INITIAL_RECORDS: Form16Record[] = [
     grossSalary: 2300000,
     tdsDeducted: 290000,
     uploadedAt: '09 Jun 2023, 03:45 PM',
-    uploadedBy: 'HR Admin'
+    uploadedBy: 'HR Admin',
+    businessUnit: 'CollabCRM'
+  },
+  // 300 Minds Records
+  {
+    id: 'F16-017',
+    empId: 'TM00101',
+    empName: 'Karan Mehra',
+    department: 'Engineering',
+    pan: 'KRME1234A',
+    financialYear: '2024-25',
+    assessmentYear: '2025-26',
+    status: 'Uploaded',
+    partAFileName: 'Form16_PartA_KRME1234A_2024-25.pdf',
+    partBFileName: 'Form16_PartB_KRME1234A_2024-25.pdf',
+    grossSalary: 2200000,
+    tdsDeducted: 240000,
+    uploadedAt: '12 Jun 2025, 12:15 PM',
+    uploadedBy: 'HR Admin',
+    businessUnit: '300 Minds'
+  },
+  {
+    id: 'F16-018',
+    empId: 'TM00102',
+    empName: 'Shruti Sen',
+    department: 'Operations',
+    pan: 'SRSN5678B',
+    financialYear: '2024-25',
+    assessmentYear: '2025-26',
+    status: 'Pending',
+    grossSalary: 1350000,
+    tdsDeducted: 78000,
+    uploadedAt: '-',
+    uploadedBy: '-',
+    businessUnit: '300 Minds'
+  },
+  // MindInventory Records
+  {
+    id: 'F16-019',
+    empId: 'MI00201',
+    empName: 'Aditya Roy',
+    department: 'Design',
+    pan: 'ADRY9012C',
+    financialYear: '2024-25',
+    assessmentYear: '2025-26',
+    status: 'Uploaded',
+    partAFileName: 'Form16_PartA_ADRY9012C_2024-25.pdf',
+    partBFileName: 'Form16_PartB_ADRY9012C_2024-25.pdf',
+    grossSalary: 1950000,
+    tdsDeducted: 165000,
+    uploadedAt: '13 Jun 2025, 10:45 AM',
+    uploadedBy: 'HR Admin',
+    businessUnit: 'MindInventory'
+  },
+  // BlueWhale Tech Records
+  {
+    id: 'F16-020',
+    empId: 'BW00301',
+    empName: 'Tanvi Nair',
+    department: 'Quality Assurance',
+    pan: 'TVNR3456D',
+    financialYear: '2024-25',
+    assessmentYear: '2025-26',
+    status: 'Uploaded',
+    partAFileName: 'Form16_PartA_TVNR3456D_2024-25.pdf',
+    partBFileName: 'Form16_PartB_TVNR3456D_2024-25.pdf',
+    grossSalary: 1650000,
+    tdsDeducted: 110000,
+    uploadedAt: '13 Jun 2025, 03:20 PM',
+    uploadedBy: 'HR Admin',
+    businessUnit: 'BlueWhale Tech'
   }
 ];
 
@@ -400,6 +473,12 @@ export const UploadForm16: React.FC = () => {
   const [fySearchQuery, setFySearchQuery] = useState('');
   const fyDropdownRef = useRef<HTMLDivElement>(null);
 
+  // Business Unit Filter Dropdown State
+  const [selectedBUs, setSelectedBUs] = useState<string[]>(['CollabCRM']);
+  const [buDropdownOpen, setBuDropdownOpen] = useState(false);
+  const [buSearchQuery, setBuSearchQuery] = useState('');
+  const buDropdownRef = useRef<HTMLDivElement>(null);
+
   // Modals & Toast State
   const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
   const [isSingleUploadModalOpen, setIsSingleUploadModalOpen] = useState(false);
@@ -408,7 +487,7 @@ export const UploadForm16: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Bulk Upload State
-  const [bulkModalStep, setBulkModalStep] = useState<1 | 2 | 3>(1);
+  const [bulkModalStep, setBulkModalStep] = useState<1 | 2>(1);
   const [bulkUploadType, setBulkUploadType] = useState<'ZIP' | 'TRACES_MERGED'>('ZIP');
   const [bulkFY, setBulkFY] = useState('2024-25');
   const [bulkFile, setBulkFile] = useState<File | null>(null);
@@ -463,7 +542,7 @@ export const UploadForm16: React.FC = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Click outside hook for filter dropdown & FY dropdown
+  // Click outside hook for filter dropdown & FY/BU dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -471,6 +550,9 @@ export const UploadForm16: React.FC = () => {
       }
       if (fyDropdownRef.current && !fyDropdownRef.current.contains(event.target as Node)) {
         setFyDropdownOpen(false);
+      }
+      if (buDropdownRef.current && !buDropdownRef.current.contains(event.target as Node)) {
+        setBuDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -484,11 +566,31 @@ export const UploadForm16: React.FC = () => {
     setCurrentPage(1);
   };
 
+  const toggleBU = (bu: string) => {
+    setSelectedBUs((prev) =>
+      prev.includes(bu) ? prev.filter((item) => item !== bu) : [...prev, bu]
+    );
+    setCurrentPage(1);
+  };
+
   const filteredFyOptions = useMemo(() => {
     return FY_OPTIONS.filter((fy) =>
       fy.toLowerCase().includes(fySearchQuery.toLowerCase())
     );
   }, [fySearchQuery]);
+
+  const filteredBuOptions = useMemo(() => {
+    return BUSINESS_UNITS_LIST.filter((bu) =>
+      bu.toLowerCase().includes(buSearchQuery.toLowerCase())
+    );
+  }, [buSearchQuery]);
+
+  const buButtonLabel = useMemo(() => {
+    if (selectedBUs.length === 0) return 'Select Business Unit...';
+    if (selectedBUs.length === BUSINESS_UNITS_LIST.length) return 'All Business Units';
+    if (selectedBUs.length === 1) return selectedBUs[0];
+    return `${selectedBUs.length} Business Units`;
+  }, [selectedBUs]);
 
   const getOptionsForField = (field: string) => {
     if (field === 'Status') {
@@ -576,14 +678,21 @@ export const UploadForm16: React.FC = () => {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Filtered Records based on FY Dropdown + text search + dynamic filter chips
+  // Filtered Records based on BU + FY Dropdowns + text search + dynamic filter chips
   const filteredRecords = useMemo(() => {
     return records.filter((r) => {
-      // 1. Financial Year selection filter
+      // 1. Business Unit selection filter
+      const matchesBU =
+        selectedBUs.length === 0 ||
+        selectedBUs.length === BUSINESS_UNITS_LIST.length ||
+        (r.businessUnit ? selectedBUs.includes(r.businessUnit) : true);
+      if (!matchesBU) return false;
+
+      // 2. Financial Year selection filter
       const matchesFY = selectedFYs.length === 0 || selectedFYs.includes(r.financialYear);
       if (!matchesFY) return false;
 
-      // 2. Text search
+      // 3. Text search
       const matchesSearch = searchTerm
         ? r.empName.toLowerCase().includes(searchTerm.toLowerCase()) ||
           r.empId.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -595,7 +704,7 @@ export const UploadForm16: React.FC = () => {
 
       if (!matchesSearch) return false;
 
-      // 3. Dynamic lookup filter pills
+      // 4. Dynamic lookup filter pills
       for (const filter of completedFilters) {
         let recValue = '';
         if (filter.field === 'Status') recValue = r.status || '';
@@ -619,7 +728,7 @@ export const UploadForm16: React.FC = () => {
 
       return true;
     });
-  }, [records, selectedFYs, searchTerm, completedFilters]);
+  }, [records, selectedBUs, selectedFYs, searchTerm, completedFilters]);
 
   const totalPages = Math.ceil(filteredRecords.length / itemsPerPage) || 1;
   const paginatedRecords = useMemo(() => {
@@ -629,16 +738,35 @@ export const UploadForm16: React.FC = () => {
 
   // Statistics Calculations (3 Cards)
   const stats = useMemo(() => {
-    const total = 1842;
-    const uploadedCount = 1633;
-    const pendingCount = 209;
+    const buCounts: Record<string, { totalEmployees: number; uploadedCount: number; pendingCount: number }> = {
+      'CollabCRM': { totalEmployees: 1842, uploadedCount: 1633, pendingCount: 209 },
+      '300 Minds': { totalEmployees: 480, uploadedCount: 425, pendingCount: 55 },
+      'MindInventory': { totalEmployees: 430, uploadedCount: 381, pendingCount: 49 },
+      'BlueWhale Tech': { totalEmployees: 290, uploadedCount: 258, pendingCount: 32 },
+    };
+
+    if (selectedBUs.length === 1 && buCounts[selectedBUs[0]]) {
+      return buCounts[selectedBUs[0]];
+    }
+
+    if (selectedBUs.length === 0 || selectedBUs.length === BUSINESS_UNITS_LIST.length) {
+      return {
+        totalEmployees: 1842,
+        uploadedCount: 1633,
+        pendingCount: 209
+      };
+    }
+
+    const total = selectedBUs.reduce((acc, bu) => acc + (buCounts[bu]?.totalEmployees || 0), 0) || 1842;
+    const uploadedCount = selectedBUs.reduce((acc, bu) => acc + (buCounts[bu]?.uploadedCount || 0), 0) || 1633;
+    const pendingCount = total - uploadedCount;
 
     return {
       totalEmployees: total,
       uploadedCount: uploadedCount,
       pendingCount: pendingCount
     };
-  }, []);
+  }, [selectedBUs]);
 
   const filteredMappingRecords = useMemo(() => {
     if (!mappingSearch.trim()) return mappingRecords;
@@ -720,9 +848,6 @@ export const UploadForm16: React.FC = () => {
     };
   }, [mappingRecords, existingUploadedEmpCodes, overrideExisting]);
 
-  const handleStep2ConfirmAndUpload = () => {
-    setBulkModalStep(3);
-  };
 
   const handleDownloadFailedRecords = () => {
     const failedList = mappingRecords.filter((m) => m.status !== 'MATCHED');
@@ -814,12 +939,179 @@ export const UploadForm16: React.FC = () => {
 
       {/* Top Header */}
       <div className="bg-white border-b border-slate-200 px-8 py-6 shrink-0">
-        <div className="flex items-center gap-3.5">
-          <div className="p-2.5 bg-gradient-to-tr from-sky-500 via-indigo-600 to-purple-600 rounded-xl text-white shadow-md shadow-indigo-100">
-            <UploadCloud size={26} />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="p-2.5 bg-gradient-to-tr from-sky-500 via-indigo-600 to-purple-600 rounded-xl text-white shadow-md shadow-indigo-100">
+              <UploadCloud size={26} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Upload Form-16</h1>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Upload Form-16</h1>
+
+          {/* Top Right Corner Dropdowns: Business Unit & Financial Year */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Business Unit Dropdown */}
+            <div className="relative" ref={buDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setBuDropdownOpen((prev) => !prev)}
+                className={`px-3.5 py-2 min-w-[170px] bg-white border text-left text-xs font-semibold rounded-lg flex items-center justify-between gap-2 shadow-sm transition-all cursor-pointer ${
+                  buDropdownOpen
+                    ? 'border-indigo-400 ring-2 ring-indigo-100 text-slate-800'
+                    : 'border-slate-200 hover:border-slate-300 text-slate-700'
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <Building size={14} className="text-indigo-600 shrink-0" />
+                  <span className="truncate">{buButtonLabel}</span>
+                </div>
+                {buDropdownOpen ? (
+                  <ChevronUp size={14} className="text-indigo-600 shrink-0" />
+                ) : (
+                  <ChevronDown size={14} className="text-slate-400 shrink-0" />
+                )}
+              </button>
+
+              {/* Dropdown Panel */}
+              {buDropdownOpen && (
+                <div className="absolute right-0 top-full mt-1.5 w-60 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                  {/* Search Input */}
+                  <div className="relative mb-2">
+                    <input
+                      type="text"
+                      placeholder="Search business unit..."
+                      value={buSearchQuery}
+                      onChange={(e) => setBuSearchQuery(e.target.value)}
+                      className="w-full pl-3 pr-8 py-1.5 bg-white border border-indigo-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      autoFocus
+                    />
+                    <Search size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  </div>
+
+                  {/* Select All / Reset Actions */}
+                  <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-slate-100 text-[11px] font-bold">
+                    <span className="text-slate-400 uppercase tracking-wider text-[10px]">
+                      Units ({selectedBUs.length}/{BUSINESS_UNITS_LIST.length})
+                    </span>
+                    {selectedBUs.length < BUSINESS_UNITS_LIST.length ? (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedBUs([...BUSINESS_UNITS_LIST])}
+                        className="text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer"
+                      >
+                        Select All
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedBUs(['CollabCRM'])}
+                        className="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Options List with Checkboxes */}
+                  <div className="max-h-48 overflow-y-auto space-y-0.5">
+                    {filteredBuOptions.length === 0 ? (
+                      <div className="px-3 py-2 text-xs text-slate-400 italic">No business units found</div>
+                    ) : (
+                      filteredBuOptions.map((bu) => {
+                        const isChecked = selectedBUs.includes(bu);
+                        return (
+                          <label
+                            key={bu}
+                            className="flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => toggleBU(bu)}
+                              className="w-3.5 h-3.5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500 cursor-pointer"
+                            />
+                            <span className="truncate">{bu}</span>
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Financial Year Dropdown (Moved to Top Right Corner) */}
+            <div className="relative" ref={fyDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setFyDropdownOpen((prev) => !prev)}
+                className={`px-3.5 py-2 min-w-[170px] bg-white border text-left text-xs font-semibold rounded-lg flex items-center justify-between gap-2 shadow-sm transition-all cursor-pointer ${
+                  fyDropdownOpen
+                    ? 'border-purple-400 ring-2 ring-purple-100 text-slate-800'
+                    : 'border-slate-200 hover:border-slate-300 text-slate-700'
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <Calendar size={14} className="text-purple-600 shrink-0" />
+                  <span className="truncate">
+                    {selectedFYs.length === 0
+                      ? 'Select Financial Year...'
+                      : selectedFYs.length === 1
+                      ? selectedFYs[0]
+                      : `${selectedFYs.length} Selected`}
+                  </span>
+                </div>
+                {fyDropdownOpen ? (
+                  <ChevronUp size={14} className="text-purple-600 shrink-0" />
+                ) : (
+                  <ChevronDown size={14} className="text-slate-400 shrink-0" />
+                )}
+              </button>
+
+              {/* Dropdown Panel with Search and Checkboxes */}
+              {fyDropdownOpen && (
+                <div className="absolute right-0 top-full mt-1.5 w-60 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                  {/* Search Input */}
+                  <div className="relative mb-2">
+                    <input
+                      type="text"
+                      placeholder="Search..."
+                      value={fySearchQuery}
+                      onChange={(e) => setFySearchQuery(e.target.value)}
+                      className="w-full pl-3 pr-8 py-1.5 bg-white border border-purple-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                      autoFocus
+                    />
+                    <Search size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  </div>
+
+                  {/* Options List with Checkboxes */}
+                  <div className="max-h-48 overflow-y-auto space-y-0.5">
+                    {filteredFyOptions.length === 0 ? (
+                      <div className="px-3 py-2 text-xs text-slate-400 italic">No years found</div>
+                    ) : (
+                      filteredFyOptions.map((fy) => {
+                        const isChecked = selectedFYs.includes(fy);
+                        return (
+                          <label
+                            key={fy}
+                            className="flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => toggleFY(fy)}
+                              className="w-3.5 h-3.5 rounded text-purple-600 border-slate-300 focus:ring-purple-500 cursor-pointer"
+                            />
+                            <span className="truncate">{fy}</span>
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -829,7 +1121,7 @@ export const UploadForm16: React.FC = () => {
           <div className="bg-gradient-to-br from-blue-50/70 to-indigo-50/40 p-4 rounded-2xl border border-blue-100/80 shadow-sm flex items-center justify-between">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-blue-700/80">Total Employees</p>
-              <p className="text-2xl font-black text-slate-900 mt-1">{stats.totalEmployees.toLocaleString()}</p>
+              <p className="text-2xl font-black text-slate-900 mt-1">{(stats.totalEmployees ?? 1842).toLocaleString()}</p>
               <p className="text-[10px] font-semibold text-slate-500 mt-0.5">Eligible for Form-16</p>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-blue-100/80 text-blue-700 flex items-center justify-center font-bold">
@@ -841,7 +1133,7 @@ export const UploadForm16: React.FC = () => {
           <div className="bg-gradient-to-br from-emerald-50/70 to-teal-50/40 p-4 rounded-2xl border border-emerald-100/80 shadow-sm flex items-center justify-between">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700/80">Form-16 Uploaded</p>
-              <p className="text-2xl font-black text-slate-900 mt-1">{stats.uploadedCount.toLocaleString()}</p>
+              <p className="text-2xl font-black text-slate-900 mt-1">{(stats.uploadedCount ?? 1633).toLocaleString()}</p>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-emerald-100/80 text-emerald-700 flex items-center justify-center font-bold">
               <CheckCircle2 size={22} />
@@ -852,7 +1144,7 @@ export const UploadForm16: React.FC = () => {
           <div className="bg-gradient-to-br from-amber-50/70 to-orange-50/40 p-4 rounded-2xl border border-amber-100/80 shadow-sm flex items-center justify-between">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-amber-700/80">Pending Uploads</p>
-              <p className="text-2xl font-black text-slate-900 mt-1">{stats.pendingCount.toLocaleString()}</p>
+              <p className="text-2xl font-black text-slate-900 mt-1">{(stats.pendingCount ?? 209).toLocaleString()}</p>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-amber-100/80 text-amber-700 flex items-center justify-center font-bold">
               <AlertCircle size={22} />
@@ -865,83 +1157,14 @@ export const UploadForm16: React.FC = () => {
       <div className="p-8 flex-1 flex flex-col space-y-4">
         {/* Table Container */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
-          {/* Table Header / Title with FY Dropdown and Action Buttons on Top of Filter */}
+          {/* Table Header / Title and Action Button */}
           <div className="px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white">
             <div>
               <h2 className="text-base font-bold text-slate-800">Employees Form-16 Records</h2>
             </div>
 
-            {/* Action Buttons with Financial Year Dropdown to the left */}
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Financial Year Dropdown (Styled like BU dropdown) */}
-              <div className="relative" ref={fyDropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => setFyDropdownOpen((prev) => !prev)}
-                  className={`px-3.5 py-2 min-w-[170px] bg-white border text-left text-xs font-semibold rounded-lg flex items-center justify-between gap-2 shadow-sm transition-all ${
-                    fyDropdownOpen
-                      ? 'border-purple-400 ring-2 ring-purple-100 text-slate-800'
-                      : 'border-slate-200 hover:border-slate-300 text-slate-700'
-                  }`}
-                >
-                  <span className="truncate">
-                    {selectedFYs.length === 0
-                      ? 'Select Financial Year...'
-                      : selectedFYs.length === 1
-                      ? selectedFYs[0]
-                      : `${selectedFYs.length} Selected`}
-                  </span>
-                  {fyDropdownOpen ? (
-                    <ChevronUp size={14} className="text-purple-600 shrink-0" />
-                  ) : (
-                    <ChevronDown size={14} className="text-slate-400 shrink-0" />
-                  )}
-                </button>
-
-                {/* Dropdown Panel with Search and Checkboxes */}
-                {fyDropdownOpen && (
-                  <div className="absolute right-0 top-full mt-1.5 w-60 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                    {/* Search Input */}
-                    <div className="relative mb-2">
-                      <input
-                        type="text"
-                        placeholder="Search..."
-                        value={fySearchQuery}
-                        onChange={(e) => setFySearchQuery(e.target.value)}
-                        className="w-full pl-3 pr-8 py-1.5 bg-white border border-purple-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
-                        autoFocus
-                      />
-                      <Search size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                    </div>
-
-                    {/* Options List with Checkboxes */}
-                    <div className="max-h-48 overflow-y-auto space-y-0.5">
-                      {filteredFyOptions.length === 0 ? (
-                        <div className="px-3 py-2 text-xs text-slate-400 italic">No years found</div>
-                      ) : (
-                        filteredFyOptions.map((fy) => {
-                          const isChecked = selectedFYs.includes(fy);
-                          return (
-                            <label
-                              key={fy}
-                              className="flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isChecked}
-                                onChange={() => toggleFY(fy)}
-                                className="w-3.5 h-3.5 rounded text-purple-600 border-slate-300 focus:ring-purple-500 cursor-pointer"
-                              />
-                              <span className="truncate">{fy}</span>
-                            </label>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3">
               {/* Bulk Upload Form-16 */}
               <button
                 onClick={() => {
@@ -950,7 +1173,7 @@ export const UploadForm16: React.FC = () => {
                   }
                   setIsBulkUploadModalOpen(true);
                 }}
-                className="px-5 py-2 bg-indigo-600 text-white font-bold text-sm rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all flex items-center gap-2"
+                className="px-5 py-2 bg-indigo-600 text-white font-bold text-sm rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all flex items-center gap-2 cursor-pointer"
               >
                 <FileArchive size={17} />
                 Upload Form-16
@@ -1339,7 +1562,7 @@ export const UploadForm16: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
           <div
             className={`bg-white rounded-lg w-full border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] transition-all duration-200 ${
-              bulkModalStep >= 2 || isProcessing ? 'w-full sm:w-[92vw] lg:w-[1024px] max-w-5xl' : 'max-w-3xl'
+              bulkModalStep === 2 || isProcessing ? 'w-full sm:w-[92vw] lg:w-[1024px] max-w-5xl' : 'max-w-3xl'
             }`}
           >
             {/* Modal Header */}
@@ -1351,26 +1574,18 @@ export const UploadForm16: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-base font-bold text-slate-800">
-                      {isProcessing
-                        ? 'Bulk Upload Form-16'
-                        : bulkModalStep === 1
-                        ? 'Bulk Upload Form-16'
-                        : bulkModalStep === 2
-                        ? 'Form-16 File & PAN Mapping Preview'
-                        : 'Bulk Upload Form-16'}
+                      Bulk Upload Form-16
                     </h3>
                     <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-extrabold rounded-full uppercase tracking-wider">
-                      {isProcessing || bulkModalStep === 3
+                      {isProcessing || bulkModalStep === 2
                         ? 'Step 2 of 2'
-                        : `Step ${bulkModalStep} of 3`}
+                        : 'Step 1 of 2'}
                     </span>
                   </div>
                   <p className="text-xs text-slate-500">
-                    {isProcessing || bulkModalStep === 3
+                    {isProcessing || bulkModalStep === 2
                       ? 'Review the results of your import and download any failed records.'
-                      : bulkModalStep === 1
-                      ? 'Upload multiple Form-16 PDFs (Part A & Part B) in bulk'
-                      : `Review employee PAN mappings and matched files for FY ${bulkFY}`}
+                      : 'Upload multiple Form-16 PDFs (Part A & Part B) in bulk'}
                   </p>
                 </div>
               </div>
@@ -1501,37 +1716,6 @@ export const UploadForm16: React.FC = () => {
                     </p>
                   </div>
 
-                  {/* Upload Scope Block: Radio Buttons */}
-                  <div className="bg-slate-50/70 border border-slate-200 rounded-lg p-3 sm:px-4 flex flex-wrap items-center gap-6 sm:gap-8">
-                    <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                      <input
-                        type="radio"
-                        name="bulkTargetScope"
-                        value="ALL"
-                        checked={bulkTargetScope === 'ALL'}
-                        onChange={() => setBulkTargetScope('ALL')}
-                        className="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500 cursor-pointer"
-                      />
-                      <span className="text-xs font-semibold text-slate-800">
-                        Upload for all employees
-                      </span>
-                    </label>
-
-                    <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                      <input
-                        type="radio"
-                        name="bulkTargetScope"
-                        value="PENDING"
-                        checked={bulkTargetScope === 'PENDING'}
-                        onChange={() => setBulkTargetScope('PENDING')}
-                        className="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500 cursor-pointer"
-                      />
-                      <span className="text-xs font-semibold text-slate-800">
-                        Upload for pending employees
-                      </span>
-                    </label>
-                  </div>
-
                   {/* Two-Column Layout: Dropzone (Left) & Instructions (Right) */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
                     {/* Left: Redesigned File Selection Block */}
@@ -1562,7 +1746,7 @@ export const UploadForm16: React.FC = () => {
                             setBulkFile(e.target.files[0]);
                           }
                         }}
-                        accept=".zip,.pdf"
+                        accept=".zip"
                         className="hidden"
                       />
 
@@ -1614,7 +1798,7 @@ export const UploadForm16: React.FC = () => {
                             Browse Files
                           </button>
                           <p className="text-[10.5px] text-amber-900/80 font-medium mt-4">
-                            Max file size: 250 MB. Accepted formats: .zip and .pdf.
+                            Max file size: 50 MB. Accepted formats: .zip.
                           </p>
                         </>
                       )}
@@ -1654,20 +1838,18 @@ export const UploadForm16: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Override Checkbox (Hidden if Upload for pending employees is selected) */}
-                      {bulkTargetScope !== 'PENDING' && (
-                        <label className="flex items-center gap-2.5 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100/70 transition-all select-none">
-                          <input
-                            type="checkbox"
-                            checked={overrideExisting}
-                            onChange={(e) => setOverrideExisting(e.target.checked)}
-                            className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500 cursor-pointer"
-                          />
-                          <span className="text-xs font-semibold text-slate-700">
-                            Override existing file if any.
-                          </span>
-                        </label>
-                      )}
+                      {/* Override Checkbox */}
+                      <label className="flex items-center gap-2.5 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100/70 transition-all select-none">
+                        <input
+                          type="checkbox"
+                          checked={overrideExisting}
+                          onChange={(e) => setOverrideExisting(e.target.checked)}
+                          className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500 cursor-pointer"
+                        />
+                        <span className="text-xs font-semibold text-slate-700">
+                          Override existing file if any.
+                        </span>
+                      </label>
                     </div>
                   </div>
 
@@ -1697,268 +1879,8 @@ export const UploadForm16: React.FC = () => {
                 </div>
               </>
             )
-            ) : bulkModalStep === 2 ? (
-              // ================= STEP 2: MAPPING PREVIEW SCREEN =================
-              <>
-                <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(92vh-140px)]">
-                  {/* Notice Banner if Override is NOT selected */}
-                  {!overrideExisting && (
-                    <div className="border border-sky-200 bg-sky-50/70 rounded-lg p-3 flex items-start gap-2.5">
-                      <Info size={16} className="text-sky-600 shrink-0 mt-0.5" />
-                      <p className="text-xs text-sky-900 leading-relaxed font-medium">
-                        Form-16 is already present in some employee profiles. Since <span className="font-bold">"Override existing file if any"</span> was not selected, no changes will be made to their existing files.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Simulation Toggle & Search Bar */}
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Test Scenario:</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (simulateAllFail) {
-                            setMappingRecords(MOCK_MAPPING_DATA);
-                            setSimulateAllFail(false);
-                          } else {
-                            setMappingRecords(
-                              MOCK_MAPPING_DATA.map((item) => ({
-                                ...item,
-                                status: item.status === 'MATCHED' ? 'UNMATCHED' : item.status
-                              }))
-                            );
-                            setSimulateAllFail(true);
-                          }
-                        }}
-                        className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1.5 shadow-xs ${
-                          simulateAllFail
-                            ? 'bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100'
-                            : 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100'
-                        }`}
-                        title="Click to switch between Partial Failure (Image 2) and All Failed (Image 3)"
-                      >
-                        {simulateAllFail ? (
-                          <>
-                            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-                            Simulating: All Failed (Image 3)
-                          </>
-                        ) : (
-                          <>
-                            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                            Simulating: Partial Success (Image 2)
-                          </>
-                        )}
-                      </button>
-                    </div>
-
-                    <div className="relative w-full sm:w-72">
-                      <input
-                        type="text"
-                        placeholder="Search employee, PAN, file name..."
-                        value={mappingSearch}
-                        onChange={(e) => setMappingSearch(e.target.value)}
-                        className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                      />
-                      <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                      {mappingSearch && (
-                        <button
-                          onClick={() => setMappingSearch('')}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                        >
-                          <X size={13} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Mapping Details Table */}
-                  <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xs">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left border-collapse">
-                        <thead>
-                          <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                            <th className="py-3 px-4">Employee Code</th>
-                            <th className="py-3 px-4">Employee Name</th>
-                            <th className="py-3 px-4">PAN Number (Profile)</th>
-                            <th className="py-3 px-4">PAN Number (Form-16)</th>
-                            <th className="py-3 px-4">Matched File Name</th>
-                            <th className="py-3 px-4 text-right">Mapping Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 text-xs">
-                          {filteredMappingRecords.length === 0 ? (
-                            <tr>
-                              <td colSpan={6} className="py-8 text-center text-slate-400 text-xs">
-                                No records matching your search/filter criteria.
-                              </td>
-                            </tr>
-                          ) : (
-                            filteredMappingRecords.map((item) => (
-                              <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
-                                {/* Employee Code */}
-                                <td className="py-3 px-4 font-mono font-bold text-slate-800 text-xs">
-                                  {item.empCode}
-                                </td>
-
-                                {/* Employee Name */}
-                                <td className="py-3 px-4">
-                                  <div className="flex items-center gap-2.5">
-                                    <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-[10px] shrink-0">
-                                      {item.empName
-                                        .split(' ')
-                                        .map((n) => n[0])
-                                        .join('')}
-                                    </div>
-                                    <span className="font-bold text-slate-800 text-xs">{item.empName}</span>
-                                  </div>
-                                </td>
-
-                                {/* PAN Number (Profile) */}
-                                <td className="py-3 px-4">
-                                  {item.panProfile ? (
-                                    <span className="px-2 py-1 bg-slate-100 border border-slate-200 text-slate-800 rounded font-mono font-bold text-xs tracking-wider">
-                                      {item.panProfile}
-                                    </span>
-                                  ) : (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-rose-50 border border-rose-200 text-rose-700 rounded text-[11px] font-semibold">
-                                      <AlertCircle size={12} className="text-rose-600 shrink-0" />
-                                      Missing in Profile
-                                    </span>
-                                  )}
-                                </td>
-
-                                {/* PAN Number (Form-16) */}
-                                <td className="py-3 px-4">
-                                  {!item.panProfile || item.status === 'UNMATCHED' ? (
-                                    <span className="text-slate-400 font-bold text-sm tracking-wider">--</span>
-                                  ) : item.panForm16 ? (
-                                    <span className="px-2 py-1 bg-indigo-50 border border-indigo-200 text-indigo-900 rounded font-mono font-bold text-xs tracking-wider">
-                                      {item.panForm16}
-                                    </span>
-                                  ) : (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 rounded text-[11px] font-semibold">
-                                      <AlertCircle size={12} className="text-amber-600 shrink-0" />
-                                      File not found
-                                    </span>
-                                  )}
-                                </td>
-
-                                {/* Matched File */}
-                                <td className="py-3 px-4">
-                                  {!item.panProfile || item.status === 'UNMATCHED' || item.matchedFiles.length === 0 ? (
-                                    <span className="text-slate-400 font-bold text-sm tracking-wider">--</span>
-                                  ) : (
-                                    <div className="flex flex-col gap-1 max-w-[220px]">
-                                      {item.matchedFiles.map((file, idx) => (
-                                        <span
-                                          key={idx}
-                                          className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-slate-50 border border-slate-200 text-slate-700 rounded text-[11px] font-mono"
-                                          title={file}
-                                        >
-                                          <FileText size={12} className="text-rose-500 shrink-0" />
-                                          <span className="truncate">{file}</span>
-                                        </span>
-                                      ))}
-                                    </div>
-                                  )}
-                                </td>
-
-                                {/* Mapping Status */}
-                                <td className="py-3 px-4 text-right">
-                                  {item.status === 'MATCHED' && (
-                                    existingUploadedEmpCodes.has(item.empCode) ? (
-                                      !overrideExisting ? (
-                                        <span
-                                          className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-sky-50 text-sky-800 border border-sky-200 rounded-full font-semibold text-[11px]"
-                                          title="Form-16 is already present in employee profile. No changes made because override is disabled."
-                                        >
-                                          <Info size={13} className="text-sky-600" />
-                                          Skipped (File Exists)
-                                        </span>
-                                      ) : (
-                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-bold text-[11px]">
-                                          <CheckCircle2 size={13} className="text-emerald-600" />
-                                          Success (Override)
-                                        </span>
-                                      )
-                                    ) : (
-                                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-bold text-[11px]">
-                                        <CheckCircle2 size={13} className="text-emerald-600" />
-                                        Success
-                                      </span>
-                                    )
-                                  )}
-                                  {item.status === 'PAN_MISSING_PROFILE' && (
-                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-full font-bold text-[11px]">
-                                      <AlertCircle size={13} className="text-rose-600" />
-                                      Error: PAN missing in profile
-                                    </span>
-                                  )}
-                                  {item.status === 'PAN_MISSING_FILE' && (
-                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full font-bold text-[11px]">
-                                      <AlertCircle size={13} className="text-amber-600" />
-                                      Error: No file found for this PAN number.
-                                    </span>
-                                  )}
-                                  {item.status === 'UNMATCHED' && (
-                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-full font-bold text-[11px]">
-                                      <AlertCircle size={13} className="text-rose-600" />
-                                      Error: PAN not matching with the profile.
-                                    </span>
-                                  )}
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Step 2 Footer */}
-                <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3">
-                  <div className="text-xs text-slate-500 font-medium">
-                    <span className="font-bold text-slate-800">{mappingStats.matched}</span> of{' '}
-                    <span className="font-bold text-slate-800">{mappingStats.total}</span> files matched successfully
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setBulkModalStep(1);
-                        setBulkFile(null);
-                      }}
-                      className="px-5 py-2.5 border border-slate-200 text-slate-700 font-bold text-sm rounded-lg hover:bg-white transition-all flex items-center gap-2 cursor-pointer shadow-xs"
-                    >
-                      <RotateCcw size={15} /> Start Again
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsBulkUploadModalOpen(false);
-                        setBulkModalStep(1);
-                        setBulkFile(null);
-                      }}
-                      className="px-5 py-2.5 border border-slate-200 text-slate-600 font-bold text-sm rounded-lg hover:bg-white transition-all cursor-pointer shadow-xs"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleStep2ConfirmAndUpload}
-                      style={{ backgroundColor: '#444CE7' }}
-                      className="px-6 py-2.5 bg-[#444CE7] hover:bg-[#3538CD] text-white font-bold text-sm rounded-lg shadow-md shadow-indigo-100 transition-all flex items-center gap-2 cursor-pointer"
-                    >
-                      <CheckCircle2 size={16} /> Confirm & Upload
-                    </button>
-                  </div>
-                </div>
-              </>
             ) : (
-              // ================= STEP 3: IMPORT RESULTS SCREEN (MATCHING SCREENSHOT 2 & 3) =================
+              // ================= STEP 2: IMPORT RESULTS SCREEN (MATCHING SCREENSHOT 2 & 3) =================
               <>
                 {/* Stepper Bar across top matching Screenshot 2 & 3 */}
                 <div className="border-b border-slate-100 py-5 bg-white select-none">
@@ -2025,16 +1947,8 @@ export const UploadForm16: React.FC = () => {
                           <div className="flex items-center gap-3 mt-6">
                             <button
                               type="button"
-                              onClick={handleDownloadFailedRecords}
-                              style={{ backgroundColor: '#444CE7' }}
-                              className="flex-1 py-2.5 px-4 bg-[#444CE7] hover:bg-[#3538CD] text-white text-xs font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
-                            >
-                              <Download size={13} /> Download Failed Records
-                            </button>
-                            <button
-                              type="button"
                               onClick={() => setShowErrorModal(true)}
-                              className="py-2.5 px-4 bg-indigo-50/70 hover:bg-indigo-100 text-[#444CE7] border border-indigo-100 text-xs font-bold rounded-lg transition-all cursor-pointer text-center whitespace-nowrap"
+                              className="w-full py-2.5 px-4 bg-indigo-50/70 hover:bg-indigo-100 text-[#444CE7] border border-indigo-100 text-xs font-bold rounded-lg transition-all cursor-pointer text-center whitespace-nowrap"
                             >
                               View Error Messages
                             </button>
@@ -2091,14 +2005,6 @@ export const UploadForm16: React.FC = () => {
                           <div className="flex flex-col gap-2 mt-4">
                             <button
                               type="button"
-                              onClick={handleDownloadFailedRecords}
-                              style={{ backgroundColor: '#444CE7' }}
-                              className="w-full py-2 px-3 bg-[#444CE7] hover:bg-[#3538CD] text-white text-xs font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
-                            >
-                              <Download size={13} /> Download Failed Records
-                            </button>
-                            <button
-                              type="button"
                               onClick={() => setShowErrorModal(true)}
                               className="w-full py-2 px-3 bg-indigo-50/70 hover:bg-indigo-100 text-[#444CE7] border border-indigo-100 text-xs font-bold rounded-lg transition-all cursor-pointer text-center"
                             >
@@ -2141,7 +2047,7 @@ export const UploadForm16: React.FC = () => {
                   )}
                 </div>
 
-                {/* Step 3 Footer: Restored Original Buttons */}
+                {/* Step 2 Footer: Start Again & Conditional Push to Employee's account */}
                 <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end">
                   <div className="flex items-center gap-3">
                     <button
@@ -2167,15 +2073,17 @@ export const UploadForm16: React.FC = () => {
                       }}
                       className="px-5 py-2.5 border border-indigo-200 bg-indigo-50 text-indigo-700 font-bold text-sm rounded-lg hover:bg-indigo-100 transition-all flex items-center gap-2 cursor-pointer shadow-xs"
                     >
-                      <RotateCcw size={15} /> Re-upload
+                      <RotateCcw size={15} /> Start Again
                     </button>
-                    <button
-                      type="button"
-                      onClick={handleConfirmMappingUpload}
-                      className="px-6 py-2.5 bg-indigo-600 text-white font-bold text-sm rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all flex items-center gap-2 cursor-pointer"
-                    >
-                      <Send size={15} /> Push to Employee's account
-                    </button>
+                    {importSummary.failureCount === 0 && (
+                      <button
+                        type="button"
+                        onClick={handleConfirmMappingUpload}
+                        className="px-6 py-2.5 bg-indigo-600 text-white font-bold text-sm rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all flex items-center gap-2 cursor-pointer"
+                      >
+                        <Send size={15} /> Push to Employee's account
+                      </button>
+                    )}
                   </div>
                 </div>
               </>
