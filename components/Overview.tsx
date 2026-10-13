@@ -104,6 +104,7 @@ const MOCK_ADVANCES = [
 
 interface RevisionItem {
   period: string;
+  month: string;
   monthLabel: string;
   year: number;
   prevGross: number;
@@ -117,7 +118,8 @@ interface RevisionItem {
 const ALL_REVISION_DATA: RevisionItem[] = [
   {
     period: 'January 2024',
-    monthLabel: 'Jan',
+    month: 'Jan',
+    monthLabel: 'Jan 2024',
     year: 2024,
     prevGross: 0,
     gross: 150000,
@@ -128,7 +130,8 @@ const ALL_REVISION_DATA: RevisionItem[] = [
   },
   {
     period: 'July 2024',
-    monthLabel: 'Jul',
+    month: 'Jul',
+    monthLabel: 'Jul 2024',
     year: 2024,
     prevGross: 150000,
     gross: 175000,
@@ -139,7 +142,8 @@ const ALL_REVISION_DATA: RevisionItem[] = [
   },
   {
     period: 'January 2025',
-    monthLabel: 'Jan',
+    month: 'Jan',
+    monthLabel: 'Jan 2025',
     year: 2025,
     prevGross: 175000,
     gross: 190000,
@@ -150,7 +154,8 @@ const ALL_REVISION_DATA: RevisionItem[] = [
   },
   {
     period: 'July 2025',
-    monthLabel: 'Jul',
+    month: 'Jul',
+    monthLabel: 'Jul 2025',
     year: 2025,
     prevGross: 190000,
     gross: 180000,
@@ -161,7 +166,8 @@ const ALL_REVISION_DATA: RevisionItem[] = [
   },
   {
     period: 'January 2026',
-    monthLabel: 'Jan',
+    month: 'Jan',
+    monthLabel: 'Jan 2026',
     year: 2026,
     prevGross: 180000,
     gross: 200000,
@@ -172,7 +178,8 @@ const ALL_REVISION_DATA: RevisionItem[] = [
   },
   {
     period: 'April 2026',
-    monthLabel: 'Apr',
+    month: 'Apr',
+    monthLabel: 'Apr 2026',
     year: 2026,
     prevGross: 200000,
     gross: 215000,
@@ -183,7 +190,8 @@ const ALL_REVISION_DATA: RevisionItem[] = [
   },
   {
     period: 'July 2026',
-    monthLabel: 'Jul',
+    month: 'Jul',
+    monthLabel: 'Jul 2026',
     year: 2026,
     prevGross: 215000,
     gross: 205000,
@@ -194,7 +202,8 @@ const ALL_REVISION_DATA: RevisionItem[] = [
   },
   {
     period: 'October 2026',
-    monthLabel: 'Oct',
+    month: 'Oct',
+    monthLabel: 'Oct 2026',
     year: 2026,
     prevGross: 205000,
     gross: 225000,
@@ -307,7 +316,7 @@ const Overview: React.FC<OverviewProps> = ({
     const currentYear = 2026;
     if (revisionPreset === 'THIS_YEAR') {
       // Points for this year (matching Screenshot 3: Apr, Jul, Oct)
-      return ALL_REVISION_DATA.filter(r => r.year === currentYear && r.monthLabel !== 'Jan');
+      return ALL_REVISION_DATA.filter(r => r.year === currentYear && r.month !== 'Jan');
     }
     if (revisionPreset === 'LAST_2_YEARS') {
       return ALL_REVISION_DATA.filter(r => r.year >= currentYear - 1);
@@ -508,7 +517,7 @@ const Overview: React.FC<OverviewProps> = ({
                   <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider whitespace-nowrap">
                     Tax & Investment Summary
                   </h3>
-                  <p className="text-[10px] text-slate-400 font-medium whitespace-nowrap">FY 2025–26 Tax Planning Overview</p>
+                  <p className="text-[10px] text-slate-400 font-medium whitespace-nowrap">FY 2025–26</p>
                 </div>
               </div>
 
@@ -795,26 +804,23 @@ const Overview: React.FC<OverviewProps> = ({
             {/* 3 Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-4">
               <div className="bg-rose-50/60 border border-rose-100 rounded-lg p-2.5 flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-0.5">
+                <div className="mb-0.5">
                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Outstanding</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
                 </div>
                 <span className="text-base sm:text-lg font-black text-rose-600">{formatINR(totalOutstandingAll)}</span>
               </div>
               <div className="bg-emerald-50/60 border border-emerald-100 rounded-lg p-2.5 flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-0.5">
+                <div className="mb-0.5">
                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Paid</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                 </div>
                 <span className="text-base sm:text-lg font-black text-emerald-600">{formatINR(totalPaidAll)}</span>
               </div>
               <div className="bg-blue-50/60 border border-blue-100 rounded-lg p-2.5 flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-0.5">
+                <div className="mb-0.5">
                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Upcoming EMI</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
                 </div>
                 <span className="text-base sm:text-lg font-black text-blue-600">
-                  {formatINR(totalUpcomingEmiAll)} <span className="text-[11px] font-semibold text-slate-400">/ mo</span>
+                  {formatINR(totalUpcomingEmiAll)} <span className="text-[11px] font-semibold text-slate-400">/ month</span>
                 </span>
               </div>
             </div>

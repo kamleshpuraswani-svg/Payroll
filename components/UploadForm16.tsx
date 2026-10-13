@@ -43,7 +43,8 @@ interface Form16Record {
   pan: string;
   financialYear: string;
   assessmentYear: string;
-  status: 'Uploaded' | 'Pending';
+  status: 'Uploaded' | 'Pending' | 'Published' | 'Failed';
+  failureReason?: string;
   partAFileName?: string;
   partBFileName?: string;
   grossSalary: number;
@@ -56,7 +57,7 @@ interface Form16Record {
 const BUSINESS_UNITS_LIST = ['CollabCRM', '300 Minds', 'MindInventory', 'BlueWhale Tech'];
 
 const INITIAL_RECORDS: Form16Record[] = [
-  // FY 2024-25 Records
+  // FY 2024-25 Records (Top 6 rows contain Uploaded, Pending, Published, and all 3 Failed reasons)
   {
     id: 'F16-001',
     empId: 'TF00912',
@@ -75,6 +76,83 @@ const INITIAL_RECORDS: Form16Record[] = [
   },
   {
     id: 'F16-002',
+    empId: 'SU00234',
+    empName: 'Neha Kapoor',
+    department: 'Design',
+    pan: 'CDENK9012H',
+    financialYear: '2024-25',
+    assessmentYear: '2025-26',
+    status: 'Pending',
+    partAFileName: 'Form16_PartA_CDENK9012H_2024-25.pdf',
+    grossSalary: 1200000,
+    tdsDeducted: 68000,
+    uploadedAt: '14 Jun 2025, 03:15 PM',
+    uploadedBy: 'System'
+  },
+  {
+    id: 'F16-003',
+    empId: 'GL87890',
+    empName: 'Rohan Desai',
+    department: 'Marketing',
+    pan: 'DERD3456J',
+    financialYear: '2024-25',
+    assessmentYear: '2025-26',
+    status: 'Published',
+    partAFileName: 'Form16_PartA_DERD3456J_2024-25.pdf',
+    partBFileName: 'Form16_PartB_DERD3456J_2024-25.pdf',
+    grossSalary: 1550000,
+    tdsDeducted: 102000,
+    uploadedAt: '12 Jun 2025, 11:40 AM',
+    uploadedBy: 'HR Admin'
+  },
+  {
+    id: 'F16-004',
+    empId: 'TF00145',
+    empName: 'Ananya Patel',
+    department: 'Finance',
+    pan: 'EFAP7890K',
+    financialYear: '2024-25',
+    assessmentYear: '2025-26',
+    status: 'Failed',
+    failureReason: 'PAN not matching with the profile.',
+    partBFileName: 'Form16_PartB_EFAP7890K_2024-25.pdf',
+    grossSalary: 950000,
+    tdsDeducted: 32000,
+    uploadedAt: '15 Jun 2025, 10:20 AM',
+    uploadedBy: 'System'
+  },
+  {
+    id: 'F16-005',
+    empId: 'TF00882',
+    empName: 'Kavita Iyer',
+    department: 'Human Resources',
+    pan: 'GHKI6789M',
+    financialYear: '2024-25',
+    assessmentYear: '2025-26',
+    status: 'Failed',
+    failureReason: 'PAN missing in profile',
+    grossSalary: 1100000,
+    tdsDeducted: 54000,
+    uploadedAt: '14 Jun 2025, 11:00 AM',
+    uploadedBy: 'System'
+  },
+  {
+    id: 'F16-006',
+    empId: 'TF00319',
+    empName: 'Rajesh Gupta',
+    department: 'Operations',
+    pan: 'GUPR4567P',
+    financialYear: '2024-25',
+    assessmentYear: '2025-26',
+    status: 'Failed',
+    failureReason: 'No file found for this PAN number.',
+    grossSalary: 1350000,
+    tdsDeducted: 82000,
+    uploadedAt: '15 Jun 2025, 11:30 AM',
+    uploadedBy: 'System'
+  },
+  {
+    id: 'F16-007',
     empId: 'AC94567',
     empName: 'Arjun Mehta',
     department: 'Product',
@@ -90,60 +168,14 @@ const INITIAL_RECORDS: Form16Record[] = [
     uploadedBy: 'HR Admin'
   },
   {
-    id: 'F16-003',
-    empId: 'SU00234',
-    empName: 'Neha Kapoor',
-    department: 'Design',
-    pan: 'CDENK9012H',
-    financialYear: '2024-25',
-    assessmentYear: '2025-26',
-    status: 'Pending',
-    partAFileName: 'Form16_PartA_CDENK9012H_2024-25.pdf',
-    grossSalary: 1200000,
-    tdsDeducted: 68000,
-    uploadedAt: '14 Jun 2025, 03:15 PM',
-    uploadedBy: 'System'
-  },
-  {
-    id: 'F16-004',
-    empId: 'GL87890',
-    empName: 'Rohan Desai',
-    department: 'Marketing',
-    pan: 'DERD3456J',
-    financialYear: '2024-25',
-    assessmentYear: '2025-26',
-    status: 'Uploaded',
-    partAFileName: 'Form16_PartA_DERD3456J_2024-25.pdf',
-    partBFileName: 'Form16_PartB_DERD3456J_2024-25.pdf',
-    grossSalary: 1550000,
-    tdsDeducted: 102000,
-    uploadedAt: '12 Jun 2025, 11:40 AM',
-    uploadedBy: 'HR Admin'
-  },
-  {
-    id: 'F16-005',
-    empId: 'TF00145',
-    empName: 'Ananya Patel',
-    department: 'Finance',
-    pan: 'EFAP7890K',
-    financialYear: '2024-25',
-    assessmentYear: '2025-26',
-    status: 'Pending',
-    partBFileName: 'Form16_PartB_EFAP7890K_2024-25.pdf',
-    grossSalary: 950000,
-    tdsDeducted: 32000,
-    uploadedAt: '15 Jun 2025, 10:20 AM',
-    uploadedBy: 'System'
-  },
-  {
-    id: 'F16-006',
+    id: 'F16-008',
     empId: 'AC99367',
     empName: 'Vikram Singh',
     department: 'Sales',
     pan: 'FGVS2345L',
     financialYear: '2024-25',
     assessmentYear: '2025-26',
-    status: 'Uploaded',
+    status: 'Published',
     partAFileName: 'Form16_PartA_FGVS2345L_2024-25.pdf',
     partBFileName: 'Form16_PartB_FGVS2345L_2024-25.pdf',
     grossSalary: 2100000,
@@ -152,21 +184,7 @@ const INITIAL_RECORDS: Form16Record[] = [
     uploadedBy: 'HR Admin'
   },
   {
-    id: 'F16-007',
-    empId: 'TF00882',
-    empName: 'Kavita Iyer',
-    department: 'Human Resources',
-    pan: 'GHKI6789M',
-    financialYear: '2024-25',
-    assessmentYear: '2025-26',
-    status: 'Pending',
-    grossSalary: 1100000,
-    tdsDeducted: 54000,
-    uploadedAt: '-',
-    uploadedBy: '-'
-  },
-  {
-    id: 'F16-008',
+    id: 'F16-009',
     empId: 'TF00561',
     empName: 'Siddharth Rao',
     department: 'Engineering',
@@ -184,7 +202,7 @@ const INITIAL_RECORDS: Form16Record[] = [
 
   // FY 2023-24 Records
   {
-    id: 'F16-009',
+    id: 'F16-010',
     empId: 'TF00912',
     empName: 'Priya Sharma',
     department: 'Engineering',
@@ -200,22 +218,6 @@ const INITIAL_RECORDS: Form16Record[] = [
     uploadedBy: 'HR Admin'
   },
   {
-    id: 'F16-010',
-    empId: 'AC94567',
-    empName: 'Arjun Mehta',
-    department: 'Product',
-    pan: 'BCDAM5678G',
-    financialYear: '2023-24',
-    assessmentYear: '2024-25',
-    status: 'Uploaded',
-    partAFileName: 'Form16_PartA_BCDAM5678G_2023-24.pdf',
-    partBFileName: 'Form16_PartB_BCDAM5678G_2023-24.pdf',
-    grossSalary: 2100000,
-    tdsDeducted: 230000,
-    uploadedAt: '10 Jun 2024, 02:20 PM',
-    uploadedBy: 'HR Admin'
-  },
-  {
     id: 'F16-011',
     empId: 'SU00234',
     empName: 'Neha Kapoor',
@@ -223,13 +225,11 @@ const INITIAL_RECORDS: Form16Record[] = [
     pan: 'CDENK9012H',
     financialYear: '2023-24',
     assessmentYear: '2024-25',
-    status: 'Uploaded',
-    partAFileName: 'Form16_PartA_CDENK9012H_2023-24.pdf',
-    partBFileName: 'Form16_PartB_CDENK9012H_2023-24.pdf',
+    status: 'Pending',
     grossSalary: 1050000,
     tdsDeducted: 52000,
-    uploadedAt: '11 Jun 2024, 11:10 AM',
-    uploadedBy: 'HR Admin'
+    uploadedAt: '-',
+    uploadedBy: '-'
   },
   {
     id: 'F16-012',
@@ -239,7 +239,7 @@ const INITIAL_RECORDS: Form16Record[] = [
     pan: 'DERD3456J',
     financialYear: '2023-24',
     assessmentYear: '2024-25',
-    status: 'Uploaded',
+    status: 'Published',
     partAFileName: 'Form16_PartA_DERD3456J_2023-24.pdf',
     partBFileName: 'Form16_PartB_DERD3456J_2023-24.pdf',
     grossSalary: 1400000,
@@ -255,18 +255,33 @@ const INITIAL_RECORDS: Form16Record[] = [
     pan: 'EFAP7890K',
     financialYear: '2023-24',
     assessmentYear: '2024-25',
-    status: 'Uploaded',
-    partAFileName: 'Form16_PartA_EFAP7890K_2023-24.pdf',
-    partBFileName: 'Form16_PartB_EFAP7890K_2023-24.pdf',
+    status: 'Failed',
+    failureReason: 'PAN not matching with the profile.',
     grossSalary: 850000,
     tdsDeducted: 24000,
     uploadedAt: '10 Jun 2024, 02:35 PM',
+    uploadedBy: 'System'
+  },
+  {
+    id: 'F16-014',
+    empId: 'AC94567',
+    empName: 'Arjun Mehta',
+    department: 'Product',
+    pan: 'BCDAM5678G',
+    financialYear: '2023-24',
+    assessmentYear: '2024-25',
+    status: 'Uploaded',
+    partAFileName: 'Form16_PartA_BCDAM5678G_2023-24.pdf',
+    partBFileName: 'Form16_PartB_BCDAM5678G_2023-24.pdf',
+    grossSalary: 2100000,
+    tdsDeducted: 230000,
+    uploadedAt: '10 Jun 2024, 02:20 PM',
     uploadedBy: 'HR Admin'
   },
 
   // FY 2022-23 Records
   {
-    id: 'F16-014',
+    id: 'F16-015',
     empId: 'TF00912',
     empName: 'Priya Sharma',
     department: 'Engineering',
@@ -282,23 +297,52 @@ const INITIAL_RECORDS: Form16Record[] = [
     uploadedBy: 'HR Admin'
   },
   {
-    id: 'F16-015',
+    id: 'F16-016',
+    empId: 'SU00234',
+    empName: 'Neha Kapoor',
+    department: 'Design',
+    pan: 'CDENK9012H',
+    financialYear: '2022-23',
+    assessmentYear: '2023-24',
+    status: 'Pending',
+    grossSalary: 950000,
+    tdsDeducted: 42000,
+    uploadedAt: '-',
+    uploadedBy: '-'
+  },
+  {
+    id: 'F16-017',
+    empId: 'GL87890',
+    empName: 'Rohan Desai',
+    department: 'Marketing',
+    pan: 'DERD3456J',
+    financialYear: '2022-23',
+    assessmentYear: '2023-24',
+    status: 'Published',
+    partAFileName: 'Form16_PartA_DERD3456J_2022-23.pdf',
+    partBFileName: 'Form16_PartB_DERD3456J_2022-23.pdf',
+    grossSalary: 1250000,
+    tdsDeducted: 75000,
+    uploadedAt: '08 Jun 2023, 11:20 AM',
+    uploadedBy: 'HR Admin'
+  },
+  {
+    id: 'F16-018',
     empId: 'AC94567',
     empName: 'Arjun Mehta',
     department: 'Product',
     pan: 'BCDAM5678G',
     financialYear: '2022-23',
     assessmentYear: '2023-24',
-    status: 'Uploaded',
-    partAFileName: 'Form16_PartA_BCDAM5678G_2022-23.pdf',
-    partBFileName: 'Form16_PartB_BCDAM5678G_2022-23.pdf',
+    status: 'Failed',
+    failureReason: 'PAN missing in profile',
     grossSalary: 1800000,
     tdsDeducted: 185000,
     uploadedAt: '08 Jun 2023, 10:15 AM',
-    uploadedBy: 'HR Admin'
+    uploadedBy: 'System'
   },
   {
-    id: 'F16-016',
+    id: 'F16-019',
     empId: 'TF00561',
     empName: 'Siddharth Rao',
     department: 'Engineering',
@@ -314,9 +358,10 @@ const INITIAL_RECORDS: Form16Record[] = [
     uploadedBy: 'HR Admin',
     businessUnit: 'CollabCRM'
   },
+
   // 300 Minds Records
   {
-    id: 'F16-017',
+    id: 'F16-020',
     empId: 'TM00101',
     empName: 'Karan Mehra',
     department: 'Engineering',
@@ -333,7 +378,7 @@ const INITIAL_RECORDS: Form16Record[] = [
     businessUnit: '300 Minds'
   },
   {
-    id: 'F16-018',
+    id: 'F16-021',
     empId: 'TM00102',
     empName: 'Shruti Sen',
     department: 'Operations',
@@ -347,9 +392,43 @@ const INITIAL_RECORDS: Form16Record[] = [
     uploadedBy: '-',
     businessUnit: '300 Minds'
   },
+  {
+    id: 'F16-022',
+    empId: 'TM00103',
+    empName: 'Amit Shah',
+    department: 'Finance',
+    pan: 'AMSH9012C',
+    financialYear: '2024-25',
+    assessmentYear: '2025-26',
+    status: 'Published',
+    partAFileName: 'Form16_PartA_AMSH9012C_2024-25.pdf',
+    partBFileName: 'Form16_PartB_AMSH9012C_2024-25.pdf',
+    grossSalary: 1750000,
+    tdsDeducted: 135000,
+    uploadedAt: '12 Jun 2025, 12:30 PM',
+    uploadedBy: 'HR Admin',
+    businessUnit: '300 Minds'
+  },
+  {
+    id: 'F16-023',
+    empId: 'TM00104',
+    empName: 'Deepa Nair',
+    department: 'Marketing',
+    pan: 'DPNR3456D',
+    financialYear: '2024-25',
+    assessmentYear: '2025-26',
+    status: 'Failed',
+    failureReason: 'PAN not matching with the profile.',
+    grossSalary: 1450000,
+    tdsDeducted: 92000,
+    uploadedAt: '14 Jun 2025, 04:10 PM',
+    uploadedBy: 'System',
+    businessUnit: '300 Minds'
+  },
+
   // MindInventory Records
   {
-    id: 'F16-019',
+    id: 'F16-024',
     empId: 'MI00201',
     empName: 'Aditya Roy',
     department: 'Design',
@@ -365,9 +444,58 @@ const INITIAL_RECORDS: Form16Record[] = [
     uploadedBy: 'HR Admin',
     businessUnit: 'MindInventory'
   },
+  {
+    id: 'F16-025',
+    empId: 'MI00202',
+    empName: 'Pooja Verma',
+    department: 'Human Resources',
+    pan: 'PJVR5678E',
+    financialYear: '2024-25',
+    assessmentYear: '2025-26',
+    status: 'Pending',
+    grossSalary: 1250000,
+    tdsDeducted: 72000,
+    uploadedAt: '-',
+    uploadedBy: '-',
+    businessUnit: 'MindInventory'
+  },
+  {
+    id: 'F16-026',
+    empId: 'MI00203',
+    empName: 'Manish Joshi',
+    department: 'Engineering',
+    pan: 'MNJS1234F',
+    financialYear: '2024-25',
+    assessmentYear: '2025-26',
+    status: 'Published',
+    partAFileName: 'Form16_PartA_MNJS1234F_2024-25.pdf',
+    partBFileName: 'Form16_PartB_MNJS1234F_2024-25.pdf',
+    grossSalary: 2350000,
+    tdsDeducted: 260000,
+    uploadedAt: '13 Jun 2025, 11:15 AM',
+    uploadedBy: 'HR Admin',
+    businessUnit: 'MindInventory'
+  },
+  {
+    id: 'F16-027',
+    empId: 'MI00204',
+    empName: 'Sneha Patil',
+    department: 'Operations',
+    pan: 'SNPT7890G',
+    financialYear: '2024-25',
+    assessmentYear: '2025-26',
+    status: 'Failed',
+    failureReason: 'PAN missing in profile',
+    grossSalary: 1150000,
+    tdsDeducted: 58000,
+    uploadedAt: '14 Jun 2025, 02:40 PM',
+    uploadedBy: 'System',
+    businessUnit: 'MindInventory'
+  },
+
   // BlueWhale Tech Records
   {
-    id: 'F16-020',
+    id: 'F16-028',
     empId: 'BW00301',
     empName: 'Tanvi Nair',
     department: 'Quality Assurance',
@@ -381,6 +509,54 @@ const INITIAL_RECORDS: Form16Record[] = [
     tdsDeducted: 110000,
     uploadedAt: '13 Jun 2025, 03:20 PM',
     uploadedBy: 'HR Admin',
+    businessUnit: 'BlueWhale Tech'
+  },
+  {
+    id: 'F16-029',
+    empId: 'BW00302',
+    empName: 'Vivek Sharma',
+    department: 'Engineering',
+    pan: 'VKSH7890H',
+    financialYear: '2024-25',
+    assessmentYear: '2025-26',
+    status: 'Pending',
+    grossSalary: 1400000,
+    tdsDeducted: 88000,
+    uploadedAt: '-',
+    uploadedBy: '-',
+    businessUnit: 'BlueWhale Tech'
+  },
+  {
+    id: 'F16-030',
+    empId: 'BW00303',
+    empName: 'Ritu Sen',
+    department: 'Sales',
+    pan: 'RTSN1234J',
+    financialYear: '2024-25',
+    assessmentYear: '2025-26',
+    status: 'Published',
+    partAFileName: 'Form16_PartA_RTSN1234J_2024-25.pdf',
+    partBFileName: 'Form16_PartB_RTSN1234J_2024-25.pdf',
+    grossSalary: 1850000,
+    tdsDeducted: 155000,
+    uploadedAt: '13 Jun 2025, 03:45 PM',
+    uploadedBy: 'HR Admin',
+    businessUnit: 'BlueWhale Tech'
+  },
+  {
+    id: 'F16-031',
+    empId: 'BW00304',
+    empName: 'Deepak Rao',
+    department: 'Finance',
+    pan: 'DPKR5678K',
+    financialYear: '2024-25',
+    assessmentYear: '2025-26',
+    status: 'Failed',
+    failureReason: 'No file found for this PAN number.',
+    grossSalary: 1300000,
+    tdsDeducted: 74000,
+    uploadedAt: '14 Jun 2025, 05:00 PM',
+    uploadedBy: 'System',
     businessUnit: 'BlueWhale Tech'
   }
 ];
@@ -485,6 +661,11 @@ export const UploadForm16: React.FC = () => {
   const [previewRecord, setPreviewRecord] = useState<Form16Record | null>(null);
   const [downloadRecord, setDownloadRecord] = useState<Form16Record | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Publish Form-16 Modal State
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  const [selectedForPublish, setSelectedForPublish] = useState<string[]>([]);
+  const [publishSearchTerm, setPublishSearchTerm] = useState('');
 
   // Bulk Upload State
   const [bulkModalStep, setBulkModalStep] = useState<1 | 2>(1);
@@ -594,7 +775,7 @@ export const UploadForm16: React.FC = () => {
 
   const getOptionsForField = (field: string) => {
     if (field === 'Status') {
-      return ['Uploaded', 'Pending'];
+      return ['Published', 'Uploaded', 'Pending', 'Failed'];
     }
     if (field === 'Financial Year') {
       return ['2024-25', '2023-24', '2022-23', '2021-22'];
@@ -736,13 +917,16 @@ export const UploadForm16: React.FC = () => {
     return filteredRecords.slice(start, start + itemsPerPage);
   }, [filteredRecords, currentPage]);
 
-  // Statistics Calculations (3 Cards)
+  // Statistics Calculations (4 Cards)
   const stats = useMemo(() => {
-    const buCounts: Record<string, { totalEmployees: number; uploadedCount: number; pendingCount: number }> = {
-      'CollabCRM': { totalEmployees: 1842, uploadedCount: 1633, pendingCount: 209 },
-      '300 Minds': { totalEmployees: 480, uploadedCount: 425, pendingCount: 55 },
-      'MindInventory': { totalEmployees: 430, uploadedCount: 381, pendingCount: 49 },
-      'BlueWhale Tech': { totalEmployees: 290, uploadedCount: 258, pendingCount: 32 },
+    const buCounts: Record<
+      string,
+      { totalEmployees: number; uploadedCount: number; pendingCount: number; failedCount: number }
+    > = {
+      'CollabCRM': { totalEmployees: 1842, uploadedCount: 1633, pendingCount: 197, failedCount: 12 },
+      '300 Minds': { totalEmployees: 480, uploadedCount: 425, pendingCount: 50, failedCount: 5 },
+      'MindInventory': { totalEmployees: 430, uploadedCount: 381, pendingCount: 45, failedCount: 4 },
+      'BlueWhale Tech': { totalEmployees: 290, uploadedCount: 258, pendingCount: 29, failedCount: 3 },
     };
 
     if (selectedBUs.length === 1 && buCounts[selectedBUs[0]]) {
@@ -753,18 +937,21 @@ export const UploadForm16: React.FC = () => {
       return {
         totalEmployees: 1842,
         uploadedCount: 1633,
-        pendingCount: 209
+        pendingCount: 197,
+        failedCount: 12
       };
     }
 
     const total = selectedBUs.reduce((acc, bu) => acc + (buCounts[bu]?.totalEmployees || 0), 0) || 1842;
     const uploadedCount = selectedBUs.reduce((acc, bu) => acc + (buCounts[bu]?.uploadedCount || 0), 0) || 1633;
-    const pendingCount = total - uploadedCount;
+    const failedCount = selectedBUs.reduce((acc, bu) => acc + (buCounts[bu]?.failedCount || 0), 0) || 12;
+    const pendingCount = Math.max(0, total - uploadedCount - failedCount);
 
     return {
       totalEmployees: total,
       uploadedCount: uploadedCount,
-      pendingCount: pendingCount
+      pendingCount: pendingCount,
+      failedCount: failedCount
     };
   }, [selectedBUs]);
 
@@ -905,15 +1092,20 @@ export const UploadForm16: React.FC = () => {
             }
           } else {
             // Error in mapping
-            if (!alreadyHasForm16) {
-              return {
-                ...r,
-                status: 'Pending' as const,
-                uploadedAt: r.uploadedAt === '-' || !r.uploadedAt ? 'Pending Upload' : r.uploadedAt,
-                uploadedBy: r.uploadedBy === '-' || !r.uploadedBy ? 'System' : r.uploadedBy
-              };
-            }
-            return r;
+            const reason =
+              mappedItem.status === 'PAN_MISSING_PROFILE'
+                ? 'PAN missing in profile'
+                : mappedItem.status === 'PAN_MISSING_FILE'
+                ? 'No file found for this PAN number.'
+                : 'PAN not matching with the profile.';
+
+            return {
+              ...r,
+              status: 'Failed' as const,
+              failureReason: reason,
+              uploadedAt: 'Just now',
+              uploadedBy: 'System'
+            };
           }
         }
         return r;
@@ -922,6 +1114,78 @@ export const UploadForm16: React.FC = () => {
 
     const successCount = mappingRecords.filter((m) => m.status === 'MATCHED').length;
     showToast(`Form-16 successfully pushed to ${successCount} employees' accounts!`);
+  };
+
+  // Publish Form-16 Helpers & Handlers
+  const publishActiveFY = useMemo(() => {
+    if (selectedFYs.length >= 1) return selectedFYs[0];
+    return '2024-25';
+  }, [selectedFYs]);
+
+  const publishModalRecords = useMemo(() => {
+    return records.filter((r) => r.financialYear === publishActiveFY);
+  }, [records, publishActiveFY]);
+
+  const filteredPublishModalRecords = useMemo(() => {
+    if (!publishSearchTerm.trim()) return publishModalRecords;
+    const q = publishSearchTerm.toLowerCase();
+    return publishModalRecords.filter(
+      (r) =>
+        r.empName.toLowerCase().includes(q) ||
+        r.empId.toLowerCase().includes(q) ||
+        r.pan.toLowerCase().includes(q) ||
+        r.department.toLowerCase().includes(q)
+    );
+  }, [publishModalRecords, publishSearchTerm]);
+
+  const eligiblePublishRecords = useMemo(() => {
+    return publishModalRecords.filter((r) => r.status === 'Uploaded');
+  }, [publishModalRecords]);
+
+  const isAllEligibleSelected =
+    eligiblePublishRecords.length > 0 &&
+    eligiblePublishRecords.every((r) => selectedForPublish.includes(r.id));
+
+  const toggleSelectAllEligible = () => {
+    if (isAllEligibleSelected) {
+      setSelectedForPublish([]);
+    } else {
+      setSelectedForPublish(eligiblePublishRecords.map((r) => r.id));
+    }
+  };
+
+  const toggleEmployeePublish = (id: string) => {
+    setSelectedForPublish((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleOpenPublishModal = () => {
+    const eligibleRecords = publishModalRecords.filter((r) => r.status === 'Uploaded');
+    setSelectedForPublish(eligibleRecords.map((r) => r.id));
+    setPublishSearchTerm('');
+    setIsPublishModalOpen(true);
+  };
+
+  const handlePublishSubmit = () => {
+    if (selectedForPublish.length === 0) return;
+    const count = selectedForPublish.length;
+
+    setRecords((prev) =>
+      prev.map((r) =>
+        selectedForPublish.includes(r.id)
+          ? {
+              ...r,
+              status: 'Published' as const,
+              uploadedAt: 'Just now',
+              uploadedBy: 'HR Admin (Published)'
+            }
+          : r
+      )
+    );
+
+    setIsPublishModalOpen(false);
+    showToast(`Form-16 published successfully for ${count} employee${count > 1 ? 's' : ''}!`);
   };
 
   return (
@@ -1115,24 +1379,23 @@ export const UploadForm16: React.FC = () => {
           </div>
         </div>
 
-        {/* 3 Statistics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+        {/* 4 Statistics Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
           {/* Card 1: Total Employees */}
           <div className="bg-gradient-to-br from-blue-50/70 to-indigo-50/40 p-4 rounded-2xl border border-blue-100/80 shadow-sm flex items-center justify-between">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-blue-700/80">Total Employees</p>
               <p className="text-2xl font-black text-slate-900 mt-1">{(stats.totalEmployees ?? 1842).toLocaleString()}</p>
-              <p className="text-[10px] font-semibold text-slate-500 mt-0.5">Eligible for Form-16</p>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-blue-100/80 text-blue-700 flex items-center justify-center font-bold">
               <Users size={22} />
             </div>
           </div>
 
-          {/* Card 2: Form-16 Uploaded */}
+          {/* Card 2: Success */}
           <div className="bg-gradient-to-br from-emerald-50/70 to-teal-50/40 p-4 rounded-2xl border border-emerald-100/80 shadow-sm flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700/80">Form-16 Uploaded</p>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700/80">Success</p>
               <p className="text-2xl font-black text-slate-900 mt-1">{(stats.uploadedCount ?? 1633).toLocaleString()}</p>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-emerald-100/80 text-emerald-700 flex items-center justify-center font-bold">
@@ -1140,14 +1403,25 @@ export const UploadForm16: React.FC = () => {
             </div>
           </div>
 
-          {/* Card 3: Pending Uploads */}
+          {/* Card 3: Pending */}
           <div className="bg-gradient-to-br from-amber-50/70 to-orange-50/40 p-4 rounded-2xl border border-amber-100/80 shadow-sm flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-amber-700/80">Pending Uploads</p>
-              <p className="text-2xl font-black text-slate-900 mt-1">{(stats.pendingCount ?? 209).toLocaleString()}</p>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-amber-700/80">Pending</p>
+              <p className="text-2xl font-black text-slate-900 mt-1">{(stats.pendingCount ?? 197).toLocaleString()}</p>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-amber-100/80 text-amber-700 flex items-center justify-center font-bold">
               <AlertCircle size={22} />
+            </div>
+          </div>
+
+          {/* Card 4: Failed */}
+          <div className="bg-gradient-to-br from-rose-50/70 to-red-50/40 p-4 rounded-2xl border border-rose-100/80 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-rose-700/80">Failed</p>
+              <p className="text-2xl font-black text-slate-900 mt-1">{(stats.failedCount ?? 12).toLocaleString()}</p>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-rose-100/80 text-rose-700 flex items-center justify-center font-bold">
+              <AlertTriangle size={22} />
             </div>
           </div>
         </div>
@@ -1177,6 +1451,15 @@ export const UploadForm16: React.FC = () => {
               >
                 <FileArchive size={17} />
                 Upload Form-16
+              </button>
+
+              {/* Publish Form-16 */}
+              <button
+                onClick={handleOpenPublishModal}
+                className="px-5 py-2 bg-emerald-600 text-white font-bold text-sm rounded-lg hover:bg-emerald-700 shadow-md shadow-emerald-100 transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <Send size={16} />
+                Publish Form-16
               </button>
             </div>
           </div>
@@ -1431,6 +1714,7 @@ export const UploadForm16: React.FC = () => {
               <thead>
                 <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                   <th className="py-4 px-6">Employee</th>
+                  <th className="py-4 px-4">PAN Number</th>
                   <th className="py-4 px-4">Financial Year</th>
                   <th className="py-4 px-4">Assessment Year</th>
                   <th className="py-4 px-4 text-center">Status</th>
@@ -1441,7 +1725,7 @@ export const UploadForm16: React.FC = () => {
               <tbody className="divide-y divide-slate-100 text-xs">
                 {paginatedRecords.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-slate-400">
+                    <td colSpan={7} className="py-12 text-center text-slate-400">
                       <div className="flex flex-col items-center justify-center gap-2">
                         <FileText size={36} className="text-slate-300" />
                         <p className="font-bold text-sm text-slate-600">No Form-16 records found</p>
@@ -1468,6 +1752,11 @@ export const UploadForm16: React.FC = () => {
                         </div>
                       </td>
 
+                      {/* PAN Number */}
+                      <td className="py-4 px-4">
+                        <span className="font-semibold text-slate-700 text-xs font-mono">{row.pan}</span>
+                      </td>
+
                       {/* Financial Year */}
                       <td className="py-4 px-4">
                         <span className="font-bold text-slate-800 text-xs">{row.financialYear}</span>
@@ -1480,13 +1769,45 @@ export const UploadForm16: React.FC = () => {
 
                       {/* Status */}
                       <td className="py-4 px-4 text-center">
-                        {row.status === 'Uploaded' ? (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-bold text-[11px]">
+                        {row.status === 'Published' ? (
+                          <span
+                            className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-bold text-[11px] cursor-help"
+                            title="Employee ke account mein dikh raha hai"
+                          >
                             <CheckCircle2 size={13} className="text-emerald-600" />
+                            Published
+                          </span>
+                        ) : row.status === 'Uploaded' ? (
+                          <span
+                            className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full font-bold text-[11px] cursor-help"
+                            title="Upload ho gaya, par employee ko abhi dikhta nahi"
+                          >
+                            <CheckCircle2 size={13} className="text-blue-600" />
                             Uploaded
                           </span>
+                        ) : row.status === 'Failed' ? (
+                          <div className="flex flex-col items-center gap-1.5 py-0.5">
+                            <span
+                              className="inline-flex items-center gap-1.5 px-3 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-full font-bold text-[11px]"
+                              title={row.failureReason ? `Upload failed: ${row.failureReason}` : 'Upload failed'}
+                            >
+                              <AlertTriangle size={12} className="text-rose-600 shrink-0" />
+                              Failed
+                            </span>
+                            {row.failureReason && (
+                              <span
+                                className="text-[10px] font-semibold text-rose-600 bg-rose-50/80 border border-rose-100 rounded-md px-2 py-0.5 text-center leading-snug max-w-[210px]"
+                                title={`Reason: ${row.failureReason}`}
+                              >
+                                {row.failureReason}
+                              </span>
+                            )}
+                          </div>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full font-bold text-[11px]">
+                          <span
+                            className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full font-bold text-[11px] cursor-help"
+                            title="Form-16 abhi upload nahi hua"
+                          >
                             <AlertCircle size={13} className="text-amber-600" />
                             Pending
                           </span>
@@ -1947,7 +2268,22 @@ export const UploadForm16: React.FC = () => {
                           <div className="flex items-center gap-3 mt-6">
                             <button
                               type="button"
-                              onClick={() => setShowErrorModal(true)}
+                              onClick={() => {
+                                setIsBulkUploadModalOpen(false);
+                                setBulkModalStep(1);
+                                setBulkFile(null);
+                                setCompletedFilters([
+                                  {
+                                    id: 'status-failed-filter',
+                                    field: 'Status',
+                                    operator: 'Is',
+                                    values: ['Failed']
+                                  }
+                                ]);
+                                setCurrentPage(1);
+                                setSearchTerm('');
+                                showToast('Filtered records by Status: Failed');
+                              }}
                               className="w-full py-2.5 px-4 bg-indigo-50/70 hover:bg-indigo-100 text-[#444CE7] border border-indigo-100 text-xs font-bold rounded-lg transition-all cursor-pointer text-center whitespace-nowrap"
                             >
                               View Error Messages
@@ -2005,7 +2341,22 @@ export const UploadForm16: React.FC = () => {
                           <div className="flex flex-col gap-2 mt-4">
                             <button
                               type="button"
-                              onClick={() => setShowErrorModal(true)}
+                              onClick={() => {
+                                setIsBulkUploadModalOpen(false);
+                                setBulkModalStep(1);
+                                setBulkFile(null);
+                                setCompletedFilters([
+                                  {
+                                    id: 'status-failed-filter',
+                                    field: 'Status',
+                                    operator: 'Is',
+                                    values: ['Failed']
+                                  }
+                                ]);
+                                setCurrentPage(1);
+                                setSearchTerm('');
+                                showToast('Filtered records by Status: Failed');
+                              }}
                               className="w-full py-2 px-3 bg-indigo-50/70 hover:bg-indigo-100 text-[#444CE7] border border-indigo-100 text-xs font-bold rounded-lg transition-all cursor-pointer text-center"
                             >
                               View Error Messages
@@ -2061,7 +2412,7 @@ export const UploadForm16: React.FC = () => {
                       }}
                       className="px-5 py-2.5 border border-slate-200 text-slate-600 font-bold text-sm rounded-lg hover:bg-white transition-all cursor-pointer shadow-xs"
                     >
-                      Cancel
+                      Close
                     </button>
                     <button
                       type="button"
@@ -2259,26 +2610,13 @@ export const UploadForm16: React.FC = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-100 bg-slate-50/80 flex items-center justify-between gap-3">
+            <div className="p-4 border-t border-slate-100 bg-slate-50/80 flex items-center justify-end">
               <button
                 type="button"
                 onClick={() => setDownloadRecord(null)}
-                className="px-4 py-2 border border-slate-200 text-slate-600 font-bold text-xs rounded-lg hover:bg-white transition-all cursor-pointer"
+                className="px-5 py-2 border border-slate-200 text-slate-600 font-bold text-xs rounded-lg hover:bg-white transition-all cursor-pointer shadow-xs"
               >
                 Cancel
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  const emp = downloadRecord.empName;
-                  await downloadForm16BothZip(downloadRecord);
-                  setDownloadRecord(null);
-                  showToast(`Downloaded Form-16 (Part A & B) ZIP for ${emp}`);
-                }}
-                style={{ backgroundColor: '#444CE7' }}
-                className="px-4 py-2 bg-[#444CE7] hover:bg-[#3538CD] text-white font-bold text-xs rounded-lg shadow-sm hover:shadow transition-all flex items-center gap-1.5 cursor-pointer"
-              >
-                <Download size={13} /> Download Both (Part A & B)
               </button>
             </div>
           </div>
@@ -2358,31 +2696,7 @@ export const UploadForm16: React.FC = () => {
                   Supported format: .PDF • Max file size: 2MB
                 </p>
               </div>
-
-              {/* OR Divider */}
-              <div className="relative flex items-center justify-center my-1">
-                <div className="border-t border-slate-200 w-full" />
-                <span className="bg-white px-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider absolute">
-                  OR
-                </span>
               </div>
-
-              {/* Upload ZIP Block */}
-              <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-slate-800">Form-16 (ZIP File)</span>
-                </div>
-                <input
-                  type="file"
-                  accept=".zip"
-                  onChange={(e) => setSingleZipFile(e.target.files?.[0] || null)}
-                  className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
-                />
-                <p className="text-[11px] text-slate-400 mt-1.5 font-medium">
-                  Supported format: .ZIP • Max file size: 5MB
-                </p>
-              </div>
-            </div>
 
             <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-3">
               <button
@@ -2476,15 +2790,26 @@ export const UploadForm16: React.FC = () => {
                       <p className="text-[11px] text-slate-400">Available on Employee Portal</p>
                     </div>
                   </div>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-bold border ${
-                      previewRecord.status === 'Uploaded'
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        : 'bg-amber-50 text-amber-700 border-amber-200'
-                    }`}
-                  >
-                    {previewRecord.status}
-                  </span>
+                  <div className="flex flex-col items-end gap-1">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                        previewRecord.status === 'Published'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : previewRecord.status === 'Uploaded'
+                          ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : previewRecord.status === 'Failed'
+                          ? 'bg-rose-50 text-rose-700 border-rose-200'
+                          : 'bg-amber-50 text-amber-700 border-amber-200'
+                      }`}
+                    >
+                      {previewRecord.status}
+                    </span>
+                    {previewRecord.status === 'Failed' && previewRecord.failureReason && (
+                      <span className="text-[10.5px] font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-md px-2 py-0.5 max-w-[240px] text-right">
+                        {previewRecord.failureReason}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -2511,6 +2836,230 @@ export const UploadForm16: React.FC = () => {
                   <Download size={14} /> Download PDF
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 4: Publish Form-16 Dialog */}
+      {isPublishModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-3xl w-full border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 shadow-xs">
+                  <Send size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-800">
+                    Publish Form-16 for FY {publishActiveFY}
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Select employees to publish Form-16. Only employees with successfully uploaded Form-16 can be selected.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPublishModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Filter / Search Bar */}
+            <div className="px-6 py-3.5 bg-slate-50/40 border-b border-slate-100 flex items-center justify-end">
+              <div className="relative w-full sm:w-64">
+                <input
+                  type="text"
+                  placeholder="Search employee or PAN..."
+                  value={publishSearchTerm}
+                  onChange={(e) => setPublishSearchTerm(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                />
+                <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="overflow-y-auto max-h-[50vh] p-6">
+              <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xs">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <tr>
+                      <th className="py-3 px-4 w-12 text-center">
+                        <input
+                          type="checkbox"
+                          checked={isAllEligibleSelected}
+                          onChange={toggleSelectAllEligible}
+                          disabled={eligiblePublishRecords.length === 0}
+                          className="w-4 h-4 rounded text-emerald-600 border-slate-300 focus:ring-emerald-500 cursor-pointer disabled:opacity-40"
+                          title="Select / Unselect all eligible employees"
+                        />
+                      </th>
+                      <th className="py-3 px-4">Employee</th>
+                      <th className="py-3 px-4">PAN Number</th>
+                      <th className="py-3 px-4 text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredPublishModalRecords.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="py-8 text-center text-slate-400">
+                          No employees found for FY {publishActiveFY}
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredPublishModalRecords.map((row) => {
+                        const isEligible = row.status === 'Uploaded';
+                        const isPublished = row.status === 'Published';
+                        const isChecked = selectedForPublish.includes(row.id);
+
+                        return (
+                          <tr
+                            key={row.id}
+                            className={`transition-colors ${
+                              isEligible
+                                ? 'hover:bg-slate-50/80 cursor-pointer'
+                                : 'bg-slate-50/30'
+                            }`}
+                            onClick={() => {
+                              if (isEligible) {
+                                toggleEmployeePublish(row.id);
+                              }
+                            }}
+                          >
+                            <td
+                              className="py-3.5 px-4 text-center"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {isEligible ? (
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={() => toggleEmployeePublish(row.id)}
+                                  className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                                  title="Select to publish Form-16"
+                                />
+                              ) : (
+                                <div className="relative inline-flex items-center justify-center group/tip cursor-not-allowed">
+                                  <input
+                                    type="checkbox"
+                                    checked={false}
+                                    disabled
+                                    className="w-4 h-4 rounded border-slate-300 opacity-30 cursor-not-allowed bg-slate-100 pointer-events-none"
+                                  />
+                                  {/* Custom Tooltip on hover: positioned to the right of the checkbox with arrow pointing left */}
+                                  <div className="absolute left-full ml-2.5 top-1/2 -translate-y-1/2 hidden group-hover/tip:flex items-center pointer-events-none z-[60] animate-in fade-in zoom-in-95 duration-150">
+                                    <div
+                                      className="w-1.5 h-2.5 bg-slate-900 -mr-[1px] shrink-0"
+                                      style={{ clipPath: 'polygon(100% 0, 0 50%, 100% 100%)' }}
+                                    />
+                                    <div className="bg-slate-900 text-white text-[11px] font-semibold py-1 px-2.5 rounded-md shadow-2xl whitespace-nowrap">
+                                      {row.status === 'Pending'
+                                        ? 'Form-16 not available for this employee.'
+                                        : row.status === 'Published'
+                                        ? 'Form-16 already published for this employee.'
+                                        : row.failureReason
+                                        ? `Upload failed: ${row.failureReason}`
+                                        : 'Form-16 not available for this employee.'}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center gap-2.5">
+                                <div
+                                  className={`w-7 h-7 rounded-full text-white flex items-center justify-center font-bold text-[10px] ${
+                                    isPublished
+                                      ? 'bg-emerald-500'
+                                      : isEligible
+                                      ? 'bg-blue-500'
+                                      : row.status === 'Failed'
+                                      ? 'bg-rose-400'
+                                      : 'bg-slate-400'
+                                  }`}
+                                >
+                                  {row.empName
+                                    .split(' ')
+                                    .map((n) => n[0])
+                                    .join('')}
+                                </div>
+                                <div>
+                                  <p className={`font-bold text-xs ${isEligible ? 'text-slate-900' : 'text-slate-600'}`}>
+                                    {row.empName}
+                                  </p>
+                                  <p className="text-[10px] text-slate-400 font-medium">{row.empId}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-3.5 px-4 font-mono font-semibold text-slate-700 text-xs">
+                              {row.pan}
+                            </td>
+                            <td className="py-3.5 px-4 text-center">
+                              {isPublished ? (
+                                <span
+                                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-bold text-[10px]"
+                                  title="Employee ke account mein dikh raha hai"
+                                >
+                                  <CheckCircle2 size={11} className="text-emerald-600" />
+                                  Published
+                                </span>
+                              ) : isEligible ? (
+                                <span
+                                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-full font-bold text-[10px]"
+                                  title="Upload ho gaya, par employee ko abhi dikhta nahi"
+                                >
+                                  <CheckCircle2 size={11} className="text-blue-600" />
+                                  Uploaded
+                                </span>
+                              ) : row.status === 'Failed' ? (
+                                <span
+                                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-full font-bold text-[10px]"
+                                  title={row.failureReason ? `Upload error: ${row.failureReason}` : 'Upload mein error aaya'}
+                                >
+                                  <AlertTriangle size={11} className="text-rose-600" />
+                                  Failed
+                                </span>
+                              ) : (
+                                <span
+                                  className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-full font-bold text-[10px]"
+                                  title="Form-16 not available for this employee."
+                                >
+                                  <AlertCircle size={11} className="text-amber-600" />
+                                  Pending
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsPublishModalOpen(false)}
+                className="px-5 py-2.5 border border-slate-200 text-slate-600 font-bold text-sm rounded-lg hover:bg-white transition-all cursor-pointer shadow-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={selectedForPublish.length === 0}
+                onClick={handlePublishSubmit}
+                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm rounded-lg shadow-md shadow-emerald-100 transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <Send size={15} /> Publish
+              </button>
             </div>
           </div>
         </div>
