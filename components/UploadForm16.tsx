@@ -2555,9 +2555,6 @@ export const UploadForm16: React.FC = () => {
                     <p className="text-[11px] text-slate-500 leading-tight mt-0.5">
                       TRACES TDS Certificate & Tax Deduction Details
                     </p>
-                    <span className="inline-block mt-1 text-[10px] font-mono text-slate-400 truncate max-w-[200px]">
-                      {downloadRecord.partAFileName || `Form16_PartA_${downloadRecord.pan}_${downloadRecord.financialYear}.pdf`}
-                    </span>
                   </div>
                 </div>
                 <button
@@ -2588,9 +2585,6 @@ export const UploadForm16: React.FC = () => {
                     <p className="text-[11px] text-slate-500 leading-tight mt-0.5">
                       Salary Breakdown, Exemptions & Tax Computations
                     </p>
-                    <span className="inline-block mt-1 text-[10px] font-mono text-slate-400 truncate max-w-[200px]">
-                      {downloadRecord.partBFileName || `Form16_PartB_${downloadRecord.pan}_${downloadRecord.financialYear}.pdf`}
-                    </span>
                   </div>
                 </div>
                 <button
