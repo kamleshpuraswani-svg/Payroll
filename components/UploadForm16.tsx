@@ -1094,9 +1094,9 @@ export const UploadForm16: React.FC = () => {
             } else {
               return {
                 ...r,
-                status: 'Ready to Publish' as const,
+                status: 'Published' as const,
                 uploadedAt: 'Just now',
-                uploadedBy: 'HR Admin (Bulk)'
+                uploadedBy: 'HR Admin (Published)'
               };
             }
           } else {
@@ -1122,7 +1122,7 @@ export const UploadForm16: React.FC = () => {
     );
 
     const successCount = mappingRecords.filter((m) => m.status === 'MATCHED').length;
-    showToast(`Form-16 successfully pushed to ${successCount} employees' accounts!`);
+    showToast(`Form-16 successfully published to ${successCount} employees' accounts!`);
   };
 
   // Publish Form-16 Helpers & Handlers
@@ -2441,13 +2441,13 @@ export const UploadForm16: React.FC = () => {
                     >
                       <RotateCcw size={15} /> Start Again
                     </button>
-                    {importSummary.failureCount === 0 && (
+                    {importSummary.successCount > 0 && (
                       <button
                         type="button"
                         onClick={handleConfirmMappingUpload}
                         className="px-6 py-2.5 bg-indigo-600 text-white font-bold text-sm rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all flex items-center gap-2 cursor-pointer"
                       >
-                        <Send size={15} /> Push to Employee's account
+                        <Send size={15} /> Publish to Employee's account
                       </button>
                     )}
                   </div>
