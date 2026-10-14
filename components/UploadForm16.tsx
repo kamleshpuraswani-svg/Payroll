@@ -43,7 +43,7 @@ interface Form16Record {
   pan: string;
   financialYear: string;
   assessmentYear: string;
-  status: 'Uploaded' | 'Pending' | 'Published' | 'Failed';
+  status: 'Ready to Publish' | 'Pending' | 'Published' | 'Failed';
   failureReason?: string;
   partAFileName?: string;
   partBFileName?: string;
@@ -57,7 +57,7 @@ interface Form16Record {
 const BUSINESS_UNITS_LIST = ['CollabCRM', '300 Minds', 'MindInventory', 'BlueWhale Tech'];
 
 const INITIAL_RECORDS: Form16Record[] = [
-  // FY 2024-25 Records (Top 6 rows contain Uploaded, Pending, Published, and all 3 Failed reasons)
+  // FY 2024-25 Records (Top 6 rows contain Ready to Publish, Pending, Published, and all 3 Failed reasons)
   {
     id: 'F16-001',
     empId: 'TF00912',
@@ -66,7 +66,7 @@ const INITIAL_RECORDS: Form16Record[] = [
     pan: 'ABCPS1234F',
     financialYear: '2024-25',
     assessmentYear: '2025-26',
-    status: 'Uploaded',
+    status: 'Ready to Publish',
     partAFileName: 'Form16_PartA_ABCPS1234F_2024-25.pdf',
     partBFileName: 'Form16_PartB_ABCPS1234F_2024-25.pdf',
     grossSalary: 1850000,
@@ -159,7 +159,7 @@ const INITIAL_RECORDS: Form16Record[] = [
     pan: 'BCDAM5678G',
     financialYear: '2024-25',
     assessmentYear: '2025-26',
-    status: 'Uploaded',
+    status: 'Ready to Publish',
     partAFileName: 'Form16_PartA_BCDAM5678G_2024-25.pdf',
     partBFileName: 'Form16_PartB_BCDAM5678G_2024-25.pdf',
     grossSalary: 2400000,
@@ -191,7 +191,7 @@ const INITIAL_RECORDS: Form16Record[] = [
     pan: 'HJSR0123N',
     financialYear: '2024-25',
     assessmentYear: '2025-26',
-    status: 'Uploaded',
+    status: 'Ready to Publish',
     partAFileName: 'Form16_PartA_HJSR0123N_2024-25.pdf',
     partBFileName: 'Form16_PartB_HJSR0123N_2024-25.pdf',
     grossSalary: 2800000,
@@ -209,7 +209,7 @@ const INITIAL_RECORDS: Form16Record[] = [
     pan: 'ABCPS1234F',
     financialYear: '2023-24',
     assessmentYear: '2024-25',
-    status: 'Uploaded',
+    status: 'Ready to Publish',
     partAFileName: 'Form16_PartA_ABCPS1234F_2023-24.pdf',
     partBFileName: 'Form16_PartB_ABCPS1234F_2023-24.pdf',
     grossSalary: 1600000,
@@ -270,7 +270,7 @@ const INITIAL_RECORDS: Form16Record[] = [
     pan: 'BCDAM5678G',
     financialYear: '2023-24',
     assessmentYear: '2024-25',
-    status: 'Uploaded',
+    status: 'Ready to Publish',
     partAFileName: 'Form16_PartA_BCDAM5678G_2023-24.pdf',
     partBFileName: 'Form16_PartB_BCDAM5678G_2023-24.pdf',
     grossSalary: 2100000,
@@ -288,7 +288,7 @@ const INITIAL_RECORDS: Form16Record[] = [
     pan: 'ABCPS1234F',
     financialYear: '2022-23',
     assessmentYear: '2023-24',
-    status: 'Uploaded',
+    status: 'Ready to Publish',
     partAFileName: 'Form16_PartA_ABCPS1234F_2022-23.pdf',
     partBFileName: 'Form16_PartB_ABCPS1234F_2022-23.pdf',
     grossSalary: 1350000,
@@ -349,7 +349,7 @@ const INITIAL_RECORDS: Form16Record[] = [
     pan: 'HJSR0123N',
     financialYear: '2022-23',
     assessmentYear: '2023-24',
-    status: 'Uploaded',
+    status: 'Ready to Publish',
     partAFileName: 'Form16_PartA_HJSR0123N_2022-23.pdf',
     partBFileName: 'Form16_PartB_HJSR0123N_2022-23.pdf',
     grossSalary: 2300000,
@@ -368,7 +368,7 @@ const INITIAL_RECORDS: Form16Record[] = [
     pan: 'KRME1234A',
     financialYear: '2024-25',
     assessmentYear: '2025-26',
-    status: 'Uploaded',
+    status: 'Ready to Publish',
     partAFileName: 'Form16_PartA_KRME1234A_2024-25.pdf',
     partBFileName: 'Form16_PartB_KRME1234A_2024-25.pdf',
     grossSalary: 2200000,
@@ -435,7 +435,7 @@ const INITIAL_RECORDS: Form16Record[] = [
     pan: 'ADRY9012C',
     financialYear: '2024-25',
     assessmentYear: '2025-26',
-    status: 'Uploaded',
+    status: 'Ready to Publish',
     partAFileName: 'Form16_PartA_ADRY9012C_2024-25.pdf',
     partBFileName: 'Form16_PartB_ADRY9012C_2024-25.pdf',
     grossSalary: 1950000,
@@ -502,7 +502,7 @@ const INITIAL_RECORDS: Form16Record[] = [
     pan: 'TVNR3456D',
     financialYear: '2024-25',
     assessmentYear: '2025-26',
-    status: 'Uploaded',
+    status: 'Ready to Publish',
     partAFileName: 'Form16_PartA_TVNR3456D_2024-25.pdf',
     partBFileName: 'Form16_PartB_TVNR3456D_2024-25.pdf',
     grossSalary: 1650000,
@@ -643,14 +643,14 @@ export const UploadForm16: React.FC = () => {
   const [records, setRecords] = useState<Form16Record[]>(INITIAL_RECORDS);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Financial Year Filter Dropdown State (like Business Unit dropdown)
-  const [selectedFYs, setSelectedFYs] = useState<string[]>(['2024-25']);
+  // Financial Year Filter Dropdown State (Single Select)
+  const [selectedFY, setSelectedFY] = useState<string>('2024-25');
   const [fyDropdownOpen, setFyDropdownOpen] = useState(false);
   const [fySearchQuery, setFySearchQuery] = useState('');
   const fyDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Business Unit Filter Dropdown State
-  const [selectedBUs, setSelectedBUs] = useState<string[]>(['CollabCRM']);
+  // Business Unit Filter Dropdown State (Single Select)
+  const [selectedBU, setSelectedBU] = useState<string>('CollabCRM');
   const [buDropdownOpen, setBuDropdownOpen] = useState(false);
   const [buSearchQuery, setBuSearchQuery] = useState('');
   const buDropdownRef = useRef<HTMLDivElement>(null);
@@ -683,6 +683,12 @@ export const UploadForm16: React.FC = () => {
   const [bulkTargetScope, setBulkTargetScope] = useState<'ALL' | 'PENDING'>('ALL');
 
   useEffect(() => {
+    // Ensure any existing memory state with 'Uploaded' is migrated to 'Ready to Publish'
+    setRecords((prev) =>
+      prev.map((r) =>
+        (r.status as string) === 'Uploaded' ? { ...r, status: 'Ready to Publish' } : r
+      )
+    );
     return () => {
       processingTimersRef.current.forEach(clearTimeout);
     };
@@ -740,20 +746,6 @@ export const UploadForm16: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const toggleFY = (fy: string) => {
-    setSelectedFYs((prev) =>
-      prev.includes(fy) ? prev.filter((item) => item !== fy) : [...prev, fy]
-    );
-    setCurrentPage(1);
-  };
-
-  const toggleBU = (bu: string) => {
-    setSelectedBUs((prev) =>
-      prev.includes(bu) ? prev.filter((item) => item !== bu) : [...prev, bu]
-    );
-    setCurrentPage(1);
-  };
-
   const filteredFyOptions = useMemo(() => {
     return FY_OPTIONS.filter((fy) =>
       fy.toLowerCase().includes(fySearchQuery.toLowerCase())
@@ -766,16 +758,9 @@ export const UploadForm16: React.FC = () => {
     );
   }, [buSearchQuery]);
 
-  const buButtonLabel = useMemo(() => {
-    if (selectedBUs.length === 0) return 'Select Business Unit...';
-    if (selectedBUs.length === BUSINESS_UNITS_LIST.length) return 'All Business Units';
-    if (selectedBUs.length === 1) return selectedBUs[0];
-    return `${selectedBUs.length} Business Units`;
-  }, [selectedBUs]);
-
   const getOptionsForField = (field: string) => {
     if (field === 'Status') {
-      return ['Published', 'Uploaded', 'Pending', 'Failed'];
+      return ['Ready to Publish', 'Pending', 'Published', 'Failed'];
     }
     if (field === 'Financial Year') {
       return ['2024-25', '2023-24', '2022-23', '2021-22'];
@@ -862,15 +847,12 @@ export const UploadForm16: React.FC = () => {
   // Filtered Records based on BU + FY Dropdowns + text search + dynamic filter chips
   const filteredRecords = useMemo(() => {
     return records.filter((r) => {
-      // 1. Business Unit selection filter
-      const matchesBU =
-        selectedBUs.length === 0 ||
-        selectedBUs.length === BUSINESS_UNITS_LIST.length ||
-        (r.businessUnit ? selectedBUs.includes(r.businessUnit) : true);
+      // 1. Business Unit selection filter (Single select)
+      const matchesBU = !selectedBU || (r.businessUnit ? r.businessUnit === selectedBU : selectedBU === 'CollabCRM');
       if (!matchesBU) return false;
 
-      // 2. Financial Year selection filter
-      const matchesFY = selectedFYs.length === 0 || selectedFYs.includes(r.financialYear);
+      // 2. Financial Year selection filter (Single select)
+      const matchesFY = !selectedFY || r.financialYear === selectedFY;
       if (!matchesFY) return false;
 
       // 3. Text search
@@ -909,7 +891,7 @@ export const UploadForm16: React.FC = () => {
 
       return true;
     });
-  }, [records, selectedBUs, selectedFYs, searchTerm, completedFilters]);
+  }, [records, selectedBU, selectedFY, searchTerm, completedFilters]);
 
   const totalPages = Math.ceil(filteredRecords.length / itemsPerPage) || 1;
   const paginatedRecords = useMemo(() => {
@@ -917,43 +899,60 @@ export const UploadForm16: React.FC = () => {
     return filteredRecords.slice(start, start + itemsPerPage);
   }, [filteredRecords, currentPage]);
 
-  // Statistics Calculations (4 Cards)
+  // Statistics Calculations (5 Cards: Total Employees, Ready to Publish, Published, Pending, Failed)
   const stats = useMemo(() => {
     const buCounts: Record<
       string,
-      { totalEmployees: number; uploadedCount: number; pendingCount: number; failedCount: number }
+      {
+        totalEmployees: number;
+        readyToPublishCount: number;
+        publishedCount: number;
+        pendingCount: number;
+        failedCount: number;
+      }
     > = {
-      'CollabCRM': { totalEmployees: 1842, uploadedCount: 1633, pendingCount: 197, failedCount: 12 },
-      '300 Minds': { totalEmployees: 480, uploadedCount: 425, pendingCount: 50, failedCount: 5 },
-      'MindInventory': { totalEmployees: 430, uploadedCount: 381, pendingCount: 45, failedCount: 4 },
-      'BlueWhale Tech': { totalEmployees: 290, uploadedCount: 258, pendingCount: 29, failedCount: 3 },
-    };
-
-    if (selectedBUs.length === 1 && buCounts[selectedBUs[0]]) {
-      return buCounts[selectedBUs[0]];
-    }
-
-    if (selectedBUs.length === 0 || selectedBUs.length === BUSINESS_UNITS_LIST.length) {
-      return {
+      'CollabCRM': {
         totalEmployees: 1842,
-        uploadedCount: 1633,
+        readyToPublishCount: 418,
+        publishedCount: 1215,
         pendingCount: 197,
         failedCount: 12
-      };
+      },
+      '300 Minds': {
+        totalEmployees: 480,
+        readyToPublishCount: 85,
+        publishedCount: 340,
+        pendingCount: 50,
+        failedCount: 5
+      },
+      'MindInventory': {
+        totalEmployees: 430,
+        readyToPublishCount: 71,
+        publishedCount: 310,
+        pendingCount: 45,
+        failedCount: 4
+      },
+      'BlueWhale Tech': {
+        totalEmployees: 290,
+        readyToPublishCount: 48,
+        publishedCount: 210,
+        pendingCount: 29,
+        failedCount: 3
+      },
+    };
+
+    if (selectedBU && buCounts[selectedBU]) {
+      return buCounts[selectedBU];
     }
 
-    const total = selectedBUs.reduce((acc, bu) => acc + (buCounts[bu]?.totalEmployees || 0), 0) || 1842;
-    const uploadedCount = selectedBUs.reduce((acc, bu) => acc + (buCounts[bu]?.uploadedCount || 0), 0) || 1633;
-    const failedCount = selectedBUs.reduce((acc, bu) => acc + (buCounts[bu]?.failedCount || 0), 0) || 12;
-    const pendingCount = Math.max(0, total - uploadedCount - failedCount);
-
     return {
-      totalEmployees: total,
-      uploadedCount: uploadedCount,
-      pendingCount: pendingCount,
-      failedCount: failedCount
+      totalEmployees: 1842,
+      readyToPublishCount: 418,
+      publishedCount: 1215,
+      pendingCount: 197,
+      failedCount: 12
     };
-  }, [selectedBUs]);
+  }, [selectedBU]);
 
   const filteredMappingRecords = useMemo(() => {
     if (!mappingSearch.trim()) return mappingRecords;
@@ -987,7 +986,7 @@ export const UploadForm16: React.FC = () => {
   const existingUploadedEmpCodes = useMemo(() => {
     return new Set(
       records
-        .filter((r) => r.financialYear === bulkFY && r.status === 'Uploaded')
+        .filter((r) => r.financialYear === bulkFY && r.status === 'Ready to Publish')
         .map((r) => r.empId)
     );
   }, [records, bulkFY]);
@@ -1076,7 +1075,7 @@ export const UploadForm16: React.FC = () => {
 
         const mappedItem = mappingRecords.find((m) => m.empCode === r.empId);
         if (mappedItem) {
-          const alreadyHasForm16 = r.status === 'Uploaded';
+          const alreadyHasForm16 = r.status === 'Ready to Publish';
 
           if (mappedItem.status === 'MATCHED') {
             if (alreadyHasForm16 && !overrideExisting) {
@@ -1085,7 +1084,7 @@ export const UploadForm16: React.FC = () => {
             } else {
               return {
                 ...r,
-                status: 'Uploaded' as const,
+                status: 'Ready to Publish' as const,
                 uploadedAt: 'Just now',
                 uploadedBy: 'HR Admin (Bulk)'
               };
@@ -1118,9 +1117,8 @@ export const UploadForm16: React.FC = () => {
 
   // Publish Form-16 Helpers & Handlers
   const publishActiveFY = useMemo(() => {
-    if (selectedFYs.length >= 1) return selectedFYs[0];
-    return '2024-25';
-  }, [selectedFYs]);
+    return selectedFY || '2024-25';
+  }, [selectedFY]);
 
   const publishModalRecords = useMemo(() => {
     return records.filter((r) => r.financialYear === publishActiveFY);
@@ -1139,7 +1137,9 @@ export const UploadForm16: React.FC = () => {
   }, [publishModalRecords, publishSearchTerm]);
 
   const eligiblePublishRecords = useMemo(() => {
-    return publishModalRecords.filter((r) => r.status === 'Uploaded');
+    return publishModalRecords.filter(
+      (r) => r.status === 'Ready to Publish' || (r.status as string) === 'Uploaded'
+    );
   }, [publishModalRecords]);
 
   const isAllEligibleSelected =
@@ -1161,7 +1161,9 @@ export const UploadForm16: React.FC = () => {
   };
 
   const handleOpenPublishModal = () => {
-    const eligibleRecords = publishModalRecords.filter((r) => r.status === 'Uploaded');
+    const eligibleRecords = publishModalRecords.filter(
+      (r) => r.status === 'Ready to Publish' || (r.status as string) === 'Uploaded'
+    );
     setSelectedForPublish(eligibleRecords.map((r) => r.id));
     setPublishSearchTerm('');
     setIsPublishModalOpen(true);
@@ -1213,7 +1215,7 @@ export const UploadForm16: React.FC = () => {
             </div>
           </div>
 
-          {/* Top Right Corner Dropdowns: Business Unit & Financial Year */}
+          {/* Top Right Corner Dropdowns: Business Unit & Financial Year (Single Select) */}
           <div className="flex flex-wrap items-center gap-3">
             {/* Business Unit Dropdown */}
             <div className="relative" ref={buDropdownRef}>
@@ -1228,7 +1230,7 @@ export const UploadForm16: React.FC = () => {
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <Building size={14} className="text-indigo-600 shrink-0" />
-                  <span className="truncate">{buButtonLabel}</span>
+                  <span className="truncate">{selectedBU}</span>
                 </div>
                 {buDropdownOpen ? (
                   <ChevronUp size={14} className="text-indigo-600 shrink-0" />
@@ -1253,50 +1255,32 @@ export const UploadForm16: React.FC = () => {
                     <Search size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                   </div>
 
-                  {/* Select All / Reset Actions */}
-                  <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-slate-100 text-[11px] font-bold">
-                    <span className="text-slate-400 uppercase tracking-wider text-[10px]">
-                      Units ({selectedBUs.length}/{BUSINESS_UNITS_LIST.length})
-                    </span>
-                    {selectedBUs.length < BUSINESS_UNITS_LIST.length ? (
-                      <button
-                        type="button"
-                        onClick={() => setSelectedBUs([...BUSINESS_UNITS_LIST])}
-                        className="text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer"
-                      >
-                        Select All
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setSelectedBUs(['CollabCRM'])}
-                        className="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-                      >
-                        Reset
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Options List with Checkboxes */}
-                  <div className="max-h-48 overflow-y-auto space-y-0.5">
+                  {/* Options List (Single Select) */}
+                  <div className="max-h-52 overflow-y-auto space-y-1">
                     {filteredBuOptions.length === 0 ? (
                       <div className="px-3 py-2 text-xs text-slate-400 italic">No business units found</div>
                     ) : (
                       filteredBuOptions.map((bu) => {
-                        const isChecked = selectedBUs.includes(bu);
+                        const isSelected = selectedBU === bu;
                         return (
-                          <label
+                          <button
                             key={bu}
-                            className="flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                            type="button"
+                            onClick={() => {
+                              setSelectedBU(bu);
+                              setBuDropdownOpen(false);
+                              setCurrentPage(1);
+                              setBuSearchQuery('');
+                            }}
+                            className={`w-full flex items-center justify-between px-2.5 py-2 text-xs rounded-lg transition-colors cursor-pointer text-left ${
+                              isSelected
+                                ? 'bg-indigo-50 text-indigo-700 font-semibold'
+                                : 'text-slate-700 hover:bg-slate-50 font-medium'
+                            }`}
                           >
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={() => toggleBU(bu)}
-                              className="w-3.5 h-3.5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500 cursor-pointer"
-                            />
                             <span className="truncate">{bu}</span>
-                          </label>
+                            {isSelected && <Check size={14} className="text-indigo-600 shrink-0" />}
+                          </button>
                         );
                       })
                     )}
@@ -1305,7 +1289,7 @@ export const UploadForm16: React.FC = () => {
               )}
             </div>
 
-            {/* Financial Year Dropdown (Moved to Top Right Corner) */}
+            {/* Financial Year Dropdown */}
             <div className="relative" ref={fyDropdownRef}>
               <button
                 type="button"
@@ -1318,13 +1302,7 @@ export const UploadForm16: React.FC = () => {
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <Calendar size={14} className="text-purple-600 shrink-0" />
-                  <span className="truncate">
-                    {selectedFYs.length === 0
-                      ? 'Select Financial Year...'
-                      : selectedFYs.length === 1
-                      ? selectedFYs[0]
-                      : `${selectedFYs.length} Selected`}
-                  </span>
+                  <span className="truncate">{selectedFY}</span>
                 </div>
                 {fyDropdownOpen ? (
                   <ChevronUp size={14} className="text-purple-600 shrink-0" />
@@ -1333,14 +1311,14 @@ export const UploadForm16: React.FC = () => {
                 )}
               </button>
 
-              {/* Dropdown Panel with Search and Checkboxes */}
+              {/* Dropdown Panel with Search (Single Select) */}
               {fyDropdownOpen && (
                 <div className="absolute right-0 top-full mt-1.5 w-60 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2.5 animate-in fade-in slide-in-from-top-1 duration-150">
                   {/* Search Input */}
                   <div className="relative mb-2">
                     <input
                       type="text"
-                      placeholder="Search..."
+                      placeholder="Search financial year..."
                       value={fySearchQuery}
                       onChange={(e) => setFySearchQuery(e.target.value)}
                       className="w-full pl-3 pr-8 py-1.5 bg-white border border-purple-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
@@ -1349,26 +1327,32 @@ export const UploadForm16: React.FC = () => {
                     <Search size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                   </div>
 
-                  {/* Options List with Checkboxes */}
-                  <div className="max-h-48 overflow-y-auto space-y-0.5">
+                  {/* Options List (Single Select) */}
+                  <div className="max-h-52 overflow-y-auto space-y-1">
                     {filteredFyOptions.length === 0 ? (
                       <div className="px-3 py-2 text-xs text-slate-400 italic">No years found</div>
                     ) : (
                       filteredFyOptions.map((fy) => {
-                        const isChecked = selectedFYs.includes(fy);
+                        const isSelected = selectedFY === fy;
                         return (
-                          <label
+                          <button
                             key={fy}
-                            className="flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                            type="button"
+                            onClick={() => {
+                              setSelectedFY(fy);
+                              setFyDropdownOpen(false);
+                              setCurrentPage(1);
+                              setFySearchQuery('');
+                            }}
+                            className={`w-full flex items-center justify-between px-2.5 py-2 text-xs rounded-lg transition-colors cursor-pointer text-left ${
+                              isSelected
+                                ? 'bg-purple-50 text-purple-700 font-semibold'
+                                : 'text-slate-700 hover:bg-slate-50 font-medium'
+                            }`}
                           >
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={() => toggleFY(fy)}
-                              className="w-3.5 h-3.5 rounded text-purple-600 border-slate-300 focus:ring-purple-500 cursor-pointer"
-                            />
                             <span className="truncate">{fy}</span>
-                          </label>
+                            {isSelected && <Check size={14} className="text-purple-600 shrink-0" />}
+                          </button>
                         );
                       })
                     )}
@@ -1379,8 +1363,8 @@ export const UploadForm16: React.FC = () => {
           </div>
         </div>
 
-        {/* 4 Statistics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+        {/* 5 Statistics Cards (Total Employees, Ready to Publish, Published, Pending, Failed) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-6">
           {/* Card 1: Total Employees */}
           <div className="bg-gradient-to-br from-blue-50/70 to-indigo-50/40 p-4 rounded-2xl border border-blue-100/80 shadow-sm flex items-center justify-between">
             <div>
@@ -1392,18 +1376,29 @@ export const UploadForm16: React.FC = () => {
             </div>
           </div>
 
-          {/* Card 2: Success */}
+          {/* Card 2: Ready to Publish */}
+          <div className="bg-gradient-to-br from-sky-50/70 to-blue-50/40 p-4 rounded-2xl border border-sky-100/80 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-sky-700/80">Ready to Publish</p>
+              <p className="text-2xl font-black text-slate-900 mt-1">{(stats.readyToPublishCount ?? 418).toLocaleString()}</p>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-sky-100/80 text-sky-700 flex items-center justify-center font-bold">
+              <FileText size={22} />
+            </div>
+          </div>
+
+          {/* Card 3: Published */}
           <div className="bg-gradient-to-br from-emerald-50/70 to-teal-50/40 p-4 rounded-2xl border border-emerald-100/80 shadow-sm flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700/80">Success</p>
-              <p className="text-2xl font-black text-slate-900 mt-1">{(stats.uploadedCount ?? 1633).toLocaleString()}</p>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700/80">Published</p>
+              <p className="text-2xl font-black text-slate-900 mt-1">{(stats.publishedCount ?? 1215).toLocaleString()}</p>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-emerald-100/80 text-emerald-700 flex items-center justify-center font-bold">
               <CheckCircle2 size={22} />
             </div>
           </div>
 
-          {/* Card 3: Pending */}
+          {/* Card 4: Pending */}
           <div className="bg-gradient-to-br from-amber-50/70 to-orange-50/40 p-4 rounded-2xl border border-amber-100/80 shadow-sm flex items-center justify-between">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-amber-700/80">Pending</p>
@@ -1414,7 +1409,7 @@ export const UploadForm16: React.FC = () => {
             </div>
           </div>
 
-          {/* Card 4: Failed */}
+          {/* Card 5: Failed */}
           <div className="bg-gradient-to-br from-rose-50/70 to-red-50/40 p-4 rounded-2xl border border-rose-100/80 shadow-sm flex items-center justify-between">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-rose-700/80">Failed</p>
@@ -1442,8 +1437,8 @@ export const UploadForm16: React.FC = () => {
               {/* Bulk Upload Form-16 */}
               <button
                 onClick={() => {
-                  if (selectedFYs.length > 0) {
-                    setBulkFY(selectedFYs[0]);
+                  if (selectedFY) {
+                    setBulkFY(selectedFY);
                   }
                   setIsBulkUploadModalOpen(true);
                 }}
@@ -1777,13 +1772,13 @@ export const UploadForm16: React.FC = () => {
                             <CheckCircle2 size={13} className="text-emerald-600" />
                             Published
                           </span>
-                        ) : row.status === 'Uploaded' ? (
+                        ) : row.status === 'Ready to Publish' || (row.status as string) === 'Uploaded' ? (
                           <span
                             className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full font-bold text-[11px] cursor-help"
                             title="Upload ho gaya, par employee ko abhi dikhta nahi"
                           >
                             <CheckCircle2 size={13} className="text-blue-600" />
-                            Uploaded
+                            Ready to Publish
                           </span>
                         ) : row.status === 'Failed' ? (
                           <div className="flex flex-col items-center gap-1.5 py-0.5">
@@ -2712,7 +2707,7 @@ export const UploadForm16: React.FC = () => {
                       r.empId === singleEmpId
                         ? {
                             ...r,
-                            status: 'Uploaded',
+                            status: 'Ready to Publish',
                             uploadedAt: 'Just now',
                             uploadedBy: 'HR Admin'
                           }
@@ -2789,7 +2784,7 @@ export const UploadForm16: React.FC = () => {
                       className={`px-3 py-1 rounded-full text-xs font-bold border ${
                         previewRecord.status === 'Published'
                           ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          : previewRecord.status === 'Uploaded'
+                          : previewRecord.status === 'Ready to Publish'
                           ? 'bg-blue-50 text-blue-700 border-blue-200'
                           : previewRecord.status === 'Failed'
                           ? 'bg-rose-50 text-rose-700 border-rose-200'
@@ -2907,7 +2902,7 @@ export const UploadForm16: React.FC = () => {
                       </tr>
                     ) : (
                       filteredPublishModalRecords.map((row) => {
-                        const isEligible = row.status === 'Uploaded';
+                        const isEligible = row.status === 'Ready to Publish' || (row.status as string) === 'Uploaded';
                         const isPublished = row.status === 'Published';
                         const isChecked = selectedForPublish.includes(row.id);
 
@@ -3008,7 +3003,7 @@ export const UploadForm16: React.FC = () => {
                                   title="Upload ho gaya, par employee ko abhi dikhta nahi"
                                 >
                                   <CheckCircle2 size={11} className="text-blue-600" />
-                                  Uploaded
+                                  Ready to Publish
                                 </span>
                               ) : row.status === 'Failed' ? (
                                 <span
