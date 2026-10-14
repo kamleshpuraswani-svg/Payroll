@@ -649,8 +649,8 @@ export const UploadForm16: React.FC = () => {
   const [fySearchQuery, setFySearchQuery] = useState('');
   const fyDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Business Unit Filter Dropdown State (Single Select)
-  const [selectedBU, setSelectedBU] = useState<string>('CollabCRM');
+  // Business Unit Filter Dropdown State (Multi Select)
+  const [selectedBUs, setSelectedBUs] = useState<string[]>(['CollabCRM']);
   const [buDropdownOpen, setBuDropdownOpen] = useState(false);
   const [buSearchQuery, setBuSearchQuery] = useState('');
   const buDropdownRef = useRef<HTMLDivElement>(null);
@@ -701,6 +701,7 @@ export const UploadForm16: React.FC = () => {
     );
     return () => {
       processingTimersRef.current.forEach(clearTimeout);
+      singleProcessingTimersRef.current.forEach(clearTimeout);
     };
   }, []);
 
@@ -716,6 +717,11 @@ export const UploadForm16: React.FC = () => {
   const [singlePartAFile, setSinglePartAFile] = useState<File | null>(null);
   const [singlePartBFile, setSinglePartBFile] = useState<File | null>(null);
   const [singleZipFile, setSingleZipFile] = useState<File | null>(null);
+  const [singleUploadStep, setSingleUploadStep] = useState<1 | 2>(1);
+  const [isSingleProcessing, setIsSingleProcessing] = useState(false);
+  const [singleUploadStatus, setSingleUploadStatus] = useState<'SUCCESS' | 'FAILED'>('SUCCESS');
+  const [singleSimulateFail, setSingleSimulateFail] = useState(false);
+  const singleProcessingTimersRef = useRef<NodeJS.Timeout[]>([]);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -857,8 +863,10 @@ export const UploadForm16: React.FC = () => {
   // Filtered Records based on BU + FY Dropdowns + text search + dynamic filter chips
   const filteredRecords = useMemo(() => {
     return records.filter((r) => {
-      // 1. Business Unit selection filter (Single select)
-      const matchesBU = !selectedBU || (r.businessUnit ? r.businessUnit === selectedBU : selectedBU === 'CollabCRM');
+      // 1. Business Unit selection filter (Multi select)
+      const matchesBU =
+        selectedBUs.length === 0 ||
+        selectedBUs.includes(r.businessUnit || 'CollabCRM');
       if (!matchesBU) return false;
 
       // 2. Financial Year selection filter (Single select)
@@ -901,7 +909,7 @@ export const UploadForm16: React.FC = () => {
 
       return true;
     });
-  }, [records, selectedBU, selectedFY, searchTerm, completedFilters]);
+  }, [records, selectedBUs, selectedFY, searchTerm, completedFilters]);
 
   const totalPages = Math.ceil(filteredRecords.length / itemsPerPage) || 1;
   const paginatedRecords = useMemo(() => {
@@ -951,8 +959,30 @@ export const UploadForm16: React.FC = () => {
       },
     };
 
-    if (selectedBU && buCounts[selectedBU]) {
-      return buCounts[selectedBU];
+    if (selectedBUs.length > 0) {
+      let totalEmployees = 0;
+      let readyToPublishCount = 0;
+      let publishedCount = 0;
+      let pendingCount = 0;
+      let failedCount = 0;
+
+      selectedBUs.forEach((bu) => {
+        if (buCounts[bu]) {
+          totalEmployees += buCounts[bu].totalEmployees;
+          readyToPublishCount += buCounts[bu].readyToPublishCount;
+          publishedCount += buCounts[bu].publishedCount;
+          pendingCount += buCounts[bu].pendingCount;
+          failedCount += buCounts[bu].failedCount;
+        }
+      });
+
+      return {
+        totalEmployees,
+        readyToPublishCount,
+        publishedCount,
+        pendingCount,
+        failedCount
+      };
     }
 
     return {
@@ -962,7 +992,7 @@ export const UploadForm16: React.FC = () => {
       pendingCount: 197,
       failedCount: 12
     };
-  }, [selectedBU]);
+  }, [selectedBUs]);
 
   const filteredMappingRecords = useMemo(() => {
     if (!mappingSearch.trim()) return mappingRecords;
@@ -993,13 +1023,22 @@ export const UploadForm16: React.FC = () => {
     };
   }, [mappingRecords]);
 
+  const currentBulkFY = selectedFY || bulkFY || '2024-25';
+
+  const formattedBulkFY = useMemo(() => {
+    const fy = currentBulkFY;
+    const startYear = parseInt(fy.split('-')[0], 10);
+    const ay = `${startYear + 1}-${(startYear + 2).toString().slice(-2)}`;
+    return `FY ${fy} (AY ${ay})`;
+  }, [currentBulkFY]);
+
   const existingUploadedEmpCodes = useMemo(() => {
     return new Set(
       records
-        .filter((r) => r.financialYear === bulkFY && r.status === 'Ready to Publish')
+        .filter((r) => r.financialYear === currentBulkFY && r.status === 'Ready to Publish')
         .map((r) => r.empId)
     );
-  }, [records, bulkFY]);
+  }, [records, currentBulkFY]);
 
   const handleBulkUploadSubmit = () => {
     setIsProcessing(true);
@@ -1067,7 +1106,7 @@ export const UploadForm16: React.FC = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `failed_form16_records_${bulkFY}.csv`);
+    link.setAttribute('download', `failed_form16_records_${currentBulkFY}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1081,7 +1120,7 @@ export const UploadForm16: React.FC = () => {
 
     setRecords((prev) =>
       prev.map((r) => {
-        if (r.financialYear !== bulkFY) return r;
+        if (r.financialYear !== currentBulkFY) return r;
 
         const mappedItem = mappingRecords.find((m) => m.empCode === r.empId);
         if (mappedItem) {
@@ -1123,6 +1162,81 @@ export const UploadForm16: React.FC = () => {
 
     const successCount = mappingRecords.filter((m) => m.status === 'MATCHED').length;
     showToast(`Form-16 successfully published to ${successCount} employees' accounts!`);
+  };
+
+  // Single Upload Helpers & Handlers
+  const singleCurrentEmp = useMemo(() => {
+    return records.find((r) => r.empId === singleEmpId);
+  }, [records, singleEmpId]);
+
+  const handleSingleUploadSubmit = () => {
+    if (!singleEmpId) return;
+
+    setIsSingleProcessing(true);
+    singleProcessingTimersRef.current.forEach(clearTimeout);
+    singleProcessingTimersRef.current = [];
+
+    const timer = setTimeout(() => {
+      setIsSingleProcessing(false);
+      setSingleUploadStep(2);
+
+      if (singleSimulateFail) {
+        setSingleUploadStatus('FAILED');
+        setRecords((prev) =>
+          prev.map((r) =>
+            r.empId === singleEmpId
+              ? {
+                  ...r,
+                  status: 'Failed' as const,
+                  failureReason: 'Part B missing for this PAN number',
+                  uploadedAt: 'Just now',
+                  uploadedBy: 'System'
+                }
+              : r
+          )
+        );
+      } else {
+        setSingleUploadStatus('SUCCESS');
+        setRecords((prev) =>
+          prev.map((r) =>
+            r.empId === singleEmpId
+              ? {
+                  ...r,
+                  status: 'Ready to Publish' as const,
+                  uploadedAt: 'Just now',
+                  uploadedBy: 'HR Admin',
+                  failureReason: undefined
+                }
+              : r
+          )
+        );
+      }
+    }, 2000);
+
+    singleProcessingTimersRef.current.push(timer);
+  };
+
+  const handleSinglePublishSubmit = () => {
+    if (!singleEmpId) return;
+    const emp = records.find((r) => r.empId === singleEmpId);
+    setRecords((prev) =>
+      prev.map((r) =>
+        r.empId === singleEmpId
+          ? {
+              ...r,
+              status: 'Published' as const,
+              uploadedAt: 'Just now',
+              uploadedBy: 'HR Admin (Published)',
+              failureReason: undefined
+            }
+          : r
+      )
+    );
+    setIsSingleUploadModalOpen(false);
+    setSingleUploadStep(1);
+    setSinglePartAFile(null);
+    setSinglePartBFile(null);
+    showToast(`Form-16 successfully published to ${emp?.empName || 'employee'}'s account!`);
   };
 
   // Publish Form-16 Helpers & Handlers
@@ -1227,7 +1341,7 @@ export const UploadForm16: React.FC = () => {
 
           {/* Top Right Corner Dropdowns: Business Unit & Financial Year (Single Select) */}
           <div className="flex flex-wrap items-center gap-3">
-            {/* Business Unit Dropdown */}
+            {/* Business Unit Dropdown (Multi Select) */}
             <div className="relative" ref={buDropdownRef}>
               <button
                 type="button"
@@ -1240,7 +1354,13 @@ export const UploadForm16: React.FC = () => {
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <Building size={14} className="text-indigo-600 shrink-0" />
-                  <span className="truncate">{selectedBU}</span>
+                  <span className="truncate">
+                    {selectedBUs.length === 0
+                      ? 'Select Business Unit'
+                      : selectedBUs.length === 1
+                      ? selectedBUs[0]
+                      : `${selectedBUs[0]} (+${selectedBUs.length - 1})`}
+                  </span>
                 </div>
                 {buDropdownOpen ? (
                   <ChevronUp size={14} className="text-indigo-600 shrink-0" />
@@ -1265,32 +1385,43 @@ export const UploadForm16: React.FC = () => {
                     <Search size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                   </div>
 
-                  {/* Options List (Single Select) */}
+                  {/* Options List (Multi Select) */}
                   <div className="max-h-52 overflow-y-auto space-y-1">
                     {filteredBuOptions.length === 0 ? (
                       <div className="px-3 py-2 text-xs text-slate-400 italic">No business units found</div>
                     ) : (
                       filteredBuOptions.map((bu) => {
-                        const isSelected = selectedBU === bu;
+                        const isSelected = selectedBUs.includes(bu);
                         return (
-                          <button
+                          <div
                             key={bu}
-                            type="button"
                             onClick={() => {
-                              setSelectedBU(bu);
-                              setBuDropdownOpen(false);
+                              setSelectedBUs((prev) => {
+                                if (prev.includes(bu)) {
+                                  return prev.filter((item) => item !== bu);
+                                } else {
+                                  return [...prev, bu];
+                                }
+                              });
                               setCurrentPage(1);
-                              setBuSearchQuery('');
                             }}
-                            className={`w-full flex items-center justify-between px-2.5 py-2 text-xs rounded-lg transition-colors cursor-pointer text-left ${
+                            className={`w-full flex items-center justify-between px-2.5 py-2 text-xs rounded-lg transition-colors cursor-pointer select-none ${
                               isSelected
                                 ? 'bg-indigo-50 text-indigo-700 font-semibold'
                                 : 'text-slate-700 hover:bg-slate-50 font-medium'
                             }`}
                           >
-                            <span className="truncate">{bu}</span>
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => {}}
+                                className="w-3.5 h-3.5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500 cursor-pointer pointer-events-none"
+                              />
+                              <span className="truncate">{bu}</span>
+                            </div>
                             {isSelected && <Check size={14} className="text-indigo-600 shrink-0" />}
-                          </button>
+                          </div>
                         );
                       })
                     )}
@@ -1848,6 +1979,12 @@ export const UploadForm16: React.FC = () => {
                           <button
                             onClick={() => {
                               setSingleEmpId(row.empId);
+                              setSinglePartAFile(null);
+                              setSinglePartBFile(null);
+                              setSingleUploadStep(1);
+                              setIsSingleProcessing(false);
+                              setSingleUploadStatus('SUCCESS');
+                              setSingleSimulateFail(false);
                               setIsSingleUploadModalOpen(true);
                             }}
                             className="p-1.5 rounded-lg text-slate-500 hover:text-purple-600 hover:bg-purple-50 transition-colors"
@@ -2022,26 +2159,41 @@ export const UploadForm16: React.FC = () => {
                 // ================= STEP 1: UPLOAD SCREEN =================
                 <>
                   <div className="p-6 space-y-5 overflow-y-auto">
-                  {/* Financial Year Selection */}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                      Financial Year
-                    </label>
-                    <select
-                      value={bulkFY}
-                      onChange={(e) => setBulkFY(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-lg p-2.5 focus:outline-none focus:border-indigo-500"
-                    >
-                      {FY_OPTIONS.map((fy) => {
-                        const startYear = parseInt(fy.split('-')[0], 10);
-                        const ay = `${startYear + 1}-${(startYear + 2).toString().slice(-2)}`;
-                        return (
-                          <option key={fy} value={fy}>
-                            FY {fy} (AY {ay})
-                          </option>
-                        );
-                      })}
-                    </select>
+                  {/* Meta Info: Financial Year & Business Unit */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Financial Year */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Financial Year
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          readOnly
+                          disabled
+                          value={formattedBulkFY}
+                          className="w-full bg-slate-100/80 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg p-2.5 pr-8 cursor-not-allowed focus:outline-none select-none"
+                        />
+                        <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                      </div>
+                    </div>
+
+                    {/* Business Unit */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Business Unit
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          readOnly
+                          disabled
+                          value={selectedBUs.length > 0 ? selectedBUs.join(', ') : 'CollabCRM'}
+                          className="w-full bg-slate-100/80 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg p-2.5 pr-8 cursor-not-allowed focus:outline-none select-none"
+                        />
+                        <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                      </div>
+                    </div>
                   </div>
 
                   {/* Helper Notice Box (Yellow/Amber Border & Background) */}
@@ -2635,114 +2787,345 @@ export const UploadForm16: React.FC = () => {
       {/* Modal 2: Single Employee Form-16 Upload */}
       {isSingleUploadModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white rounded-lg max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+          <div
+            className={`bg-white rounded-lg w-full border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] transition-all duration-200 ${
+              singleUploadStep === 2 || isSingleProcessing ? 'max-w-2xl' : 'max-w-lg'
+            }`}
+          >
+            {/* Header */}
             <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-50 text-purple-600 rounded-xl border border-purple-100">
+                <div className="p-2 bg-purple-50 text-purple-600 rounded-xl border border-purple-100 shrink-0">
                   <Upload size={20} />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-800">
-                    Upload Form-16 - {records.find((r) => r.empId === singleEmpId)?.empName || 'Employee'}
-                  </h3>
-                  <p className="text-xs text-slate-500">Upload Part A (TRACES) and Part B (Salary breakdown)</p>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold text-slate-800">
+                      Upload Form-16 - {singleCurrentEmp?.empName || 'Employee'}
+                    </h3>
+                    {(isSingleProcessing || singleUploadStep === 2) && (
+                      <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-extrabold rounded-full uppercase tracking-wider">
+                        Step 2 of 2
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    {isSingleProcessing
+                      ? 'Processing your import...'
+                      : singleUploadStep === 2
+                      ? 'Review the results of your import.'
+                      : 'Upload Part A (TRACES) and Part B (Salary breakdown)'}
+                  </p>
                 </div>
               </div>
               <button
-                onClick={() => setIsSingleUploadModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100"
+                onClick={() => {
+                  if (!isSingleProcessing) {
+                    singleProcessingTimersRef.current.forEach(clearTimeout);
+                    singleProcessingTimersRef.current = [];
+                    setIsSingleProcessing(false);
+                    setIsSingleUploadModalOpen(false);
+                    setSingleUploadStep(1);
+                    setSinglePartAFile(null);
+                    setSinglePartBFile(null);
+                  }
+                }}
+                disabled={isSingleProcessing}
+                className={`text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors ${
+                  isSingleProcessing ? 'opacity-30 cursor-not-allowed pointer-events-none' : 'cursor-pointer'
+                }`}
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="p-6 space-y-4 overflow-y-auto">
-              {/* Select Employee Dropdown (Hidden as specific employee is selected from row) */}
-              <div className="hidden">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Select Employee
-                </label>
-                <select
-                  value={singleEmpId}
-                  onChange={(e) => setSingleEmpId(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl p-2.5 focus:outline-none focus:border-indigo-500"
-                >
-                  <option value="">-- Choose Employee --</option>
-                  {records.map((r) => (
-                    <option key={r.id} value={r.empId}>
-                      {r.empName} ({r.empId}) - {r.pan}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            {singleUploadStep === 1 ? (
+              isSingleProcessing ? (
+                // ================= STEP 1: PROCESSING / LOADING SCREEN =================
+                <>
+                  {/* Stepper matching Bulk Upload */}
+                  <div className="border-b border-slate-100 py-5 bg-white select-none">
+                    <div className="flex items-center justify-between max-w-xl mx-auto px-6 relative">
+                      {/* Connecting Line */}
+                      <div className="absolute left-8 right-8 top-3 h-[2px] bg-slate-100 -translate-y-1/2 -z-0">
+                        <div className="h-full bg-[#444CE7] w-full transition-all duration-300" />
+                      </div>
 
-              <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-slate-800">Part A (TRACES Certificate)</span>
+                      {/* Step 1: Upload File (Completed) */}
+                      <div className="flex flex-col items-center relative z-10">
+                        <div className="w-6 h-6 rounded-full border-2 border-[#444CE7] flex items-center justify-center bg-white text-[#444CE7]">
+                          <Check size={12} strokeWidth={3} className="text-[#444CE7]" />
+                        </div>
+                        <span className="text-[11px] mt-2 font-bold text-slate-400">
+                          Upload File
+                        </span>
+                      </div>
+
+                      {/* Step 2: Import Results (Active) */}
+                      <div className="flex flex-col items-center relative z-10">
+                        <div className="w-6 h-6 rounded-full border-2 border-[#444CE7] flex items-center justify-center bg-white text-[#444CE7]">
+                          <div className="w-2.5 h-2.5 bg-[#444CE7] rounded-full" />
+                        </div>
+                        <span className="text-[11px] mt-2 font-bold text-[#444CE7]">
+                          Import Results
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Body: Centered Loader & Status Message */}
+                  <div className="p-8 flex-grow overflow-y-auto min-h-[350px] bg-white flex flex-col justify-center items-center">
+                    <div className="flex flex-col items-center justify-center h-full min-h-[250px] animate-in fade-in duration-200 space-y-4">
+                      {/* Circular loader with document icon */}
+                      <div className="relative w-16 h-16 flex items-center justify-center">
+                        <div className="absolute inset-0 rounded-full border-[3px] border-slate-100" />
+                        <div className="absolute inset-0 rounded-full border-[3px] border-t-[#444CE7] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+                        <FileUp size={20} className="text-[#444CE7]" />
+                      </div>
+
+                      {/* Status message */}
+                      <div className="text-center space-y-1.5">
+                        <h4 className="text-sm font-bold text-slate-800">Processing your import...</h4>
+                        <p className="text-xs text-slate-400 font-semibold">This may take a moment. Please do not close this window.</p>
+                      </div>
+
+                      {/* Bouncing dots loading indicator */}
+                      <div className="flex gap-1.5 justify-center pt-2">
+                        <div className="w-2 h-2 bg-[#444CE7] rounded-full animate-bounce [animation-delay:-0.3s]" />
+                        <div className="w-2 h-2 bg-[#444CE7] rounded-full animate-bounce [animation-delay:-0.15s]" />
+                        <div className="w-2 h-2 bg-[#444CE7] rounded-full animate-bounce" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer: Disabled Done button */}
+                  <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end">
+                    <button
+                      type="button"
+                      disabled
+                      className="px-6 py-2 bg-indigo-200 text-white font-bold text-xs rounded-lg cursor-not-allowed select-none opacity-80"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </>
+              ) : (
+                // ================= STEP 1: INITIAL UPLOAD FORM =================
+                <>
+                  <div className="p-6 space-y-4 overflow-y-auto">
+                    <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-slate-800">Part A (TRACES Certificate)</span>
+                      </div>
+                      <input
+                        type="file"
+                        accept=".pdf"
+                        onChange={(e) => setSinglePartAFile(e.target.files?.[0] || null)}
+                        className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
+                      />
+                      <p className="text-[11px] text-slate-400 mt-1.5 font-medium">
+                        Supported format: .PDF • Max file size: 2MB
+                      </p>
+                    </div>
+
+                    <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-slate-800">Part B (Annexure & Computations)</span>
+                      </div>
+                      <input
+                        type="file"
+                        accept=".pdf"
+                        onChange={(e) => setSinglePartBFile(e.target.files?.[0] || null)}
+                        className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
+                      />
+                      <p className="text-[11px] text-slate-400 mt-1.5 font-medium">
+                        Supported format: .PDF • Max file size: 2MB
+                      </p>
+                    </div>
+
+                    {/* Simulation Toggle for testing fail scenario */}
+                    <div className="flex items-center justify-between pt-1">
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={singleSimulateFail}
+                          onChange={(e) => setSingleSimulateFail(e.target.checked)}
+                          className="w-3.5 h-3.5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500 cursor-pointer"
+                        />
+                        <span className="text-[11px] font-medium text-slate-500 hover:text-slate-700">
+                          Simulate import failure (for testing error view)
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsSingleUploadModalOpen(false)}
+                      className="px-4 py-2 border border-slate-200 text-slate-600 font-bold text-xs rounded-md hover:bg-white transition-all cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSingleUploadSubmit}
+                      style={{ backgroundColor: '#444CE7' }}
+                      className="px-6 py-2 bg-[#444CE7] hover:bg-[#3538CD] text-white font-bold text-xs rounded-md shadow-md shadow-indigo-100 transition-all flex items-center gap-2 cursor-pointer"
+                    >
+                      <Upload size={14} /> Upload
+                    </button>
+                  </div>
+                </>
+              )
+            ) : (
+              // ================= STEP 2: IMPORT RESULTS SCREEN =================
+              <>
+                {/* Stepper Bar across top */}
+                <div className="border-b border-slate-100 py-5 bg-white select-none">
+                  <div className="flex items-center justify-between max-w-xl mx-auto px-6 relative">
+                    {/* Connecting Line */}
+                    <div className="absolute left-8 right-8 top-3 h-[2px] bg-slate-100 -translate-y-1/2 -z-0">
+                      <div className="h-full bg-[#444CE7] w-full transition-all duration-300" />
+                    </div>
+
+                    {/* Step 1: Upload File (Completed) */}
+                    <div className="flex flex-col items-center relative z-10">
+                      <div className="w-6 h-6 rounded-full border-2 border-[#444CE7] flex items-center justify-center bg-white text-[#444CE7]">
+                        <Check size={12} strokeWidth={3} className="text-[#444CE7]" />
+                      </div>
+                      <span className="text-[11px] mt-2 font-bold text-slate-400">
+                        Upload File
+                      </span>
+                    </div>
+
+                    {/* Step 2: Import Results (Active) */}
+                    <div className="flex flex-col items-center relative z-10">
+                      <div className="w-6 h-6 rounded-full border-2 border-[#444CE7] flex items-center justify-center bg-white text-[#444CE7]">
+                        <div className="w-2.5 h-2.5 bg-[#444CE7] rounded-full" />
+                      </div>
+                      <span className="text-[11px] mt-2 font-bold text-[#444CE7]">
+                        Import Results
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <input
-                  type="file"
-                  accept=".pdf"
-                  onChange={(e) => setSinglePartAFile(e.target.files?.[0] || null)}
-                  className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
-                />
-                <p className="text-[11px] text-slate-400 mt-1.5 font-medium">
-                  Supported format: .PDF • Max file size: 2MB
-                </p>
-              </div>
 
-              <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-slate-800">Part B (Annexure & Computations)</span>
+                {/* Body Content */}
+                <div className="p-8 space-y-6 overflow-y-auto flex-grow flex flex-col justify-center min-h-[350px] bg-slate-50/20">
+                  {singleUploadStatus === 'FAILED' ? (
+                    // ---------------- FAILED VIEW ----------------
+                    <div className="w-full max-w-xl mx-auto space-y-5 animate-in fade-in duration-200">
+                      {/* Red Alert Banner */}
+                      <div className="w-full bg-rose-50/70 border border-rose-200/80 rounded-md p-3.5 flex items-center gap-3 shadow-xs">
+                        <div className="p-1 bg-rose-100 rounded-full text-rose-600 shrink-0">
+                          <AlertCircle size={16} />
+                        </div>
+                        <span className="text-xs font-semibold text-rose-900">
+                          Record failed to import. Please review your file, correct the errors, and re-upload.
+                        </span>
+                      </div>
+
+                      {/* Centered Failure Card */}
+                      <div className="max-w-md mx-auto w-full pt-1">
+                        <div className="border border-rose-100 bg-white rounded-xl p-6 shadow-xs flex items-center gap-5">
+                          <div className="w-14 h-14 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 border border-rose-100 shrink-0">
+                            <X size={26} strokeWidth={2.5} />
+                          </div>
+                          <div>
+                            <div className="text-3xl font-black text-slate-800 leading-none">
+                              1
+                            </div>
+                            <div className="text-xs text-slate-500 font-semibold mt-1.5">
+                              Record(s) failed to import
+                            </div>
+                            <div className="text-[11px] text-rose-600 font-medium mt-1">
+                              Part B missing for this PAN number
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    // ---------------- SUCCESS VIEW ----------------
+                    <div className="w-full max-w-xl mx-auto space-y-5 animate-in fade-in duration-200">
+                      {/* Green Alert Banner */}
+                      <div className="w-full bg-emerald-50/70 border border-emerald-200/80 rounded-md p-3.5 flex items-center gap-3 shadow-xs">
+                        <div className="p-1 bg-emerald-100 rounded-full text-emerald-600 shrink-0">
+                          <CheckCircle2 size={16} />
+                        </div>
+                        <span className="text-xs font-semibold text-emerald-900">
+                          Form-16 imported successfully for {singleCurrentEmp?.empName}!
+                        </span>
+                      </div>
+
+                      {/* Centered Success Card */}
+                      <div className="max-w-md mx-auto w-full pt-1">
+                        <div className="border border-slate-200 bg-white rounded-xl p-6 flex items-center gap-5 shadow-xs">
+                          <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 border border-emerald-100/60 shrink-0">
+                            <Check size={26} strokeWidth={3} />
+                          </div>
+                          <div>
+                            <div className="text-3xl font-black text-slate-800 leading-none">
+                              1
+                            </div>
+                            <div className="text-xs text-slate-500 font-semibold mt-1.5">
+                              Record(s) imported successfully
+                            </div>
+                            <div className="text-[11px] text-slate-400 font-medium mt-1">
+                              {singleCurrentEmp?.empName} ({singleCurrentEmp?.empId}) • PAN: {singleCurrentEmp?.pan}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <input
-                  type="file"
-                  accept=".pdf"
-                  onChange={(e) => setSinglePartBFile(e.target.files?.[0] || null)}
-                  className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
-                />
-                <p className="text-[11px] text-slate-400 mt-1.5 font-medium">
-                  Supported format: .PDF • Max file size: 2MB
-                </p>
-              </div>
-              </div>
 
-            <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setIsSingleUploadModalOpen(false)}
-                className="px-4 py-2 border border-slate-200 text-slate-600 font-bold text-xs rounded-md hover:bg-white transition-all cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!singleEmpId) {
-                    alert('Please select an employee');
-                    return;
-                  }
-                  setRecords((prev) =>
-                    prev.map((r) =>
-                      r.empId === singleEmpId
-                        ? {
-                            ...r,
-                            status: 'Ready to Publish',
-                            uploadedAt: 'Just now',
-                            uploadedBy: 'HR Admin'
-                          }
-                        : r
-                    )
-                  );
-                  setIsSingleUploadModalOpen(false);
-                  showToast('Form-16 uploaded successfully for employee!');
-                }}
-                style={{ backgroundColor: '#444CE7' }}
-                className="px-6 py-2 bg-[#444CE7] hover:bg-[#3538CD] text-white font-bold text-xs rounded-md shadow-md shadow-indigo-100 transition-all flex items-center gap-2 cursor-pointer"
-              >
-                <Upload size={14} /> Upload
-              </button>
-            </div>
+                {/* Step 2 Footer */}
+                <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end">
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsSingleUploadModalOpen(false);
+                        setSingleUploadStep(1);
+                        setSinglePartAFile(null);
+                        setSinglePartBFile(null);
+                        if (singleUploadStatus === 'SUCCESS') {
+                          showToast(`Form-16 uploaded successfully for ${singleCurrentEmp?.empName}!`);
+                        }
+                      }}
+                      className="px-5 py-2.5 border border-slate-200 text-slate-600 font-bold text-sm rounded-lg hover:bg-white transition-all cursor-pointer shadow-xs"
+                    >
+                      Close
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSingleUploadStep(1);
+                        setSinglePartAFile(null);
+                        setSinglePartBFile(null);
+                        setSingleUploadStatus('SUCCESS');
+                      }}
+                      className="px-5 py-2.5 border border-indigo-200 bg-indigo-50 text-indigo-700 font-bold text-sm rounded-lg hover:bg-indigo-100 transition-all flex items-center gap-2 cursor-pointer shadow-xs"
+                    >
+                      <RotateCcw size={15} /> Start Again
+                    </button>
+                    {singleUploadStatus === 'SUCCESS' && (
+                      <button
+                        type="button"
+                        onClick={handleSinglePublishSubmit}
+                        style={{ backgroundColor: '#444CE7' }}
+                        className="px-6 py-2.5 bg-[#444CE7] hover:bg-[#3538CD] text-white font-bold text-sm rounded-lg shadow-md shadow-indigo-100 transition-all flex items-center gap-2 cursor-pointer"
+                      >
+                        <Send size={15} /> Publish to Employee's account
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
