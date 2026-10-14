@@ -113,9 +113,9 @@ const INITIAL_RECORDS: Form16Record[] = [
     pan: 'EFAP7890K',
     financialYear: '2024-25',
     assessmentYear: '2025-26',
-    status: 'Failed',
-    failureReason: 'PAN not matching with the profile.',
-    partBFileName: 'Form16_PartB_EFAP7890K_2024-25.pdf',
+    status: 'Pending',
+    failureReason: 'Part B missing for this PAN number',
+    partAFileName: 'Form16_PartA_EFAP7890K_2024-25.pdf',
     grossSalary: 950000,
     tdsDeducted: 32000,
     uploadedAt: '15 Jun 2025, 10:20 AM',
@@ -683,11 +683,21 @@ export const UploadForm16: React.FC = () => {
   const [bulkTargetScope, setBulkTargetScope] = useState<'ALL' | 'PENDING'>('ALL');
 
   useEffect(() => {
-    // Ensure any existing memory state with 'Uploaded' is migrated to 'Ready to Publish'
+    // Ensure any existing memory state with 'Uploaded' is migrated to 'Ready to Publish', and update Ananya Patel
     setRecords((prev) =>
-      prev.map((r) =>
-        (r.status as string) === 'Uploaded' ? { ...r, status: 'Ready to Publish' } : r
-      )
+      prev.map((r) => {
+        if (r.id === 'F16-004' || r.empName === 'Ananya Patel') {
+          return {
+            ...r,
+            status: 'Pending' as const,
+            failureReason: 'Part B missing for this PAN number'
+          };
+        }
+        if ((r.status as string) === 'Uploaded') {
+          return { ...r, status: 'Ready to Publish' as const };
+        }
+        return r;
+      })
     );
     return () => {
       processingTimersRef.current.forEach(clearTimeout);
@@ -1799,13 +1809,23 @@ export const UploadForm16: React.FC = () => {
                             )}
                           </div>
                         ) : (
-                          <span
-                            className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full font-bold text-[11px] cursor-help"
-                            title="Form-16 abhi upload nahi hua"
-                          >
-                            <AlertCircle size={13} className="text-amber-600" />
-                            Pending
-                          </span>
+                          <div className="flex flex-col items-center gap-1.5 py-0.5">
+                            <span
+                              className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full font-bold text-[11px] cursor-help"
+                              title={row.failureReason ? `Pending: ${row.failureReason}` : 'Form-16 abhi upload nahi hua'}
+                            >
+                              <AlertCircle size={13} className="text-amber-600" />
+                              Pending
+                            </span>
+                            {row.failureReason && (
+                              <span
+                                className="text-[10px] font-semibold text-amber-700 bg-amber-50/80 border border-amber-200 rounded-md px-2 py-0.5 text-center leading-snug max-w-[210px]"
+                                title={`Reason: ${row.failureReason}`}
+                              >
+                                {row.failureReason}
+                              </span>
+                            )}
+                          </div>
                         )}
                       </td>
 
@@ -2793,8 +2813,14 @@ export const UploadForm16: React.FC = () => {
                     >
                       {previewRecord.status}
                     </span>
-                    {previewRecord.status === 'Failed' && previewRecord.failureReason && (
-                      <span className="text-[10.5px] font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-md px-2 py-0.5 max-w-[240px] text-right">
+                    {previewRecord.failureReason && (
+                      <span
+                        className={`text-[10.5px] font-semibold border rounded-md px-2 py-0.5 max-w-[240px] text-right ${
+                          previewRecord.status === 'Failed'
+                            ? 'text-rose-600 bg-rose-50 border-rose-100'
+                            : 'text-amber-700 bg-amber-50 border-amber-200'
+                        }`}
+                      >
                         {previewRecord.failureReason}
                       </span>
                     )}
