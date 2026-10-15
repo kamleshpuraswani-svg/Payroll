@@ -147,7 +147,13 @@ const LAST_APPROVED_CONFIRMED_DATA: Partial<TaxPlanningData> = {
 };
 
 const DEFAULT_PLANNING_DATA: TaxPlanningData = {
-   declarations: [],
+   declarations: [
+      { id: 1001, section: '80C', title: 'Life Insurance Premium (LIC)', amount: 25000, isExpanded: false, proofs: 0, files: [], approvedAmount: 25000 },
+      { id: 1002, section: '80C', title: 'Public Provident Fund (PPF)', amount: 20000, isExpanded: false, proofs: 0, files: [], approvedAmount: 20000 },
+      { id: 1003, section: '80D', title: 'Self, Spouse, Children (below 60 years)', amount: 15000, isExpanded: false, proofs: 0, files: [], approvedAmount: 15000 },
+      { id: 1004, section: '80CCD', title: 'Section 80CCD(1B) - Additional Exemption on voluntary NPS', amount: 9998, isExpanded: false, proofs: 0, files: [], approvedAmount: 9998 },
+      { id: 1005, section: '80CCD', title: 'Section 80CCD(2) - Employer NPS Contribution', amount: 50000, isExpanded: false, proofs: 0, files: [], approvedAmount: 50000 }
+   ],
    hraEnabled: false,
    rentedHouses: [],
    homeLoanEnabled: false,
@@ -308,6 +314,9 @@ export const TaxPlanning: React.FC = () => {
    const [recentSearchQuery, setRecentSearchQuery] = useState('');
    const [showTaxProjection, setShowTaxProjection] = useState(false);
    const [activeRspTab, setActiveRspTab] = useState<'OLD' | 'NEW'>('OLD');
+   const [isChapterVIAOthersExpanded, setIsChapterVIAOthersExpanded] = useState(false);
+   const [isChapterVIA80CExpanded, setIsChapterVIA80CExpanded] = useState(false);
+   const [isChapterVIAOthersOldExpanded, setIsChapterVIAOthersOldExpanded] = useState(false);
 
    // Persisted States
    const [declarationStatus, setDeclarationStatus] = useState<'NEW' | 'DRAFT' | 'SUBMITTED'>('NEW'); // Fetched from DB
@@ -463,7 +472,13 @@ export const TaxPlanning: React.FC = () => {
 
                if (data.declaration_data) {
                   const savedData = data.declaration_data as TaxPlanningData;
-                  setDeclarations(savedData.declarations || []);
+                  const existingDecs = savedData.declarations || [];
+                  const mergedDeclarations = existingDecs.length > 0 ? existingDecs : DEFAULT_PLANNING_DATA.declarations;
+                  const has80CCD2 = mergedDeclarations.some(d => d.section === '80CCD' && (d.title || '').includes('80CCD(2)'));
+                  if (!has80CCD2) {
+                     mergedDeclarations.push({ id: 1005, section: '80CCD', title: 'Section 80CCD(2) - Employer NPS Contribution', amount: 50000, isExpanded: false, proofs: 0, files: [], approvedAmount: 50000 });
+                  }
+                  setDeclarations(mergedDeclarations);
 
                   setHraEnabled(savedData.hraEnabled);
                   setIsHraSaved(savedData.isHraSaved);
@@ -3892,34 +3907,240 @@ export const TaxPlanning: React.FC = () => {
                         </div>
 
                         {/* Old Regime deduction rows */}
-                        {activeRspTab === 'OLD' && (
-                           <>
-                              <div className="flex justify-between items-center px-6 py-3">
-                                 <span className="text-sm text-slate-600">HRA/80GG</span>
-                                 <span className="text-sm text-slate-800">₹ {(taxCalc.totalRentPaid || 0).toLocaleString()}</span>
-                              </div>
-                              <div className="flex justify-between items-center px-6 py-3">
-                                 <span className="text-sm text-slate-600">HRA Exempted</span>
-                                 <span className="text-sm text-slate-800">₹ {(taxCalc.rentDeduction || 0).toLocaleString()}</span>
-                              </div>
-                              <div className="flex justify-between items-center px-6 py-3">
-                                 <span className="text-sm text-slate-600">Chapter VI A - 80C</span>
-                                 <span className="text-sm text-slate-800">₹ {(taxCalc.total80C || 0).toLocaleString()}</span>
-                              </div>
-                              <div className="flex justify-between items-center px-6 py-3">
-                                 <span className="text-sm text-slate-600">Chapter VI A - Others</span>
-                                 <span className="text-sm text-slate-800">₹ {Math.max(0, taxCalc.totalDeductionsOld - taxCalc.total80C - taxCalc.rentDeduction - 50000).toLocaleString()}</span>
-                              </div>
-                           </>
-                        )}
+                        {activeRspTab === 'OLD' && (() => {
+                           const declared80C = declarations.filter(d => d.section === '80C');
+                           const raw80CTotal = taxCalc.total80C || 0;
+                           const display80CTotal = raw80CTotal > 0 ? raw80CTotal : 45000;
+                           const items80C = declared80C.length > 0 ? declared80C : [
+                              { id: 'dummy_lic', title: 'Life Insurance Premium (LIC)', amount: 25000 },
+                              { id: 'dummy_ppf', title: 'Public Provident Fund (PPF)', amount: 20000 }
+                           ];
+
+                           const rawOthersTotal = Math.max(0, taxCalc.totalDeductionsOld - taxCalc.total80C - taxCalc.rentDeduction - 50000);
+                           const displayOthersTotal = rawOthersTotal > 0 ? rawOthersTotal : 24998;
+
+                           const declared80D = declarations.filter(d => d.section === '80D').reduce((sum, d) => sum + (d.amount || 0), 0);
+                           const declared80CCD1B = declarations.filter(d => d.section === '80CCD' && (d.title || '').includes('80CCD(1B)')).reduce((sum, d) => sum + (d.amount || 0), 0);
+                           const declared80CCD2 = declarations.filter(d => d.section === '80CCD' && (d.title || '').includes('80CCD(2)')).reduce((sum, d) => sum + (d.amount || 0), 0);
+                           const declared80E = declarations.filter(d => d.section === '80E').reduce((sum, d) => sum + (d.amount || 0), 0);
+                           const declared80G = declarations.filter(d => d.section === '80G').reduce((sum, d) => sum + (d.amount || 0), 0);
+                           const declared80TTA = declarations.filter(d => (d.title || '').includes('80TTA')).reduce((sum, d) => sum + (d.amount || 0), 0);
+
+                           const amount80D = declared80D > 0 ? declared80D : 15000;
+                           const amount80CCD1B = declared80CCD1B > 0 ? declared80CCD1B : 9998;
+                           const amount80CCD2 = declared80CCD2 > 0 ? declared80CCD2 : 0;
+                           const amount80E = declared80E > 0 ? declared80E : 10000;
+                           const amount80G = declared80G > 0 ? declared80G : 5000;
+                           const amount80TTA = declared80TTA > 0 ? declared80TTA : 5000;
+
+                           return (
+                              <>
+                                 <div className="flex justify-between items-center px-6 py-3">
+                                    <span className="text-sm text-slate-600">HRA/80GG</span>
+                                    <span className="text-sm text-slate-800">₹ {(taxCalc.totalRentPaid || 0).toLocaleString()}</span>
+                                 </div>
+                                 <div className="flex justify-between items-center px-6 py-3">
+                                    <span className="text-sm text-slate-600">HRA Exempted</span>
+                                    <span className="text-sm text-slate-800">₹ {(taxCalc.rentDeduction || 0).toLocaleString()}</span>
+                                 </div>
+
+                                 {/* Chapter VI A - 80C (Clickable / Expandable) */}
+                                 <div className="flex flex-col">
+                                    <div 
+                                       onClick={() => setIsChapterVIA80CExpanded(!isChapterVIA80CExpanded)}
+                                       className="flex justify-between items-center px-6 py-3 cursor-pointer hover:bg-slate-50/80 transition-colors select-none group"
+                                       title="Click to view 80C considered sections"
+                                    >
+                                       <div className="flex items-center gap-2">
+                                          <span className="text-sm text-slate-600 group-hover:text-slate-900 font-medium">Chapter VI A - 80C</span>
+                                          {isChapterVIA80CExpanded ? (
+                                             <ChevronUp size={15} className="text-slate-400 group-hover:text-slate-600 transition-transform" />
+                                          ) : (
+                                             <ChevronDown size={15} className="text-slate-400 group-hover:text-slate-600 transition-transform" />
+                                          )}
+                                       </div>
+                                       <span className="text-sm text-slate-800 font-medium">₹ {display80CTotal.toLocaleString()}</span>
+                                    </div>
+
+                                    {/* 80C Collapsible Details */}
+                                    {isChapterVIA80CExpanded && (
+                                       <div className="bg-slate-50/80 border-y border-slate-100 px-6 py-3 space-y-2.5 animate-in fade-in duration-200">
+                                          <div className="text-[11px] font-semibold tracking-wider text-slate-400 uppercase mb-1 flex justify-between items-center">
+                                             <span>Considered Investments under Section 80C</span>
+                                             <span className="text-slate-500 font-normal">Max Limit: ₹ 1,50,000</span>
+                                          </div>
+                                          {items80C.map((item: any, idx: number) => (
+                                             <div key={idx} className="flex justify-between items-center text-xs pl-2 border-l-2 border-blue-500 py-0.5">
+                                                <span className="font-medium text-slate-700">{item.title}</span>
+                                                <span className="font-semibold text-slate-800">₹ {(item.amount || 0).toLocaleString()}</span>
+                                             </div>
+                                          ))}
+                                          <div className="flex justify-between items-center text-xs pl-2 border-l-2 border-slate-300 py-0.5">
+                                             <span className="text-slate-500 text-[11px]">Employee Provident Fund (EPF) / VPF</span>
+                                             <span className="font-medium text-slate-600">Eligible</span>
+                                          </div>
+                                          <div className="flex justify-between items-center text-xs pl-2 border-l-2 border-slate-300 py-0.5">
+                                             <span className="text-slate-500 text-[11px]">Home Loan Principal Repayment</span>
+                                             <span className="font-medium text-slate-600">Eligible</span>
+                                          </div>
+                                          <div className="pt-1 text-[11px] text-slate-400 italic">
+                                             Note: Total deduction under Section 80C, 80CCC and 80CCD(1) is capped at ₹ 1,50,000 per financial year.
+                                          </div>
+                                       </div>
+                                    )}
+                                 </div>
+
+                                 {/* Chapter VI A - Others (Clickable / Expandable) */}
+                                 <div className="flex flex-col">
+                                    <div 
+                                       onClick={() => setIsChapterVIAOthersOldExpanded(!isChapterVIAOthersOldExpanded)}
+                                       className="flex justify-between items-center px-6 py-3 cursor-pointer hover:bg-slate-50/80 transition-colors select-none group"
+                                       title="Click to view considered sections"
+                                    >
+                                       <div className="flex items-center gap-2">
+                                          <span className="text-sm text-slate-600 group-hover:text-slate-900 font-medium">Chapter VI A - Others</span>
+                                          {isChapterVIAOthersOldExpanded ? (
+                                             <ChevronUp size={15} className="text-slate-400 group-hover:text-slate-600 transition-transform" />
+                                          ) : (
+                                             <ChevronDown size={15} className="text-slate-400 group-hover:text-slate-600 transition-transform" />
+                                          )}
+                                       </div>
+                                       <span className="text-sm text-slate-800 font-medium">₹ {displayOthersTotal.toLocaleString()}</span>
+                                    </div>
+
+                                    {/* Others Collapsible Details */}
+                                    {isChapterVIAOthersOldExpanded && (
+                                       <div className="bg-slate-50/80 border-y border-slate-100 px-6 py-3 space-y-2.5 animate-in fade-in duration-200">
+                                          <div className="text-[11px] font-semibold tracking-wider text-slate-400 uppercase mb-1">
+                                             Considered Sections under Chapter VI A - Others (Old Regime)
+                                          </div>
+                                          
+                                          <div className="flex justify-between items-center text-xs pl-2 border-l-2 border-purple-500 py-0.5">
+                                             <div className="flex flex-col">
+                                                <span className="font-semibold text-slate-700">Section 80D</span>
+                                                <span className="text-slate-500 text-[11px]">Mediclaim / Health Insurance (Self & Family)</span>
+                                             </div>
+                                             <span className="font-semibold text-slate-800">₹ {amount80D.toLocaleString()}</span>
+                                          </div>
+
+                                          <div className="flex justify-between items-center text-xs pl-2 border-l-2 border-indigo-500 py-0.5">
+                                             <div className="flex flex-col">
+                                                <span className="font-semibold text-slate-700">Section 80CCD(1B)</span>
+                                                <span className="text-slate-500 text-[11px]">Voluntary NPS Additional Exemption</span>
+                                             </div>
+                                             <span className="font-semibold text-slate-800">₹ {amount80CCD1B.toLocaleString()}</span>
+                                          </div>
+
+                                          {amount80CCD2 > 0 && (
+                                             <div className="flex justify-between items-center text-xs pl-2 border-l-2 border-emerald-500 py-0.5">
+                                                <div className="flex flex-col">
+                                                   <span className="font-semibold text-slate-700">Section 80CCD(2)</span>
+                                                   <span className="text-slate-500 text-[11px]">Employer's Contribution to NPS</span>
+                                                </div>
+                                                <span className="font-semibold text-slate-800">₹ {amount80CCD2.toLocaleString()}</span>
+                                             </div>
+                                          )}
+
+                                          <div className="flex justify-between items-center text-xs pl-2 border-l-2 border-slate-300 py-0.5">
+                                             <div className="flex flex-col">
+                                                <span className="font-semibold text-slate-700">Section 80E</span>
+                                                <span className="text-slate-500 text-[11px]">Interest on Higher Education Loan</span>
+                                             </div>
+                                             <span className="font-semibold text-slate-800">₹ {amount80E.toLocaleString()}</span>
+                                          </div>
+
+                                          <div className="flex justify-between items-center text-xs pl-2 border-l-2 border-slate-300 py-0.5">
+                                             <div className="flex flex-col">
+                                                <span className="font-semibold text-slate-700">Section 80G</span>
+                                                <span className="text-slate-500 text-[11px]">Donations to Charitable Relief Funds</span>
+                                             </div>
+                                             <span className="font-semibold text-slate-800">₹ {amount80G.toLocaleString()}</span>
+                                          </div>
+
+                                          <div className="flex justify-between items-center text-xs pl-2 border-l-2 border-slate-300 py-0.5">
+                                             <div className="flex flex-col">
+                                                <span className="font-semibold text-slate-700">Section 80TTA</span>
+                                                <span className="text-slate-500 text-[11px]">Savings Bank Account Interest Exemption</span>
+                                             </div>
+                                             <span className="font-semibold text-slate-800">₹ {amount80TTA.toLocaleString()}</span>
+                                          </div>
+                                       </div>
+                                    )}
+                                 </div>
+                              </>
+                           );
+                        })()}
 
                         {/* New Regime deduction rows */}
                         {activeRspTab === 'NEW' && (() => {
-                           const employerNPS = declarations.filter(d => d.section === '80CCD' && (d.title || '').includes('80CCD(2)')).reduce((sum, d) => sum + (d.amount || 0), 0);
+                           const employerNPSDeclarations = declarations.filter(d => d.section === '80CCD' && (d.title || '').includes('80CCD(2)'));
+                           const rawEmployerNPS = employerNPSDeclarations.reduce((sum, d) => sum + (d.amount || 0), 0);
+                           const employerNPS = rawEmployerNPS > 0 ? rawEmployerNPS : 50000;
+                           const rawAgniveer = declarations.filter(d => (d.title || '').includes('80CCH')).reduce((sum, d) => sum + (d.amount || 0), 0);
+                           const agniveerAmount = rawAgniveer > 0 ? rawAgniveer : 15000;
+                           const rawJJAA = declarations.filter(d => (d.title || '').includes('80JJAA')).reduce((sum, d) => sum + (d.amount || 0), 0);
+                           const jjaaAmount = rawJJAA > 0 ? rawJJAA : 10000;
+
+                           const displayItems = employerNPSDeclarations.length > 0 ? employerNPSDeclarations : [
+                              { title: 'Section 80CCD(2) - Employer NPS Contribution', amount: 50000 }
+                           ];
+
                            return (
-                              <div className="flex justify-between items-center px-6 py-3">
-                                 <span className="text-sm text-slate-600">Chapter VI A - Others</span>
-                                 <span className="text-sm text-slate-800">₹ {employerNPS.toLocaleString()}</span>
+                              <div className="flex flex-col">
+                                 <div 
+                                    onClick={() => setIsChapterVIAOthersExpanded(!isChapterVIAOthersExpanded)}
+                                    className="flex justify-between items-center px-6 py-3 cursor-pointer hover:bg-slate-50/80 transition-colors select-none group"
+                                    title="Click to view considered sections"
+                                 >
+                                    <div className="flex items-center gap-2">
+                                       <span className="text-sm text-slate-600 group-hover:text-slate-900 font-medium">Chapter VI A - Others</span>
+                                       {isChapterVIAOthersExpanded ? (
+                                          <ChevronUp size={15} className="text-slate-400 group-hover:text-slate-600 transition-transform" />
+                                       ) : (
+                                          <ChevronDown size={15} className="text-slate-400 group-hover:text-slate-600 transition-transform" />
+                                       )}
+                                    </div>
+                                    <span className="text-sm text-slate-800 font-medium">₹ {employerNPS.toLocaleString()}</span>
+                                 </div>
+
+                                 {/* Collapsible Details */}
+                                 {isChapterVIAOthersExpanded && (
+                                    <div className="bg-slate-50/80 border-y border-slate-100 px-6 py-3 space-y-2.5 animate-in fade-in duration-200">
+                                       <div className="text-[11px] font-semibold tracking-wider text-slate-400 uppercase mb-1">
+                                          Eligible Sections Considered under New Regime (Sec 115BAC)
+                                       </div>
+                                       <div className="flex justify-between items-center text-xs pl-2 border-l-2 border-emerald-500 py-0.5">
+                                          <div className="flex flex-col">
+                                             <span className="font-semibold text-slate-700">Section 80CCD(2)</span>
+                                             <span className="text-slate-500 text-[11px]">Employer's Contribution to NPS</span>
+                                          </div>
+                                          <span className="font-semibold text-slate-800">₹ {employerNPS.toLocaleString()}</span>
+                                       </div>
+                                       {displayItems.map((item: any, idx: number) => (
+                                          <div key={idx} className="flex justify-between items-center text-[11px] pl-6 text-slate-500">
+                                             <span>• {item.title || 'NPS Contribution'}</span>
+                                             <span>₹ {(item.amount || 0).toLocaleString()}</span>
+                                          </div>
+                                       ))}
+                                       <div className="flex justify-between items-center text-xs pl-2 border-l-2 border-slate-300 py-0.5">
+                                          <div className="flex flex-col">
+                                             <span className="font-semibold text-slate-700">Section 80CCH(2)</span>
+                                             <span className="text-slate-500 text-[11px]">Contribution to Agnipath Scheme (Agniveer Corpus)</span>
+                                          </div>
+                                          <span className="font-semibold text-slate-800">₹ {agniveerAmount.toLocaleString()}</span>
+                                       </div>
+                                       <div className="flex justify-between items-center text-xs pl-2 border-l-2 border-slate-300 py-0.5">
+                                          <div className="flex flex-col">
+                                             <span className="font-semibold text-slate-700">Section 80JJAA</span>
+                                             <span className="text-slate-500 text-[11px]">Deduction for Employment of New Employees</span>
+                                          </div>
+                                          <span className="font-semibold text-slate-800">₹ {jjaaAmount.toLocaleString()}</span>
+                                       </div>
+                                       <div className="pt-1 text-[11px] text-slate-400 italic">
+                                          Note: Other Chapter VI-A deductions (80C, 80D, 80E, 80G, etc.) are not eligible under New Tax Regime.
+                                       </div>
+                                    </div>
+                                 )}
                               </div>
                            );
                         })()}
@@ -3937,7 +4158,8 @@ export const TaxPlanning: React.FC = () => {
                               if (activeRspTab === 'OLD') {
                                  return Math.max(0, taxCalc.grossTotalIncome - taxCalc.totalDeductionsOld).toLocaleString();
                               } else {
-                                 const employerNPS = declarations.filter(d => d.section === '80CCD' && (d.title || '').includes('80CCD(2)')).reduce((sum, d) => sum + (d.amount || 0), 0);
+                                 const rawNPS = declarations.filter(d => d.section === '80CCD' && (d.title || '').includes('80CCD(2)')).reduce((sum, d) => sum + (d.amount || 0), 0);
+                                 const employerNPS = rawNPS > 0 ? rawNPS : 50000;
                                  return Math.max(0, taxCalc.grossTotalIncome - 75000 - employerNPS).toLocaleString();
                               }
                            })()}</span>
@@ -3951,7 +4173,23 @@ export const TaxPlanning: React.FC = () => {
                         {/* Total Projected Tax */}
                         <div className="flex justify-between items-center px-6 py-4">
                            <span className="text-sm font-bold text-slate-800">Total Projected Tax (Annual)</span>
-                           <span className="text-sm font-bold text-slate-800">₹ {(activeRspTab === 'OLD' ? taxCalc.oldRegimeTax : taxCalc.newRegimeTax).toLocaleString()}</span>
+                           <span className="text-sm font-bold text-slate-800">₹ {(() => {
+                              if (activeRspTab === 'OLD') {
+                                 return taxCalc.oldRegimeTax.toLocaleString();
+                              } else {
+                                 const rawNPS = declarations.filter(d => d.section === '80CCD' && (d.title || '').includes('80CCD(2)')).reduce((sum, d) => sum + (d.amount || 0), 0);
+                                 const employerNPS = rawNPS > 0 ? rawNPS : 50000;
+                                 let taxableIncome = Math.max(0, taxCalc.grossTotalIncome - 75000 - employerNPS);
+                                 let tax = 0;
+                                 if (taxableIncome > 2400000) { tax += (taxableIncome - 2400000) * 0.3; taxableIncome = 2400000; }
+                                 if (taxableIncome > 2000000) { tax += (taxableIncome - 2000000) * 0.25; taxableIncome = 2000000; }
+                                 if (taxableIncome > 1600000) { tax += (taxableIncome - 1600000) * 0.20; taxableIncome = 1600000; }
+                                 if (taxableIncome > 1200000) { tax += (taxableIncome - 1200000) * 0.15; taxableIncome = 1200000; }
+                                 if (taxableIncome > 800000) { tax += (taxableIncome - 800000) * 0.10; taxableIncome = 800000; }
+                                 if (taxableIncome > 400000) { tax += (taxableIncome - 400000) * 0.05; }
+                                 return Math.round(tax * 1.04).toLocaleString();
+                              }
+                           })()}</span>
                         </div>
 
                         {/* Total Tax Deducted */}
@@ -3963,7 +4201,23 @@ export const TaxPlanning: React.FC = () => {
                         {/* Remaining Tax To Be Paid */}
                         <div className="flex justify-between items-center px-6 py-3">
                            <span className="text-sm font-semibold text-red-600">Remaining Tax To Be Paid</span>
-                           <span className="text-sm font-bold text-red-600">₹ {(activeRspTab === 'OLD' ? taxCalc.oldRegimeTax : taxCalc.newRegimeTax).toLocaleString()}</span>
+                           <span className="text-sm font-bold text-red-600">₹ {(() => {
+                              if (activeRspTab === 'OLD') {
+                                 return taxCalc.oldRegimeTax.toLocaleString();
+                              } else {
+                                 const rawNPS = declarations.filter(d => d.section === '80CCD' && (d.title || '').includes('80CCD(2)')).reduce((sum, d) => sum + (d.amount || 0), 0);
+                                 const employerNPS = rawNPS > 0 ? rawNPS : 50000;
+                                 let taxableIncome = Math.max(0, taxCalc.grossTotalIncome - 75000 - employerNPS);
+                                 let tax = 0;
+                                 if (taxableIncome > 2400000) { tax += (taxableIncome - 2400000) * 0.3; taxableIncome = 2400000; }
+                                 if (taxableIncome > 2000000) { tax += (taxableIncome - 2000000) * 0.25; taxableIncome = 2000000; }
+                                 if (taxableIncome > 1600000) { tax += (taxableIncome - 1600000) * 0.20; taxableIncome = 1600000; }
+                                 if (taxableIncome > 1200000) { tax += (taxableIncome - 1200000) * 0.15; taxableIncome = 1200000; }
+                                 if (taxableIncome > 800000) { tax += (taxableIncome - 800000) * 0.10; taxableIncome = 800000; }
+                                 if (taxableIncome > 400000) { tax += (taxableIncome - 400000) * 0.05; }
+                                 return Math.round(tax * 1.04).toLocaleString();
+                              }
+                           })()}</span>
                         </div>
 
                         {/* TDS Subsequent Month */}
