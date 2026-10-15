@@ -662,6 +662,20 @@ export const UploadForm16: React.FC = () => {
   const [downloadRecord, setDownloadRecord] = useState<Form16Record | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Top Summary Card Status Filter
+  const [cardStatusFilter, setCardStatusFilter] = useState<'Ready to Publish' | 'Published' | 'Pending' | 'Failed' | null>(null);
+
+  // Multi-Select Mode & Row Selection
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
+
+  // Confirmation Dialog Box Target (for Single & Bulk Publish)
+  const [publishConfirmTarget, setPublishConfirmTarget] = useState<
+    | { type: 'single'; record: Form16Record }
+    | { type: 'bulk'; count: number; ids: string[] }
+    | null
+  >(null);
+
   // Publish Form-16 Modal State
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const [selectedForPublish, setSelectedForPublish] = useState<string[]>([]);
@@ -851,6 +865,7 @@ export const UploadForm16: React.FC = () => {
 
   const clearAllFilters = () => {
     setCompletedFilters([]);
+    setCardStatusFilter(null);
     cancelCurrentFilter();
     setSearchTerm('');
   };
@@ -872,6 +887,14 @@ export const UploadForm16: React.FC = () => {
       // 2. Financial Year selection filter (Single select)
       const matchesFY = !selectedFY || r.financialYear === selectedFY;
       if (!matchesFY) return false;
+
+      // Top Summary Card Status Filter
+      if (cardStatusFilter) {
+        const isReadyMatch =
+          cardStatusFilter === 'Ready to Publish' &&
+          (r.status === 'Ready to Publish' || (r.status as string) === 'Uploaded');
+        if (!isReadyMatch && r.status !== cardStatusFilter) return false;
+      }
 
       // 3. Text search
       const matchesSearch = searchTerm
@@ -909,7 +932,7 @@ export const UploadForm16: React.FC = () => {
 
       return true;
     });
-  }, [records, selectedBUs, selectedFY, searchTerm, completedFilters]);
+  }, [records, selectedBUs, selectedFY, searchTerm, completedFilters, cardStatusFilter]);
 
   const totalPages = Math.ceil(filteredRecords.length / itemsPerPage) || 1;
   const paginatedRecords = useMemo(() => {
@@ -1518,9 +1541,24 @@ export const UploadForm16: React.FC = () => {
           </div>
 
           {/* Card 2: Ready to Publish */}
-          <div className="bg-gradient-to-br from-sky-50/70 to-blue-50/40 p-4 rounded-2xl border border-sky-100/80 shadow-sm flex items-center justify-between">
+          <div
+            onClick={() => {
+              setCardStatusFilter((prev) => (prev === 'Ready to Publish' ? null : 'Ready to Publish'));
+              setCurrentPage(1);
+            }}
+            className={`p-4 rounded-2xl border shadow-sm flex items-center justify-between cursor-pointer transition-all ${
+              cardStatusFilter === 'Ready to Publish'
+                ? 'bg-gradient-to-br from-sky-100 to-blue-100/70 border-sky-400 ring-2 ring-sky-500 shadow-md scale-[1.02]'
+                : 'bg-gradient-to-br from-sky-50/70 to-blue-50/40 border-sky-100/80 hover:border-sky-300 hover:shadow-md'
+            }`}
+          >
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-sky-700/80">Ready to Publish</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-sky-700/80">Ready to Publish</p>
+                {cardStatusFilter === 'Ready to Publish' && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-sky-200 text-sky-800 font-extrabold">Active</span>
+                )}
+              </div>
               <p className="text-2xl font-black text-slate-900 mt-1">{(stats.readyToPublishCount ?? 418).toLocaleString()}</p>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-sky-100/80 text-sky-700 flex items-center justify-center font-bold">
@@ -1529,9 +1567,24 @@ export const UploadForm16: React.FC = () => {
           </div>
 
           {/* Card 3: Published */}
-          <div className="bg-gradient-to-br from-emerald-50/70 to-teal-50/40 p-4 rounded-2xl border border-emerald-100/80 shadow-sm flex items-center justify-between">
+          <div
+            onClick={() => {
+              setCardStatusFilter((prev) => (prev === 'Published' ? null : 'Published'));
+              setCurrentPage(1);
+            }}
+            className={`p-4 rounded-2xl border shadow-sm flex items-center justify-between cursor-pointer transition-all ${
+              cardStatusFilter === 'Published'
+                ? 'bg-gradient-to-br from-emerald-100 to-teal-100/70 border-emerald-400 ring-2 ring-emerald-500 shadow-md scale-[1.02]'
+                : 'bg-gradient-to-br from-emerald-50/70 to-teal-50/40 border-emerald-100/80 hover:border-emerald-300 hover:shadow-md'
+            }`}
+          >
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700/80">Published</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700/80">Published</p>
+                {cardStatusFilter === 'Published' && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-200 text-emerald-800 font-extrabold">Active</span>
+                )}
+              </div>
               <p className="text-2xl font-black text-slate-900 mt-1">{(stats.publishedCount ?? 1215).toLocaleString()}</p>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-emerald-100/80 text-emerald-700 flex items-center justify-center font-bold">
@@ -1540,9 +1593,24 @@ export const UploadForm16: React.FC = () => {
           </div>
 
           {/* Card 4: Pending */}
-          <div className="bg-gradient-to-br from-amber-50/70 to-orange-50/40 p-4 rounded-2xl border border-amber-100/80 shadow-sm flex items-center justify-between">
+          <div
+            onClick={() => {
+              setCardStatusFilter((prev) => (prev === 'Pending' ? null : 'Pending'));
+              setCurrentPage(1);
+            }}
+            className={`p-4 rounded-2xl border shadow-sm flex items-center justify-between cursor-pointer transition-all ${
+              cardStatusFilter === 'Pending'
+                ? 'bg-gradient-to-br from-amber-100 to-orange-100/70 border-amber-400 ring-2 ring-amber-500 shadow-md scale-[1.02]'
+                : 'bg-gradient-to-br from-amber-50/70 to-orange-50/40 border-amber-100/80 hover:border-amber-300 hover:shadow-md'
+            }`}
+          >
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-amber-700/80">Pending</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-amber-700/80">Pending</p>
+                {cardStatusFilter === 'Pending' && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-200 text-amber-800 font-extrabold">Active</span>
+                )}
+              </div>
               <p className="text-2xl font-black text-slate-900 mt-1">{(stats.pendingCount ?? 197).toLocaleString()}</p>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-amber-100/80 text-amber-700 flex items-center justify-center font-bold">
@@ -1551,9 +1619,24 @@ export const UploadForm16: React.FC = () => {
           </div>
 
           {/* Card 5: Failed */}
-          <div className="bg-gradient-to-br from-rose-50/70 to-red-50/40 p-4 rounded-2xl border border-rose-100/80 shadow-sm flex items-center justify-between">
+          <div
+            onClick={() => {
+              setCardStatusFilter((prev) => (prev === 'Failed' ? null : 'Failed'));
+              setCurrentPage(1);
+            }}
+            className={`p-4 rounded-2xl border shadow-sm flex items-center justify-between cursor-pointer transition-all ${
+              cardStatusFilter === 'Failed'
+                ? 'bg-gradient-to-br from-rose-100 to-red-100/70 border-rose-400 ring-2 ring-rose-500 shadow-md scale-[1.02]'
+                : 'bg-gradient-to-br from-rose-50/70 to-red-50/40 border-rose-100/80 hover:border-rose-300 hover:shadow-md'
+            }`}
+          >
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-rose-700/80">Failed</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-rose-700/80">Failed</p>
+                {cardStatusFilter === 'Failed' && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-200 text-rose-800 font-extrabold">Active</span>
+                )}
+              </div>
               <p className="text-2xl font-black text-slate-900 mt-1">{(stats.failedCount ?? 12).toLocaleString()}</p>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-rose-100/80 text-rose-700 flex items-center justify-center font-bold">
@@ -1591,8 +1674,18 @@ export const UploadForm16: React.FC = () => {
 
               {/* Publish Form-16 */}
               <button
-                onClick={handleOpenPublishModal}
-                className="px-5 py-2 bg-emerald-600 text-white font-bold text-sm rounded-lg hover:bg-emerald-700 shadow-md shadow-emerald-100 transition-all flex items-center gap-2 cursor-pointer"
+                onClick={() => {
+                  setIsSelectionMode((prev) => {
+                    const next = !prev;
+                    if (!next) setSelectedRowIds([]);
+                    return next;
+                  });
+                }}
+                className={`px-5 py-2 font-bold text-sm rounded-lg shadow-md transition-all flex items-center gap-2 cursor-pointer ${
+                  isSelectionMode
+                    ? 'bg-emerald-700 text-white ring-2 ring-emerald-400 shadow-emerald-200'
+                    : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-100'
+                }`}
               >
                 <Send size={16} />
                 Publish Form-16
@@ -1844,11 +1937,79 @@ export const UploadForm16: React.FC = () => {
             </div>
           </div>
 
+          {/* Multi-Select Action Banner (matching reference UI) */}
+          {isSelectionMode && (
+            <div className="px-6 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-1">
+              <div className="text-xs font-bold text-slate-800">
+                {selectedRowIds.length < 10 ? `0${selectedRowIds.length}` : selectedRowIds.length}{' '}
+                Employee{selectedRowIds.length === 1 ? '' : 's'} Selected
+              </div>
+
+              <div className="flex items-center gap-2">
+                {selectedRowIds.length > 0 && (
+                  <button
+                    onClick={() =>
+                      setPublishConfirmTarget({
+                        type: 'bulk',
+                        count: selectedRowIds.length,
+                        ids: [...selectedRowIds]
+                      })
+                    }
+                    className="px-5 py-2 bg-[#444CE7] hover:bg-[#3538CD] text-white font-bold text-xs rounded-lg shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Send size={13} />
+                    Publish
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setIsSelectionMode(false);
+                    setSelectedRowIds([]);
+                  }}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-lg shadow-sm transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Data Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  {isSelectionMode && (() => {
+                    const selectableRecords = filteredRecords.filter(
+                      (r) => r.status !== 'Pending' && r.status !== 'Failed'
+                    );
+                    const isAllSelectableSelected =
+                      selectableRecords.length > 0 &&
+                      selectableRecords.every((r) => selectedRowIds.includes(r.id));
+
+                    return (
+                      <th className="py-4 px-4 w-12 text-center">
+                        <input
+                          type="checkbox"
+                          disabled={selectableRecords.length === 0}
+                          checked={isAllSelectableSelected}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedRowIds(selectableRecords.map((r) => r.id));
+                            } else {
+                              setSelectedRowIds([]);
+                            }
+                          }}
+                          className="w-4 h-4 rounded border-slate-300 text-[#444CE7] focus:ring-[#444CE7] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                          title={
+                            selectableRecords.length === 0
+                              ? 'No eligible employees to select'
+                              : 'Select All Eligible Employees'
+                          }
+                        />
+                      </th>
+                    );
+                  })()}
                   <th className="py-4 px-6">Employee</th>
                   <th className="py-4 px-4">PAN Number</th>
                   <th className="py-4 px-4">Financial Year</th>
@@ -1861,7 +2022,7 @@ export const UploadForm16: React.FC = () => {
               <tbody className="divide-y divide-slate-100 text-xs">
                 {paginatedRecords.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-slate-400">
+                    <td colSpan={isSelectionMode ? 8 : 7} className="py-12 text-center text-slate-400">
                       <div className="flex flex-col items-center justify-center gap-2">
                         <FileText size={36} className="text-slate-300" />
                         <p className="font-bold text-sm text-slate-600">No Form-16 records found</p>
@@ -1870,8 +2031,64 @@ export const UploadForm16: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  paginatedRecords.map((row) => (
-                    <tr key={row.id} className="hover:bg-slate-50/70 transition-colors group">
+                  paginatedRecords.map((row) => {
+                    const isSelectable = row.status !== 'Pending' && row.status !== 'Failed';
+                    return (
+                    <tr
+                      key={row.id}
+                      onClick={() => {
+                        if (isSelectionMode && isSelectable) {
+                          setSelectedRowIds((prev) =>
+                            prev.includes(row.id)
+                              ? prev.filter((id) => id !== row.id)
+                              : [...prev, row.id]
+                          );
+                        }
+                      }}
+                      className={`transition-colors group ${
+                        isSelectionMode
+                          ? isSelectable
+                            ? 'cursor-pointer'
+                            : 'cursor-not-allowed'
+                          : ''
+                      } ${
+                        isSelectionMode && selectedRowIds.includes(row.id)
+                          ? 'bg-indigo-50/40 hover:bg-indigo-50/60'
+                          : 'hover:bg-slate-50/70'
+                      }`}
+                    >
+                      {/* Row Checkbox in Selection Mode */}
+                      {isSelectionMode && (
+                        <td
+                          className="py-4 px-4 text-center"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <input
+                            type="checkbox"
+                            disabled={!isSelectable}
+                            checked={selectedRowIds.includes(row.id)}
+                            onChange={() => {
+                              if (!isSelectable) return;
+                              setSelectedRowIds((prev) =>
+                                prev.includes(row.id)
+                                  ? prev.filter((id) => id !== row.id)
+                                  : [...prev, row.id]
+                              );
+                            }}
+                            className={`w-4 h-4 rounded border-slate-300 text-[#444CE7] focus:ring-[#444CE7] ${
+                              isSelectable
+                                ? 'cursor-pointer'
+                                : 'cursor-not-allowed opacity-35 bg-slate-100'
+                            }`}
+                            title={
+                              !isSelectable
+                                ? `Cannot select employee with ${row.status} status`
+                                : 'Select employee'
+                            }
+                          />
+                        </td>
+                      )}
+
                       {/* Employee Info (Name & ID only) */}
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
@@ -1967,11 +2184,11 @@ export const UploadForm16: React.FC = () => {
                       </td>
 
                       {/* Actions */}
-                      <td className="py-4 px-6 text-right">
+                      <td className="py-4 px-6 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => setDownloadRecord(row)}
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
                             title="Download Form-16 (Part A / Part B)"
                           >
                             <Download size={16} />
@@ -1987,15 +2204,29 @@ export const UploadForm16: React.FC = () => {
                               setSingleSimulateFail(false);
                               setIsSingleUploadModalOpen(true);
                             }}
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-purple-600 hover:bg-purple-50 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-purple-600 hover:bg-purple-50 transition-colors cursor-pointer"
                             title="Upload / Replace Form-16"
                           >
                             <Upload size={16} />
                           </button>
+                          {/* Publish Icon (Right side of Upload icon) */}
+                          <button
+                            onClick={() =>
+                              setPublishConfirmTarget({
+                                type: 'single',
+                                record: row
+                              })
+                            }
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
+                            title="Publish"
+                          >
+                            <Send size={16} />
+                          </button>
                         </div>
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -3457,6 +3688,98 @@ export const UploadForm16: React.FC = () => {
                 className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm rounded-lg shadow-md shadow-emerald-100 transition-all flex items-center gap-2 cursor-pointer"
               >
                 <Send size={15} /> Publish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Dialog Box for Publish Form-16 (Single & Bulk) */}
+      {publishConfirmTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-md w-full border border-slate-200 shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-indigo-50 text-[#444CE7] rounded-xl border border-indigo-100 shadow-xs">
+                  <Send size={18} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-800">Publish Form-16 Confirmation</h3>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPublishConfirmTarget(null)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6">
+              <p className="text-sm text-slate-700 leading-relaxed font-medium">
+                {publishConfirmTarget.type === 'bulk'
+                  ? `Are you sure you want to publish Form-16 (Part A and B) to employee (${publishConfirmTarget.count} employee${publishConfirmTarget.count > 1 ? 's' : ''})?`
+                  : `Are you sure you want to publish Form-16 (Part A and B) to employee (${publishConfirmTarget.record.empName})?`}
+              </p>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setPublishConfirmTarget(null)}
+                className="px-4 py-2 border border-slate-200 text-slate-600 font-bold text-xs rounded-lg hover:bg-white transition-all cursor-pointer shadow-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (publishConfirmTarget.type === 'bulk') {
+                    const idsToPublish = publishConfirmTarget.ids;
+                    const count = publishConfirmTarget.count;
+                    setRecords((prev) =>
+                      prev.map((r) =>
+                        idsToPublish.includes(r.id)
+                          ? {
+                              ...r,
+                              status: 'Published' as const,
+                              uploadedAt: 'Just now',
+                              uploadedBy: 'HR Admin (Published)'
+                            }
+                          : r
+                      )
+                    );
+                    showToast(
+                      `Form-16 published successfully for ${count} employee${count > 1 ? 's' : ''}!`
+                    );
+                    setSelectedRowIds([]);
+                    setIsSelectionMode(false);
+                  } else {
+                    const rec = publishConfirmTarget.record;
+                    setRecords((prev) =>
+                      prev.map((r) =>
+                        r.id === rec.id
+                          ? {
+                              ...r,
+                              status: 'Published' as const,
+                              uploadedAt: 'Just now',
+                              uploadedBy: 'HR Admin (Published)'
+                            }
+                          : r
+                      )
+                    );
+                    showToast(`Form-16 published successfully to employee (${rec.empName})!`);
+                  }
+                  setPublishConfirmTarget(null);
+                }}
+                className="px-5 py-2 bg-[#444CE7] hover:bg-[#3538CD] text-white font-bold text-xs rounded-lg shadow-md shadow-indigo-100 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Send size={13} />
+                Publish
               </button>
             </div>
           </div>
