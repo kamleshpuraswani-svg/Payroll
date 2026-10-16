@@ -16,7 +16,14 @@ import {
   BookOpen,
   Plane,
   Download,
-  RotateCw
+  RotateCw,
+  Info,
+  Eye,
+  EyeOff,
+  Lock,
+  ShieldCheck,
+  KeyRound,
+  X
 } from 'lucide-react';
 import {
   BarChart,
@@ -30,6 +37,45 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
+import DateRangeFilterDropdown from './DateRangeFilterDropdown';
+
+const STATUTORY_SNAPSHOT_DATA = [
+  {
+    id: 'pf',
+    label: 'Provident Fund',
+    value: '₹ 0',
+    status: 'Applicable',
+    applicable: true,
+  },
+  {
+    id: 'pt',
+    label: 'Professional Tax',
+    value: '-',
+    status: 'Not Applicable',
+    applicable: false,
+  },
+  {
+    id: 'esi',
+    label: 'ESI',
+    value: '-',
+    status: 'Not Applicable',
+    applicable: false,
+  },
+  {
+    id: 'nps',
+    label: 'NPS',
+    value: '₹ 0',
+    status: 'Applicable',
+    applicable: true,
+  },
+  {
+    id: 'lwf',
+    label: 'LWF',
+    value: '-',
+    status: 'Not Applicable',
+    applicable: false,
+  },
+];
 
 const REVISION_YEAR_OPTIONS = ['2024', '2025', '2026', '2027'];
 
@@ -296,6 +342,61 @@ const Overview: React.FC<OverviewProps> = ({
   const [activeLoanIndex, setActiveLoanIndex] = useState(0);
   const [activeAdvanceIndex, setActiveAdvanceIndex] = useState(0);
   const revisionDropdownRef = useRef<HTMLDivElement>(null);
+  // Statutory Snapshot Date Range Filter State (matching Variable Pay Summary)
+  const [statutoryTimeRange, setStatutoryTimeRange] = useState<string>('This Year');
+
+  // Shared Lock & Password Protection for Salary Revision History & Salary Breakdown
+  const [isSalaryWidgetsUnlocked, setIsSalaryWidgetsUnlocked] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [showPasswordPlaintext, setShowPasswordPlaintext] = useState(false);
+  const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
+
+  const handleEyeIconClick = () => {
+    if (isSalaryWidgetsUnlocked) {
+      setIsSalaryWidgetsUnlocked(false);
+    } else {
+      setPasswordInput('');
+      setPasswordError('');
+      setShowPasswordPlaintext(false);
+      setIsPasswordModalOpen(true);
+    }
+  };
+
+  const handleOpenPasswordModal = () => {
+    setPasswordInput('');
+    setPasswordError('');
+    setShowPasswordPlaintext(false);
+    setIsPasswordModalOpen(true);
+  };
+
+  const handleClosePasswordModal = () => {
+    setIsPasswordModalOpen(false);
+    setPasswordInput('');
+    setPasswordError('');
+    setShowPasswordPlaintext(false);
+  };
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError('');
+    if (!passwordInput.trim()) {
+      setPasswordError('Please enter your password.');
+      return;
+    }
+    if (passwordInput === '1234') {
+      setIsVerifyingPassword(true);
+      setTimeout(() => {
+        setIsVerifyingPassword(false);
+        setIsSalaryWidgetsUnlocked(true);
+        setIsPasswordModalOpen(false);
+        setPasswordInput('');
+      }, 200);
+    } else {
+      setPasswordError('Incorrect password. Default password is 1234.');
+    }
+  };
 
   const currentExpenseItems = useMemo(() => {
     return OVERVIEW_EXPENSE_DATA_MAP['This Month'];
@@ -583,14 +684,29 @@ const Overview: React.FC<OverviewProps> = ({
 
       {/* ROW 2: Salary Revision History */}
       <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
           <h3 className="font-bold text-slate-800 flex items-center gap-2">
             <TrendingUp size={18} className="text-purple-600" />
             Salary Revision History
           </h3>
 
-          {/* Date Range Dropdown with Calendar icon & full modal popup - Reference Screenshot 2 */}
-          <div className="relative" ref={revisionDropdownRef}>
+          <div className="flex items-center gap-2">
+            {/* Eye Icon to unlock/lock confidential salary widgets */}
+            <button
+              type="button"
+              onClick={handleEyeIconClick}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all cursor-pointer shadow-2xs ${
+                isSalaryWidgetsUnlocked
+                  ? 'bg-indigo-50 border-indigo-200 text-indigo-600 hover:bg-indigo-100'
+                  : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-indigo-600 hover:border-slate-300'
+              }`}
+              title={isSalaryWidgetsUnlocked ? 'Hide salary details' : 'Unlock salary details'}
+            >
+              {isSalaryWidgetsUnlocked ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
+
+            {/* Date Range Dropdown with Calendar icon & full modal popup - Reference Screenshot 2 */}
+            <div className="relative" ref={revisionDropdownRef}>
             <button
               type="button"
               onClick={() => setIsRevisionDropdownOpen(prev => !prev)}
@@ -684,105 +800,126 @@ const Overview: React.FC<OverviewProps> = ({
             )}
           </div>
         </div>
+      </div>
 
         {/* Revision Chart */}
-        <div className="h-72 w-full">
-          {salaryTrendData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={salaryTrendData} margin={{ top: 38, right: 30, left: 10, bottom: 8 }}>
-                <defs>
-                  <linearGradient id="overviewSalaryTrendLineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    {overviewSalaryTrendGradientStops.map((stop, i) => (
-                      <stop key={i} offset={stop.offset} stopColor={stop.stopColor} />
-                    ))}
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="monthLabel" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} allowDecimals={false} domain={[0, 'auto']} />
-                <RechartsTooltip
-                  cursor={{ fill: 'rgba(241, 245, 249, 0.6)' }}
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const row = payload[0].payload as RevisionItem;
-                      return (
-                        <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg text-xs min-w-[260px]">
-                          <p className="font-bold text-slate-800 mb-2 border-b border-slate-100 pb-1.5">{row.period}</p>
-                          <div className="flex justify-between items-center gap-4 text-slate-600">
-                            <span className="whitespace-nowrap">Previous Monthly CTC:</span>
-                            <span className="font-semibold whitespace-nowrap">{formatINR(row.prevGross)}</span>
-                          </div>
-                          <div className="flex justify-between items-center gap-4 text-[#4f46e5] pt-1">
-                            <span className="whitespace-nowrap font-medium">Revised Monthly CTC:</span>
-                            <span className="font-bold whitespace-nowrap">{formatINR(row.gross)}</span>
-                          </div>
-                          {row.isDecrement ? (
-                            <div className="flex justify-between items-center gap-4 text-[#dc2626] pt-1.5 mt-1.5 border-t border-slate-100">
-                              <span className="whitespace-nowrap font-medium">Decrement:</span>
-                              <span className="font-bold whitespace-nowrap">-{formatINR(row.decrementAmount)}</span>
-                            </div>
-                          ) : (
-                            <div className="flex justify-between items-center gap-4 text-[#7c3aed] pt-1.5 mt-1.5 border-t border-slate-100">
-                              <span className="whitespace-nowrap font-medium">Increment:</span>
-                              <span className="font-bold whitespace-nowrap">+{formatINR(row.incrementAmount)}</span>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Bar
-                  dataKey="gross"
-                  barSize={36}
-                  radius={[6, 6, 0, 0]}
-                  fill="#4f46e5"
-                  fillOpacity={0.85}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="gross"
-                  stroke="url(#overviewSalaryTrendLineGradient)"
-                  strokeWidth={2.5}
-                  dot={(props: any) => {
-                    const { cx, cy, payload, key } = props;
-                    if (payload.isDecrement) {
-                      const badgeLabel = `↓ -${formatINR(payload.decrementAmount)}`;
-                      const badgeWidth = Math.max(70, badgeLabel.length * 6.5);
-                      return (
-                        <g key={key}>
-                          <rect x={cx - badgeWidth / 2} y={cy - 25} width={badgeWidth} height={18} rx={4} fill="#fee2e2" stroke="#fca5a5" />
-                          <text x={cx} y={cy - 12} fill="#dc2626" fontSize="10" fontWeight="bold" textAnchor="middle">
-                            {badgeLabel}
-                          </text>
-                          <circle cx={cx} cy={cy} r={7} fill="#ef4444" fillOpacity={0.25} />
-                          <circle cx={cx} cy={cy} r={4.5} fill="#ef4444" stroke="#fff" strokeWidth={1.5} />
-                        </g>
-                      );
-                    }
-                    if (payload.isIncrement) {
-                      const badgeLabel = `↑ +${formatINR(payload.incrementAmount)}`;
-                      const badgeWidth = Math.max(70, badgeLabel.length * 6.5);
-                      return (
-                        <g key={key}>
-                          <rect x={cx - badgeWidth / 2} y={cy - 25} width={badgeWidth} height={18} rx={4} fill="#f3e8ff" stroke="#d8b4fe" />
-                          <text x={cx} y={cy - 12} fill="#7c3aed" fontSize="10" fontWeight="bold" textAnchor="middle">
-                            {badgeLabel}
-                          </text>
-                          <circle cx={cx} cy={cy} r={4} fill="#7c3aed" stroke="#fff" strokeWidth={1.5} />
-                        </g>
-                      );
-                    }
-                    return <circle key={key} cx={cx} cy={cy} r={3} fill="#4f46e5" stroke="#fff" strokeWidth={1.5} />;
-                  }}
-                />
-              </ComposedChart>
-            </ResponsiveContainer>
+        <div className="relative w-full h-72">
+          {!isSalaryWidgetsUnlocked ? (
+            <div
+              onClick={handleOpenPasswordModal}
+              className="w-full h-full flex flex-col items-center justify-center cursor-pointer select-none text-center px-4 group"
+              title="Click to unlock"
+            >
+              <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:text-indigo-600 group-hover:bg-indigo-50 transition-all mb-3">
+                <Lock size={18} strokeWidth={2} />
+              </div>
+              <p className="text-sm font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">
+                Salary Revision History is Hidden
+              </p>
+              <p className="text-xs text-slate-400 group-hover:text-indigo-600 font-medium mt-1 transition-colors">
+                Click the eye icon or click here to unlock and view details
+              </p>
+            </div>
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 text-sm italic py-12">
-              <TrendingUp size={28} className="text-slate-300 mb-2 stroke-1" />
-              No salary revisions in this period
+            <div className="w-full h-full transition-all duration-300">
+              {salaryTrendData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={salaryTrendData} margin={{ top: 38, right: 30, left: 10, bottom: 8 }}>
+                    <defs>
+                      <linearGradient id="overviewSalaryTrendLineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        {overviewSalaryTrendGradientStops.map((stop, i) => (
+                          <stop key={i} offset={stop.offset} stopColor={stop.stopColor} />
+                        ))}
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="monthLabel" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }} allowDecimals={false} domain={[0, 'auto']} />
+                    <RechartsTooltip
+                      cursor={{ fill: 'rgba(241, 245, 249, 0.6)' }}
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const row = payload[0].payload as RevisionItem;
+                          return (
+                            <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg text-xs min-w-[260px]">
+                              <p className="font-bold text-slate-800 mb-2 border-b border-slate-100 pb-1.5">{row.period}</p>
+                              <div className="flex justify-between items-center gap-4 text-slate-600">
+                                <span className="whitespace-nowrap">Previous Monthly CTC:</span>
+                                <span className="font-semibold whitespace-nowrap">{formatINR(row.prevGross)}</span>
+                              </div>
+                              <div className="flex justify-between items-center gap-4 text-[#4f46e5] pt-1">
+                                <span className="whitespace-nowrap font-medium">Revised Monthly CTC:</span>
+                                <span className="font-bold whitespace-nowrap">{formatINR(row.gross)}</span>
+                              </div>
+                              {row.isDecrement ? (
+                                <div className="flex justify-between items-center gap-4 text-[#dc2626] pt-1.5 mt-1.5 border-t border-slate-100">
+                                  <span className="whitespace-nowrap font-medium">Decrement:</span>
+                                  <span className="font-bold whitespace-nowrap">-{formatINR(row.decrementAmount)}</span>
+                                </div>
+                              ) : (
+                                <div className="flex justify-between items-center gap-4 text-[#7c3aed] pt-1.5 mt-1.5 border-t border-slate-100">
+                                  <span className="whitespace-nowrap font-medium">Increment:</span>
+                                  <span className="font-bold whitespace-nowrap">+{formatINR(row.incrementAmount)}</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Bar
+                      dataKey="gross"
+                      barSize={36}
+                      radius={[6, 6, 0, 0]}
+                      fill="#4f46e5"
+                      fillOpacity={0.85}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="gross"
+                      stroke="url(#overviewSalaryTrendLineGradient)"
+                      strokeWidth={2.5}
+                      dot={(props: any) => {
+                        const { cx, cy, payload, key } = props;
+                        if (payload.isDecrement) {
+                          const badgeLabel = `↓ -${formatINR(payload.decrementAmount)}`;
+                          const badgeWidth = Math.max(70, badgeLabel.length * 6.5);
+                          return (
+                            <g key={key}>
+                              <rect x={cx - badgeWidth / 2} y={cy - 25} width={badgeWidth} height={18} rx={4} fill="#fee2e2" stroke="#fca5a5" />
+                              <text x={cx} y={cy - 12} fill="#dc2626" fontSize="10" fontWeight="bold" textAnchor="middle">
+                                {badgeLabel}
+                              </text>
+                              <circle cx={cx} cy={cy} r={7} fill="#ef4444" fillOpacity={0.25} />
+                              <circle cx={cx} cy={cy} r={4.5} fill="#ef4444" stroke="#fff" strokeWidth={1.5} />
+                            </g>
+                          );
+                        }
+                        if (payload.isIncrement) {
+                          const badgeLabel = `↑ +${formatINR(payload.incrementAmount)}`;
+                          const badgeWidth = Math.max(70, badgeLabel.length * 6.5);
+                          return (
+                            <g key={key}>
+                              <rect x={cx - badgeWidth / 2} y={cy - 25} width={badgeWidth} height={18} rx={4} fill="#f3e8ff" stroke="#d8b4fe" />
+                              <text x={cx} y={cy - 12} fill="#7c3aed" fontSize="10" fontWeight="bold" textAnchor="middle">
+                                {badgeLabel}
+                              </text>
+                              <circle cx={cx} cy={cy} r={4} fill="#7c3aed" stroke="#fff" strokeWidth={1.5} />
+                            </g>
+                          );
+                        }
+                        return <circle key={key} cx={cx} cy={cy} r={3} fill="#4f46e5" stroke="#fff" strokeWidth={1.5} />;
+                      }}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 text-sm italic py-12">
+                  <TrendingUp size={28} className="text-slate-300 mb-2 stroke-1" />
+                  No salary revisions in this period
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -965,63 +1102,158 @@ const Overview: React.FC<OverviewProps> = ({
                 <p className="text-[10px] text-slate-400 font-medium">(Last 12 months)</p>
               </div>
             </div>
+
+            {/* Eye Icon to unlock/lock confidential salary widgets */}
+            <button
+              type="button"
+              onClick={handleEyeIconClick}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all cursor-pointer shadow-2xs ${
+                isSalaryWidgetsUnlocked
+                  ? 'bg-indigo-50 border-indigo-200 text-indigo-600 hover:bg-indigo-100'
+                  : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-indigo-600 hover:border-slate-300'
+              }`}
+              title={isSalaryWidgetsUnlocked ? 'Hide salary details' : 'Unlock salary details'}
+            >
+              {isSalaryWidgetsUnlocked ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
           </div>
 
-          <div className="w-full h-44">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={salaryBreakdown12Months} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} dy={8} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={(val) => `₹${val / 1000}k`} />
-                <RechartsTooltip
-                  cursor={{ fill: '#f8fafc' }}
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const row = payload[0].payload;
-                      return (
-                        <div className="bg-white p-3 border border-slate-200 rounded-xl shadow-xl text-xs min-w-[210px]">
-                          <p className="font-bold text-slate-800 border-b border-slate-100 pb-1.5 mb-2">{row.period}</p>
-                          <div className="space-y-1.5">
-                            <div className="flex justify-between items-center text-slate-600">
-                              <span className="font-medium">Gross Salary:</span>
-                              <span className="font-bold text-slate-900">{formatINR(row.gross)}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-rose-600">
-                              <span className="font-medium">Deductions:</span>
-                              <span className="font-bold">-{formatINR(row.deductions)}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-blue-600 pt-1 border-t border-slate-100">
-                              <span className="font-bold">Net Pay:</span>
-                              <span className="font-black text-sm">{formatINR(row.net)}</span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Bar dataKey="net" stackId="a" fill="#3B82F6" barSize={16} radius={[0, 0, 0, 0]} />
-                <Bar dataKey="deductions" stackId="a" fill="#EF4444" radius={[3, 3, 0, 0]} barSize={16} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <div className="relative w-full flex-1 flex flex-col justify-between">
+            {!isSalaryWidgetsUnlocked ? (
+              <div
+                onClick={handleOpenPasswordModal}
+                className="w-full h-56 flex flex-col items-center justify-center cursor-pointer select-none text-center px-4 group"
+                title="Click to unlock"
+              >
+                <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:text-indigo-600 group-hover:bg-indigo-50 transition-all mb-2.5">
+                  <Lock size={16} strokeWidth={2} />
+                </div>
+                <p className="text-sm font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">
+                  Salary Breakdown is Hidden
+                </p>
+                <p className="text-xs text-slate-400 group-hover:text-indigo-600 font-medium mt-1 transition-colors">
+                  Click the eye icon or click here to unlock and view details
+                </p>
+              </div>
+            ) : (
+              <div className="w-full transition-all duration-300">
+                <div className="w-full h-44">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={salaryBreakdown12Months} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} dy={8} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={(val) => `₹${val / 1000}k`} />
+                      <RechartsTooltip
+                        cursor={{ fill: '#f8fafc' }}
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const row = payload[0].payload;
+                            return (
+                              <div className="bg-white p-3 border border-slate-200 rounded-xl shadow-xl text-xs min-w-[210px]">
+                                <p className="font-bold text-slate-800 border-b border-slate-100 pb-1.5 mb-2">{row.period}</p>
+                                <div className="space-y-1.5">
+                                  <div className="flex justify-between items-center text-slate-600">
+                                    <span className="font-medium">Gross Salary:</span>
+                                    <span className="font-bold text-slate-900">{formatINR(row.gross)}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center text-rose-600">
+                                    <span className="font-medium">Deductions:</span>
+                                    <span className="font-bold">-{formatINR(row.deductions)}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center text-blue-600 pt-1 border-t border-slate-100">
+                                    <span className="font-bold">Net Pay:</span>
+                                    <span className="font-black text-sm">{formatINR(row.net)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Bar dataKey="net" stackId="a" fill="#3B82F6" barSize={16} radius={[0, 0, 0, 0]} />
+                      <Bar dataKey="deductions" stackId="a" fill="#EF4444" radius={[3, 3, 0, 0]} barSize={16} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
 
-          <div className="flex justify-center gap-6 mt-3 pt-2 border-t border-slate-100">
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-[#3B82F6]"></div>
-              <span className="text-[10px] font-bold text-slate-500 uppercase">NET PAY</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-[#EF4444]"></div>
-              <span className="text-[10px] font-bold text-slate-500 uppercase">DEDUCTIONS</span>
-            </div>
+                <div className="flex justify-center gap-6 mt-3 pt-2 border-t border-slate-100">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-[#3B82F6]"></div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">NET PAY</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-[#EF4444]"></div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">DEDUCTIONS</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
       </div>
 
-      {/* ROW 4: Expense & Reimbursement Summary */}
+      {/* ROW 4: Statutory Snapshot (Width matching Outstanding Loan/Advance Summary: lg:col-span-6) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <div className="lg:col-span-6 bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-blue-300 transition-all">
+          <div className="flex justify-between items-center mb-5 gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-bold text-slate-800">
+                Statutory Snapshot
+              </h3>
+              <div className="relative group/info">
+                <Info
+                  size={16}
+                  className="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                />
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover/info:block z-50 w-64 p-2 bg-slate-900 text-white text-[11px] rounded-lg shadow-xl text-center pointer-events-none">
+                  Summary of statutory contributions and compliance applicability for the selected period.
+                  <div className="w-2 h-2 bg-slate-900 rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Filter - Same as HR Manager role -> Payroll Dashboard -> Variable Pay Summary */}
+            <DateRangeFilterDropdown
+              value={statutoryTimeRange}
+              onChange={setStatutoryTimeRange}
+            />
+          </div>
+
+          {/* 5 Inner Cards Grid (3 columns on sm+: Provident Fund, Professional Tax, ESI on top; NPS, LWF below) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {STATUTORY_SNAPSHOT_DATA.map((item) => (
+              <div
+                key={item.id}
+                className="border border-slate-200/90 rounded-xl p-3 bg-white flex flex-col justify-between min-h-[105px] hover:border-slate-300 transition-all shadow-2xs"
+              >
+                <div>
+                  <span className="text-xs font-bold text-slate-500 truncate block">
+                    {item.label}
+                  </span>
+                  <p className="text-xl sm:text-2xl font-black text-slate-900 mt-1 mb-2">
+                    {item.value}
+                  </p>
+                </div>
+                <div>
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
+                      item.applicable
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-slate-50 text-slate-500 border border-slate-200'
+                    }`}
+                  >
+                    {item.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ROW 5: Expense & Reimbursement Summary */}
       <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
@@ -1071,6 +1303,109 @@ const Overview: React.FC<OverviewProps> = ({
           })}
         </div>
       </div>
+
+      {/* Password Prompt Modal Dialog for Unlocking Salary Widgets */}
+      {isPasswordModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xl max-w-md w-full p-7 relative overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Subtle background glow */}
+            <div className="absolute -top-20 -right-20 w-44 h-44 bg-indigo-50/70 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-20 -left-20 w-44 h-44 bg-blue-50/70 rounded-full blur-2xl pointer-events-none" />
+
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={handleClosePasswordModal}
+              className="absolute right-4 top-4 w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all cursor-pointer"
+              title="Close"
+            >
+              <X size={16} />
+            </button>
+
+            {/* Lock Icon with Shield */}
+            <div className="relative mx-auto w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mb-4 shadow-xs">
+              <Lock size={26} className="stroke-[2.2]" />
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center border-2 border-white shadow-xs">
+                <ShieldCheck size={11} />
+              </div>
+            </div>
+
+            <div className="text-center mb-5">
+              <h2 className="text-xl font-black text-slate-900 tracking-tight">Salary Access Protected</h2>
+              <p className="text-xs text-slate-500 font-medium mt-1.5 leading-relaxed">
+                This screen contains confidential payslip and salary records. Please enter your portal password to continue.
+              </p>
+            </div>
+
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2">
+                  Portal Password <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPasswordPlaintext ? 'text' : 'password'}
+                    value={passwordInput}
+                    onChange={(e) => {
+                      setPasswordInput(e.target.value);
+                      if (passwordError) setPasswordError('');
+                    }}
+                    placeholder="Enter password (e.g. 1234)"
+                    autoFocus
+                    className={`w-full pl-10 pr-11 py-2.5 bg-slate-50/60 border ${
+                      passwordError
+                        ? 'border-red-300 ring-2 ring-red-100 bg-red-50/30'
+                        : 'border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100'
+                    } rounded-xl text-sm font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white transition-all`}
+                  />
+                  <KeyRound size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordPlaintext(!showPasswordPlaintext)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                    title={showPasswordPlaintext ? 'Hide password' : 'Show password'}
+                  >
+                    {showPasswordPlaintext ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+
+                {passwordError && (
+                  <div className="mt-2.5 p-2.5 bg-red-50/90 border border-red-200/80 rounded-lg flex items-center gap-2 text-xs text-red-600 font-semibold animate-in fade-in">
+                    <AlertTriangle size={14} className="shrink-0 text-red-500" />
+                    <span>{passwordError}</span>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={isVerifyingPassword}
+                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-md shadow-indigo-100 cursor-pointer disabled:opacity-60"
+              >
+                {isVerifyingPassword ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Verifying...</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock size={15} />
+                    <span>Unlock Salary Widgets</span>
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* Default PIN Helper */}
+            <div className="mt-5 pt-4 border-t border-slate-100 text-center flex flex-col items-center gap-2">
+              <span className="text-[11px] text-slate-400 font-medium inline-flex items-center gap-1.5 bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                <span>Default PIN:</span> <strong className="text-slate-700 font-bold">1234</strong>
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
