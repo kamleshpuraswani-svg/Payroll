@@ -1254,29 +1254,32 @@ const CompensationRangeTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-const DeptHeadcountCostTooltip = ({ active, payload, label }: any) => {
+type DeptMetric = 'cost' | 'headcount';
+
+const DEPT_METRIC_OPTIONS: { value: DeptMetric; label: string; color: string }[] = [
+  { value: 'cost', label: 'Total Cost', color: '#4f46e5' },
+  { value: 'headcount', label: 'Headcount', color: '#818cf8' }
+];
+
+// Shows only the metric currently plotted by the bars (selected with the toggle)
+const DeptHeadcountCostTooltip = ({ active, payload, label, metric = 'cost' }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
+    const option = DEPT_METRIC_OPTIONS.find(o => o.value === metric) || DEPT_METRIC_OPTIONS[0];
+    const value = metric === 'headcount'
+      ? `${data.headcount} ${data.headcount === 1 ? 'employee' : 'employees'}`
+      : formatLakhValueAsINR(data.cost);
     return (
-      <div className="relative z-50 bg-white p-3.5 border border-slate-200 rounded-xl shadow-2xl min-w-[210px] text-xs">
+      <div className="relative z-50 bg-white p-3.5 border border-slate-200 rounded-xl shadow-2xl min-w-[190px] text-xs">
         <p className="font-extrabold text-sm text-slate-900 mb-2 pb-1.5 border-b border-slate-100 flex items-center justify-between">
           <span>{label}</span>
         </p>
-        <div className="space-y-1.5">
-          <div className="flex justify-between items-center text-slate-700">
-            <span className="flex items-center gap-1.5 font-medium text-slate-600">
-              <span className="w-2.5 h-2.5 rounded-sm bg-[#4f46e5]"></span>
-              Total Cost:
-            </span>
-            <span className="font-black text-[#4f46e5] text-sm">{formatLakhValueAsINR(data.cost)}</span>
-          </div>
-          <div className="flex justify-between items-center text-slate-700 pt-1 border-t border-slate-50">
-            <span className="flex items-center gap-1.5 font-medium text-slate-600">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#818cf8]"></span>
-              Headcount:
-            </span>
-            <span className="font-bold text-slate-900">{data.headcount} employees</span>
-          </div>
+        <div className="flex justify-between items-center gap-4 text-slate-700">
+          <span className="flex items-center gap-1.5 font-medium text-slate-600">
+            <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: option.color }}></span>
+            {option.label}:
+          </span>
+          <span className="font-black text-sm" style={{ color: option.color }}>{value}</span>
         </div>
       </div>
     );
@@ -2186,6 +2189,7 @@ const PayrollDashboardNew: React.FC<{ onNavigateToPayrollRun?: () => void }> = (
   const [growthTimeRange, setGrowthTimeRange] = useState('This Quarter');
   const [compRangeFilter, setCompRangeFilter] = useState('This Month');
   const [deptCostFilter, setDeptCostFilter] = useState('This Month');
+  const [deptMetric, setDeptMetric] = useState<DeptMetric>('cost');
   const [forecastTimeRange, setForecastTimeRange] = useState('Last 6 Months');
 
   const currentBuData = COST_BY_BU_MAP[buTimeRange] || COST_BY_BU_MAP['This Month'];
@@ -2733,11 +2737,40 @@ const PayrollDashboardNew: React.FC<{ onNavigateToPayrollRun?: () => void }> = (
               <BarChart data={currentDeptHeadcountCost} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="dept" axisLine={false} tickLine={false} tick={CHART_TICK} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={CHART_TICK} tickFormatter={(v: any) => formatLakhValueAsINR(v)} width={90} />
-                <RechartsTooltip content={<DeptHeadcountCostTooltip />} cursor={{ fill: '#f8fafc' }} />
-                <Bar dataKey="cost" fill="#4f46e5" radius={[4, 4, 0, 0]} name="Total Cost" maxBarSize={40} />
+                {deptMetric === 'cost' ? (
+                  <YAxis axisLine={false} tickLine={false} tick={CHART_TICK} tickFormatter={(v: any) => formatLakhValueAsINR(v)} width={90} />
+                ) : (
+                  <YAxis axisLine={false} tickLine={false} tick={CHART_TICK} allowDecimals={false} width={90} />
+                )}
+                <RechartsTooltip content={<DeptHeadcountCostTooltip metric={deptMetric} />} cursor={{ fill: '#f8fafc' }} />
+                <Bar
+                  key={deptMetric}
+                  dataKey={deptMetric}
+                  fill={DEPT_METRIC_OPTIONS.find(o => o.value === deptMetric)?.color}
+                  radius={[4, 4, 0, 0]}
+                  name={DEPT_METRIC_OPTIONS.find(o => o.value === deptMetric)?.label}
+                  maxBarSize={40}
+                />
               </BarChart>
             </ResponsiveContainer>
+          </div>
+          <div className="flex justify-center mt-3">
+            <div className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1" role="tablist" aria-label="Department chart metric">
+              {DEPT_METRIC_OPTIONS.map(o => (
+                <button
+                  key={o.value}
+                  type="button"
+                  role="tab"
+                  aria-selected={deptMetric === o.value}
+                  onClick={() => setDeptMetric(o.value)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
+                    deptMetric === o.value ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-700 hover:text-indigo-700'
+                  }`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
           </div>
         </Card>
 
