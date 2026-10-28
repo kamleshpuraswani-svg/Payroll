@@ -49,6 +49,7 @@ import {
   Legend,
   ReferenceLine
 } from 'recharts';
+import PayrollRunStatusCard, { PayrollRunStatePreview } from './PayrollRunStatusCard';
 
 const formatINR = (v: number) => `₹${v.toLocaleString('en-IN')}`;
 const formatCr = (v: number) => formatINR(v);
@@ -1044,26 +1045,38 @@ const CostForecastTooltip = ({ active, payload, label }: any) => {
 const MonthlyPayrollCostTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
+    // Derived from the stacked values so the tooltip always adds up to the bar
+    const gross = data.net + data.employeeDeductions;
+    const totalCost = gross + data.employerDeductions;
+    const row = (color: string, name: string, value: number) => (
+      <div className="flex justify-between items-center gap-4 text-slate-700">
+        <span className="flex items-center gap-1.5 font-medium text-slate-600">
+          <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: color }}></span>
+          {name}
+        </span>
+        <span className="font-bold text-slate-800">{formatLakhValueAsINR(value)}</span>
+      </div>
+    );
     return (
-      <div className="bg-white p-3 border border-slate-200 rounded-xl shadow-xl min-w-[190px] text-xs">
+      <div className="bg-white p-3 border border-slate-200 rounded-xl shadow-xl min-w-[250px] text-xs">
         <p className="font-bold text-slate-800 mb-2 border-b border-slate-100 pb-1.5 flex items-center justify-between">
           <span className="font-extrabold text-sm text-slate-900">{label}</span>
           <span className="text-[10px] font-semibold text-slate-400">Monthly</span>
         </p>
+        {/* Listed top to bottom, in the same order as the bar stack */}
         <div className="space-y-1.5">
-          <div className="flex justify-between items-center text-slate-700">
-            <span className="flex items-center gap-1.5 font-medium text-slate-600">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#4f46e5]"></span>
-              Gross:
-            </span>
-            <span className="font-bold text-[#4f46e5]">{formatLakhValueAsINR(data.gross)}</span>
+          {row('#818cf8', 'Employer Contributions', data.employerDeductions)}
+          {row('#fb7185', 'Employee Deductions', data.employeeDeductions)}
+          {row('#22c55e', 'Net Pay', data.net)}
+        </div>
+        <div className="mt-2 pt-1.5 border-t border-slate-100 space-y-1">
+          <div className="flex justify-between items-center gap-4 text-slate-500">
+            <span className="font-medium pl-4">Gross Salary</span>
+            <span className="font-semibold">{formatLakhValueAsINR(gross)}</span>
           </div>
-          <div className="flex justify-between items-center text-slate-700 pt-1 border-t border-slate-50">
-            <span className="flex items-center gap-1.5 font-bold text-slate-800">
-              <span className="w-2.5 h-2.5 rounded-sm bg-[#22c55e]"></span>
-              Net Pay:
-            </span>
-            <span className="font-black text-emerald-600">{formatLakhValueAsINR(data.net)}</span>
+          <div className="flex justify-between items-center gap-4">
+            <span className="font-bold text-slate-900 pl-4">Total Payroll Cost</span>
+            <span className="font-black text-indigo-700">{formatLakhValueAsINR(totalCost)}</span>
           </div>
         </div>
       </div>
@@ -2113,13 +2126,16 @@ const RAGBadge: React.FC<{ status: 'Filed' | 'Pending' | 'Overdue' }> = ({ statu
 
 const CHART_TICK = { fontSize: 10, fill: '#64748b', fontWeight: 600 };
 
-const PayrollDashboardNew: React.FC = () => {
+const PayrollDashboardNew: React.FC<{ onNavigateToPayrollRun?: () => void }> = ({ onNavigateToPayrollRun }) => {
   const [timeRange, setTimeRange] = useState('This Month');
 
   const currentKpiBase = KPI_METRICS_MAP[timeRange] || KPI_METRICS_MAP['This Month'];
 
   const [selectedBus, setSelectedBus] = useState<string[]>(BUSINESS_UNITS_LIST);
   const currentBuProfile = useMemo(() => getCombinedBuProfile(selectedBus), [selectedBus]);
+
+  // Visibility toggle for Payroll Run Status widget (kept in code, set to false to hide)
+  const showPayrollRunStatus = false;
 
   const [runStatusBuIndex, setRunStatusBuIndex] = useState(0);
 
@@ -2444,9 +2460,10 @@ const PayrollDashboardNew: React.FC = () => {
           icon={<TrendingUp size={16} className="text-indigo-600" />}
           className="lg:col-span-2"
           action={
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-              <span className="w-3 h-3 rounded-sm bg-[#22c55e]"></span>
-              <span>Net Pay</span>
+            <div className="flex items-center gap-x-3 gap-y-1 flex-wrap justify-end text-xs font-semibold text-slate-600">
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[#22c55e]"></span>Net Pay</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[#fb7185]"></span>Employee Deductions</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[#818cf8]"></span>Employer Contributions</span>
             </div>
           }
         >
@@ -2457,7 +2474,10 @@ const PayrollDashboardNew: React.FC = () => {
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={CHART_TICK} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={CHART_TICK} tickFormatter={(v: any) => formatLakhValueAsINR(v)} width={90} />
                 <RechartsTooltip content={<MonthlyPayrollCostTooltip />} cursor={{ fill: '#f8fafc' }} />
-                <Bar dataKey="net" fill="#22c55e" radius={[4, 4, 0, 0]} name="Net Pay" maxBarSize={36} />
+                {/* Stacked bottom to top: Net Pay + Employee Deductions = Gross; + Employer Contributions = Total Payroll Cost */}
+                <Bar dataKey="net" stackId="payrollCost" fill="#22c55e" name="Net Pay" maxBarSize={36} />
+                <Bar dataKey="employeeDeductions" stackId="payrollCost" fill="#fb7185" name="Employee Deductions" maxBarSize={36} />
+                <Bar dataKey="employerDeductions" stackId="payrollCost" fill="#818cf8" radius={[4, 4, 0, 0]} name="Employer Contributions" maxBarSize={36} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -2509,62 +2529,43 @@ const PayrollDashboardNew: React.FC = () => {
 
         {/* Side-by-Side under Variable Pay Summary: Payroll Run Status & Tax Declaration Submission Funnel */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 self-start">
-          <Card
-            title="Payroll Run Status"
-            icon={<CheckCircle2 size={16} className="text-emerald-600" />}
-            action={
-              <div className="flex items-center gap-2 flex-wrap justify-end">
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md shrink-0 whitespace-nowrap">
-                  Payroll Period: July 2026
+          {showPayrollRunStatus && (
+            <PayrollRunStatusCard
+              businessUnit={activeRunBu}
+              counts={{
+                employees: activeRunBuProfile.employees,
+                processed: activeRunBuProfile.processed,
+                onHold: activeRunBuProfile.onHold,
+                fnfSettlement: activeRunBuProfile.fnfSettlement
+              }}
+              onRunPayroll={onNavigateToPayrollRun}
+              pager={selectedBus.length > 1 ? (
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-[11px] font-bold text-slate-500 mr-0.5 select-none whitespace-nowrap">
+                  {safeRunIndex + 1} of {selectedBus.length}
                 </span>
-                {selectedBus.length > 1 && (
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-[11px] font-bold text-slate-500 mr-0.5 select-none whitespace-nowrap">
-                      {safeRunIndex + 1} of {selectedBus.length}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setRunStatusBuIndex(Math.max(0, safeRunIndex - 1))}
-                      disabled={safeRunIndex === 0}
-                      title="Previous Business Unit"
-                      className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded border border-slate-200 bg-white text-slate-600 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
-                    >
-                      <ChevronLeft size={13} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRunStatusBuIndex(Math.min(selectedBus.length - 1, safeRunIndex + 1))}
-                      disabled={safeRunIndex === selectedBus.length - 1}
-                      title="Next Business Unit"
-                      className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded border border-slate-200 bg-white text-slate-600 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
-                    >
-                      <ChevronRight size={13} />
-                    </button>
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setRunStatusBuIndex(Math.max(0, safeRunIndex - 1))}
+                  disabled={safeRunIndex === 0}
+                  title="Previous Business Unit"
+                  className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded border border-slate-200 bg-white text-slate-600 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                >
+                  <ChevronLeft size={13} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRunStatusBuIndex(Math.min(selectedBus.length - 1, safeRunIndex + 1))}
+                  disabled={safeRunIndex === selectedBus.length - 1}
+                  title="Next Business Unit"
+                  className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded border border-slate-200 bg-white text-slate-600 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                >
+                  <ChevronRight size={13} />
+                </button>
               </div>
-            }
-            className="flex flex-col justify-start"
-          >
-            <div className="space-y-2">
-              <div className="flex justify-between items-center text-xs text-slate-500 font-semibold pb-1.5 border-b border-slate-100 mb-1">
-                <span className="font-bold text-slate-800 text-xs">{activeRunBu}</span>
-                <span className="text-emerald-600 font-bold">{activeRunBuProfile.processed}/{activeRunBuProfile.employees} Done</span>
-              </div>
-              <div className="flex justify-between items-center bg-emerald-50 rounded-lg px-2.5 py-1.5">
-                <span className="text-xs font-bold text-emerald-800 flex items-center gap-1.5"><CheckCircle2 size={13} /> Processed</span>
-                <span className="text-xs font-black text-emerald-800">{activeRunBuProfile.processed}</span>
-              </div>
-              <div className="flex justify-between items-center bg-amber-50 rounded-lg px-2.5 py-1.5">
-                <span className="text-xs font-bold text-amber-800 flex items-center gap-1.5"><Clock size={13} /> On Hold</span>
-                <span className="text-xs font-black text-amber-800">{activeRunBuProfile.onHold}</span>
-              </div>
-              <div className="flex justify-between items-center bg-blue-50 rounded-lg px-2.5 py-1.5">
-                <span className="text-xs font-bold text-blue-800 flex items-center gap-1.5"><FileText size={13} /> F&amp;F Settlement</span>
-                <span className="text-xs font-black text-blue-800">{activeRunBuProfile.fnfSettlement}</span>
-              </div>
-            </div>
-          </Card>
+              ) : undefined}
+            />
+          )}
 
           <Card
             title="Tax Proof Submission Funnel"
@@ -3357,6 +3358,17 @@ const PayrollDashboardNew: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Dev-only preview of every Payroll Run Status state, kept at the end of the dashboard for review */}
+      <PayrollRunStatePreview
+        counts={{
+          employees: activeRunBuProfile.employees,
+          processed: activeRunBuProfile.processed,
+          onHold: activeRunBuProfile.onHold,
+          fnfSettlement: activeRunBuProfile.fnfSettlement
+        }}
+        onRunPayroll={onNavigateToPayrollRun}
+      />
 
       {/* TDS Full Report Modal */}
       {isTdsReportOpen && (

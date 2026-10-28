@@ -248,7 +248,7 @@ const App: React.FC = () => {
             {userRole === 'HR_MANAGER' && (
               <>
                 {currentView === ViewState.HR_DASHBOARD && <HRDashboard />}
-                {currentView === ViewState.HR_DASHBOARD_NEW && <PayrollDashboardNew />}
+                {currentView === ViewState.HR_DASHBOARD_NEW && <PayrollDashboardNew onNavigateToPayrollRun={() => setCurrentView(ViewState.HR_PAYROLL_RUN)} />}
                 {currentView === ViewState.HR_EMPLOYEES && <Workforce userRole={userRole} />}
                 {currentView === ViewState.TAX_DECLARATIONS && <TaxDeclarationsManagement />}
                 {currentView === ViewState.HR_PAYROLL_RUN && <PayrollManager userRole={userRole} />}
