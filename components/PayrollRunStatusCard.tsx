@@ -340,15 +340,14 @@ const PREVIEW_SCENARIOS: { scenario: PreviewScenario; label: string; description
   { scenario: 'NO_PAYROLL', label: '6. No Payroll', description: 'No payroll has ever been run for this business unit.' }
 ];
 
-// Shows one card per state, for reviewing the widget locally. Rendered only in dev builds.
+// Shows one card per state, for reviewing the widget states.
 export const PayrollRunStatePreview: React.FC<{ counts: RunCounts; onRunPayroll?: () => void }> = ({ counts, onRunPayroll }) => {
-  if (!isDev) return null;
   return (
     <div className="rounded-xl border-2 border-dashed border-violet-300 bg-violet-50/40 p-4">
       <div className="mb-3">
         <h3 className="text-sm font-bold text-violet-800">Preview: Payroll Run Status, all states</h3>
         <p className="text-[11px] text-violet-600 mt-0.5">
-          Dev only, not shown in production builds. Mock data, calculated from today's date with salary paid on the {MOCK_PAY_DAY}th of the next month.
+          Mock data, calculated from today's date with salary paid on the {MOCK_PAY_DAY}th of the next month.
         </p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
