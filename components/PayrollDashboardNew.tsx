@@ -2307,27 +2307,7 @@ const PayrollDashboardNew: React.FC<{ onNavigateToPayrollRun?: () => void }> = (
   const maxTdsValue = Math.max(...tdsGraphData.map(d => d.tds), 1);
   const yAxisMax = Math.ceil(maxTdsValue * 1.1);
 
-  const getGraphPath = () => {
-    if (tdsGraphData.length === 0) return '';
-    const points = tdsGraphData.map((d, i) => {
-      const x = (i / (tdsGraphData.length - 1)) * 1000;
-      const y = 300 - ((d.tds / yAxisMax) * 300);
-      return `${x},${y}`;
-    });
-    return `M ${points.join(' L ')}`;
-  };
 
-  const getAreaPath = () => {
-    const linePath = getGraphPath();
-    if (!linePath) return '';
-    return `${linePath} L 1000,300 L 0,300 Z`;
-  };
-
-  const getPointCoords = (index: number) => {
-    const x = (index / (tdsGraphData.length - 1)) * 1000;
-    const y = 300 - ((tdsGraphData[index].tds / yAxisMax) * 300);
-    return { x, y };
-  };
 
   const currentExpenseData = useMemo(() => {
     const base = EXPENSE_TREND_DATA_MAP[expenseTimeRange] || EXPENSE_TREND_DATA_MAP['This Year'];
@@ -2342,7 +2322,16 @@ const PayrollDashboardNew: React.FC<{ onNavigateToPayrollRun?: () => void }> = (
     }));
   }, [expenseTimeRange, currentBuProfile]);
 
-  const maxExpenseAmount = 35000;
+  const maxExpenseStacked = useMemo(() => {
+    if (!currentExpenseData || currentExpenseData.length === 0) return 60000;
+    const maxVal = Math.max(...currentExpenseData.map(d => {
+      const app = d.approved ?? Math.round(d.amount * 0.8);
+      const pen = d.pending ?? Math.round(d.amount * 0.2);
+      const set = d.settled ?? Math.round(app * 0.85);
+      return app + pen + set;
+    }), 10000);
+    return Math.ceil(maxVal / 10000) * 10000;
+  }, [currentExpenseData]);
 
   const mostExpensiveMonth = useMemo(() => {
     if (!currentExpenseData || currentExpenseData.length === 0) return { month: '-', amount: 0 };
@@ -2860,12 +2849,15 @@ const PayrollDashboardNew: React.FC<{ onNavigateToPayrollRun?: () => void }> = (
           </div>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-center justify-between">
               <div className="min-w-0 pr-1">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight truncate">Total TDS</p>
                 <p className="text-sm xl:text-base font-bold text-slate-800 mt-0.5 truncate">
                   ₹ {Math.round(tdsGraphData.reduce((acc, curr) => acc + curr.tds, 0) * 100000).toLocaleString('en-IN')}
+                </p>
+                <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
+                  ({(tdsGraphData[tdsGraphData.length - 1]?.employees || 1842).toLocaleString('en-IN')} employees)
                 </p>
               </div>
             </div>
@@ -2876,16 +2868,6 @@ const PayrollDashboardNew: React.FC<{ onNavigateToPayrollRun?: () => void }> = (
                 <p className="text-sm xl:text-base font-bold text-slate-800 mt-0.5 truncate">
                   ₹ {Math.round(Number((tdsGraphData.reduce((acc, curr) => acc + curr.tds, 0) / (tdsGraphData.length || 1)).toFixed(2)) * 100000).toLocaleString('en-IN')}
                 </p>
-              </div>
-            </div>
-
-            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-center justify-between">
-              <div className="min-w-0 pr-1">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight truncate">Employees with TDS</p>
-                <p className="text-sm xl:text-base font-bold text-slate-800 mt-0.5">1,842</p>
-              </div>
-              <div className="h-8 w-8 shrink-0 rounded-full bg-white border border-slate-200 flex items-center justify-center text-indigo-600 shadow-xs">
-                <Users size={15} />
               </div>
             </div>
 
@@ -2923,64 +2905,99 @@ const PayrollDashboardNew: React.FC<{ onNavigateToPayrollRun?: () => void }> = (
                     <line key={i} x1="0" y1={300 - (i * 75)} x2="1000" y2={300 - (i * 75)} stroke="#f1f5f9" strokeWidth="1" />
                   ))}
 
-                  <defs>
-                    <linearGradient id="purpleGradientNew" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#9333ea" stopOpacity="0.12" />
-                      <stop offset="100%" stopColor="#9333ea" stopOpacity="0.01" />
-                    </linearGradient>
-                  </defs>
-                  <path d={getAreaPath()} fill="url(#purpleGradientNew)" />
-                  <path d={getGraphPath()} fill="none" stroke="#9333ea" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-
                   {tdsGraphData.map((d, i) => {
-                    const { x, y } = getPointCoords(i);
+                    const slotWidth = 1000 / tdsGraphData.length;
+                    const barWidth = Math.min(48, Math.max(22, slotWidth * 0.52));
+                    const barHeight = Math.max(4, (d.tds / yAxisMax) * 300);
+                    const barX = i * slotWidth + (slotWidth - barWidth) / 2;
+                    const barY = 300 - barHeight;
+                    const isHovered = hoveredPoint === i;
+
                     return (
-                      <g key={i} onMouseEnter={() => setHoveredPoint(i)} onMouseLeave={() => setHoveredPoint(null)} style={{ cursor: 'pointer' }}>
-                        <circle cx={x} cy={y} r="4.5" fill="white" stroke="#9333ea" strokeWidth="2.5" className="transition-all hover:r-6" />
-                        <rect x={Math.max(0, x - 25)} y={0} width="50" height="300" fill="transparent" />
+                      <g
+                        key={i}
+                        onMouseEnter={() => setHoveredPoint(i)}
+                        onMouseLeave={() => setHoveredPoint(null)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        {isHovered && (
+                          <rect
+                            x={i * slotWidth + 2}
+                            y={0}
+                            width={slotWidth - 4}
+                            height={300}
+                            fill="#faf5ff"
+                            rx="6"
+                          />
+                        )}
+                        <rect
+                          x={barX}
+                          y={barY}
+                          width={barWidth}
+                          height={barHeight}
+                          rx="4"
+                          ry="4"
+                          fill={isHovered ? '#7e22ce' : '#9333ea'}
+                          className="transition-colors"
+                        />
+                        <rect
+                          x={i * slotWidth}
+                          y={0}
+                          width={slotWidth}
+                          height={300}
+                          fill="transparent"
+                        />
                       </g>
                     );
                   })}
                 </svg>
 
                 {/* Tooltip */}
-                {hoveredPoint !== null && (
-                  <div
-                    className="absolute bg-slate-900 text-white text-xs rounded-xl p-3 shadow-2xl z-30 pointer-events-none min-w-[200px]"
-                    style={{
-                      left: `${getPointCoords(hoveredPoint).x / 10}%`,
-                      top: `${(getPointCoords(hoveredPoint).y / 300) * 100}%`,
-                      transform: 'translate(-50%, -120%)'
-                    }}
-                  >
-                    <div className="font-bold border-b border-slate-700 pb-1.5 mb-1.5">
-                      <span className="text-slate-200 font-extrabold">{tdsGraphData[hoveredPoint].period}</span>
+                {hoveredPoint !== null && (() => {
+                  const slotWidth = 1000 / tdsGraphData.length;
+                  const barWidth = Math.min(48, Math.max(22, slotWidth * 0.52));
+                  const barHeight = Math.max(4, (tdsGraphData[hoveredPoint].tds / yAxisMax) * 300);
+                  const barX = hoveredPoint * slotWidth + (slotWidth - barWidth) / 2;
+                  const barY = 300 - barHeight;
+
+                  return (
+                    <div
+                      className="absolute bg-slate-900 text-white text-xs rounded-xl p-3 shadow-2xl z-30 pointer-events-none min-w-[200px]"
+                      style={{
+                        left: `${(barX + barWidth / 2) / 10}%`,
+                        top: `${(barY / 300) * 100}%`,
+                        transform: 'translate(-50%, -120%)'
+                      }}
+                    >
+                      <div className="font-bold border-b border-slate-700 pb-1.5 mb-1.5">
+                        <span className="text-slate-200 font-extrabold">{tdsGraphData[hoveredPoint].period}</span>
+                      </div>
+                      <div className="space-y-1.5 text-[11px]">
+                        <div className="flex justify-between text-slate-300 gap-3">
+                          <span>Total TDS:</span>
+                          <span className="font-bold text-purple-300">₹{Math.round(tdsGraphData[hoveredPoint].tds * 100000).toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-slate-300 gap-3">
+                          <span>Employees:</span>
+                          <span className="font-semibold text-slate-200">{tdsGraphData[hoveredPoint].employees}</span>
+                        </div>
+                        <div className="flex justify-between text-slate-400 pt-1.5 border-t border-slate-700/80 gap-3">
+                          <span>Total Taxable Salary:</span>
+                          <span className="font-semibold text-white">{tdsGraphData[hoveredPoint].gross}</span>
+                        </div>
+                      </div>
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full border-4 border-transparent border-t-slate-900" />
                     </div>
-                    <div className="space-y-1.5 text-[11px]">
-                      <div className="flex justify-between text-slate-300 gap-3">
-                        <span>Total Taxable Salary:</span>
-                        <span className="font-semibold text-white">{tdsGraphData[hoveredPoint].gross}</span>
-                      </div>
-                      <div className="flex justify-between text-slate-300 gap-3">
-                        <span>Total TDS:</span>
-                        <span className="font-semibold text-purple-300">₹{Math.round(tdsGraphData[hoveredPoint].tds * 100000).toLocaleString('en-IN')}</span>
-                      </div>
-                      <div className="flex justify-between text-slate-400 pt-1.5 border-t border-slate-700/80 gap-3">
-                        <span>Employees:</span>
-                        <span className="font-semibold text-slate-200">{tdsGraphData[hoveredPoint].employees}</span>
-                      </div>
-                    </div>
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full border-4 border-transparent border-t-slate-900" />
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             </div>
 
             {/* X-Axis Labels aligned with the SVG */}
             <div className="flex items-center pl-[88px] pr-2 pt-2.5 mt-2 border-t border-slate-100">
-              <div className="flex-1 flex justify-between text-[11px] font-semibold text-slate-500">
+              <div className="flex-1 flex text-[11px] font-semibold text-slate-500">
                 {tdsGraphData.map((d, i) => (
-                  <span key={i} className="text-center w-8 truncate">{d.period.split(' ')[0]}</span>
+                  <span key={i} className="flex-1 text-center truncate">{d.period.split(' ')[0]}</span>
                 ))}
               </div>
             </div>
@@ -3030,57 +3047,15 @@ const PayrollDashboardNew: React.FC<{ onNavigateToPayrollRun?: () => void }> = (
             </div>
           </div>
 
-          {/* Claim Lifecycle Pipeline (Added above graph and below 2 KPI cards) */}
-          <div className="bg-slate-50/80 border border-slate-200/80 rounded-xl p-3 space-y-2">
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="font-semibold text-slate-600">Claim Lifecycle Pipeline</span>
-            </div>
-
-            {/* Multi-segment progress bar visually distinguishing stages */}
-            <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden flex">
-              {/* Pending Approval: ~12% */}
-              <div className="bg-amber-400 h-full" style={{ width: '12%' }} title="Pending Approval: ₹1,86,000 (23 claims)" />
-              {/* Approved & Unpaid: ~18% */}
-              <div className="bg-blue-500 h-full" style={{ width: '18%' }} title="Approved & Unpaid: ₹4,12,000 (14 claims)" />
-              {/* Settled: ~70% */}
-              <div className="bg-emerald-500 h-full" style={{ width: '70%' }} title="Settled: ₹18,40,000 (112 claims)" />
-            </div>
-
-            {/* Stage indicators */}
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px]">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-                <span className="text-slate-600">Pending Approval:</span>
-                <span className="font-bold text-amber-800">₹1,86,000</span>
-                <span className="text-slate-400 text-[10px]">(23)</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                <span className="text-slate-600">Approved & Unpaid:</span>
-                <span className="font-bold text-blue-800">₹4,12,000</span>
-                <span className="text-slate-400 text-[10px]">(14)</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span className="text-slate-600">Settled:</span>
-                <span className="font-bold text-emerald-700">₹18,40,000</span>
-                <span className="text-slate-400 text-[10px]">(112)</span>
-              </div>
-            </div>
-          </div>
-
           {/* Main Graph (fills the 50% card) */}
           <div className="w-full bg-white border border-slate-200 rounded-xl p-4 flex flex-col justify-between h-[310px]">
             {/* Chart Area with Y-axis */}
             <div className="flex-1 min-h-0 flex gap-2">
               {/* Y-Axis Left (INR) */}
               <div className="w-10 shrink-0 flex flex-col justify-between text-[10px] font-semibold text-slate-400 text-right pr-2 select-none">
-                <span>35K</span>
-                <span>28K</span>
-                <span>21K</span>
-                <span>14K</span>
-                <span>7K</span>
-                <span>0</span>
+                {[5, 4, 3, 2, 1, 0].map(step => (
+                  <span key={step}>{step === 0 ? '0' : `${Math.round((maxExpenseStacked * step) / 5000)}K`}</span>
+                ))}
               </div>
 
               {/* Chart Grid & Bars */}
@@ -3096,24 +3071,57 @@ const PayrollDashboardNew: React.FC<{ onNavigateToPayrollRun?: () => void }> = (
 
                 {/* Bars Columns */}
                 <div className="absolute inset-0 flex items-end">
-                  {currentExpenseData.map((d, i) => (
-                    <div
-                      key={i}
-                      onMouseEnter={() => setHoveredExpenseIndex(i)}
-                      onMouseLeave={() => setHoveredExpenseIndex(null)}
-                      className="flex-1 flex flex-col items-center justify-end h-full relative group cursor-pointer transition-colors hover:bg-slate-50/70"
-                    >
-                      {/* Bar (badges removed as requested) */}
-                      {d.amount > 0 ? (
-                        <div
-                          className={`${currentExpenseData.length === 1 ? 'w-12 sm:w-16' : currentExpenseData.length <= 4 ? 'w-8 sm:w-10' : 'w-4 sm:w-5'} bg-blue-500/85 rounded-t-sm relative transition-all ${hoveredExpenseIndex === i ? 'bg-blue-600 shadow-md shadow-blue-200' : 'hover:bg-blue-600'}`}
-                          style={{ height: `${(d.amount / maxExpenseAmount) * 100}%` }}
-                        />
-                      ) : (
-                        <div className="w-3 sm:w-4 h-0.5 bg-slate-200 rounded-full mb-0.5" />
-                      )}
-                    </div>
-                  ))}
+                  {currentExpenseData.map((d, i) => {
+                    const approvedVal = d.approved ?? Math.round(d.amount * 0.8);
+                    const pendingVal = d.pending ?? Math.round(d.amount * 0.2);
+                    const settledVal = d.settled ?? Math.round(approvedVal * 0.85);
+                    const totalStatusVal = approvedVal + pendingVal + settledVal;
+
+                    return (
+                      <div
+                        key={i}
+                        onMouseEnter={() => setHoveredExpenseIndex(i)}
+                        onMouseLeave={() => setHoveredExpenseIndex(null)}
+                        className="flex-1 flex flex-col items-center justify-end h-full relative group cursor-pointer transition-colors hover:bg-slate-50/70"
+                      >
+                        {totalStatusVal > 0 ? (
+                          <div
+                            className={`${
+                              currentExpenseData.length === 1
+                                ? 'w-12 sm:w-16'
+                                : currentExpenseData.length <= 4
+                                  ? 'w-8 sm:w-10'
+                                  : 'w-4 sm:w-5'
+                            } flex flex-col justify-end rounded-t-sm overflow-hidden transition-all ${
+                              hoveredExpenseIndex === i ? 'shadow-md shadow-indigo-200 ring-2 ring-indigo-400/50' : ''
+                            }`}
+                            style={{ height: `${(totalStatusVal / maxExpenseStacked) * 100}%` }}
+                          >
+                            {/* Top segment: Pending (Amber) */}
+                            <div
+                              className="w-full bg-amber-400 hover:bg-amber-500 transition-colors"
+                              style={{ height: `${(pendingVal / totalStatusVal) * 100}%` }}
+                              title={`Pending: ₹${pendingVal.toLocaleString('en-IN')}`}
+                            />
+                            {/* Middle segment: Approved (Blue) */}
+                            <div
+                              className="w-full bg-blue-500 hover:bg-blue-600 transition-colors"
+                              style={{ height: `${(approvedVal / totalStatusVal) * 100}%` }}
+                              title={`Approved: ₹${approvedVal.toLocaleString('en-IN')}`}
+                            />
+                            {/* Bottom segment: Settled (Green) */}
+                            <div
+                              className="w-full bg-emerald-500 hover:bg-emerald-600 transition-colors"
+                              style={{ height: `${(settledVal / totalStatusVal) * 100}%` }}
+                              title={`Settled: ₹${settledVal.toLocaleString('en-IN')}`}
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-3 sm:w-4 h-0.5 bg-slate-200 rounded-full mb-0.5" />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {/* Tooltip */}
@@ -3146,10 +3154,10 @@ const PayrollDashboardNew: React.FC<{ onNavigateToPayrollRun?: () => void }> = (
                         <div className="space-y-1.5 text-[11px]">
                           <div className="flex justify-between text-slate-300 gap-3">
                             <span className="flex items-center gap-1.5 text-slate-300">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
                               Approved:
                             </span>
-                            <span className="font-semibold text-emerald-400">
+                            <span className="font-semibold text-blue-400">
                               ₹ {approvedVal.toLocaleString('en-IN')}
                             </span>
                           </div>
@@ -3164,10 +3172,10 @@ const PayrollDashboardNew: React.FC<{ onNavigateToPayrollRun?: () => void }> = (
                           </div>
                           <div className="flex justify-between text-slate-300 gap-3">
                             <span className="flex items-center gap-1.5 text-slate-300">
-                              <span className="w-1.5 h-1.5 rounded-full bg-teal-400"></span>
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                               Settled:
                             </span>
-                            <span className="font-semibold text-teal-300">
+                            <span className="font-semibold text-emerald-400">
                               ₹ {settledVal.toLocaleString('en-IN')}
                             </span>
                           </div>
@@ -3220,9 +3228,19 @@ const PayrollDashboardNew: React.FC<{ onNavigateToPayrollRun?: () => void }> = (
           </div>
 
           {/* Legend */}
-          <div className="flex justify-center items-center gap-2 pt-1">
-            <div className="w-3 h-3 bg-blue-500/80 rounded-xs" />
-            <span className="text-xs font-semibold text-slate-500">Expense Amount (INR)</span>
+          <div className="flex justify-center items-center gap-4 pt-1 flex-wrap text-xs font-semibold text-slate-600">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-xs bg-blue-500"></span>
+              Approved
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-xs bg-amber-400"></span>
+              Pending
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-xs bg-emerald-500"></span>
+              Settled
+            </span>
           </div>
         </div>
       </div>
