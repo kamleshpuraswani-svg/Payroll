@@ -120,6 +120,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
    const [extraCompEffectiveFrom, setExtraCompEffectiveFrom] = useState('');
    const [selectedCompType, setSelectedCompType] = useState<'Earnings' | 'Deductions'>('Earnings');
    const [flatAmountInput, setFlatAmountInput] = useState('');
+   const [showSalaryAlert, setShowSalaryAlert] = useState(true);
 
    // Refs to track initial values for change detection
    const initialValues = useRef({
@@ -957,12 +958,36 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
             <div className="xl:col-span-2 space-y-6">
                {/* 2. Salary Information */}
                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                  <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                  <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center gap-4 flex-wrap">
                      <h3 className="font-bold text-slate-800 flex items-center gap-2">
                         <Calculator size={18} className="text-slate-400" /> Salary Information
                      </h3>
+                     <span className="text-xs text-slate-500 italic font-normal">
+                        (Last updated by Gurpreetsingh Dhillon (BL-001) on 17-Sep-2026, 02:43 PM)
+                     </span>
                   </div>
-                  <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="p-6 space-y-6">
+                     {showSalaryAlert && (
+                        <div className="px-4 py-3 bg-[#fffbeb] border border-amber-300 rounded-lg flex items-center justify-between gap-3 text-amber-800 shadow-2xs animate-in fade-in duration-200">
+                           <div className="flex items-center gap-2.5">
+                              <Info size={17} className="text-amber-600 shrink-0" />
+                              <span className="text-xs sm:text-sm font-semibold text-amber-800">
+                                 Salary Information updated successfully.
+                              </span>
+                           </div>
+                           <button
+                              type="button"
+                              onClick={() => setShowSalaryAlert(false)}
+                              className="text-amber-600 hover:text-amber-900 hover:bg-amber-100/60 p-1 rounded-md transition-colors shrink-0 cursor-pointer"
+                              title="Close alert"
+                              aria-label="Close alert"
+                           >
+                              <X size={16} />
+                           </button>
+                        </div>
+                     )}
+
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                      <div className="space-y-6">
                         <div>
                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Select salary structure {!isReadOnly && <span className="text-rose-500">*</span>}</label>
@@ -1052,6 +1077,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                         </div>
                      </div>
                   </div>
+               </div>
 
                   <div className="px-6 pb-8 pt-6 border-t border-slate-100 bg-slate-50/30">
                      <label className="block text-xs font-bold text-slate-500 uppercase mb-4 tracking-wider">Applicable Statutory Deductions <span className="text-rose-500">*</span></label>
@@ -1321,10 +1347,13 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
 
                {/* 3. Merged Section: Bank Information, Statutory & Tax Compliance, and General Information */}
                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                  <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                  <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center gap-4 flex-wrap">
                      <h3 className="font-bold text-slate-800 flex items-center gap-2">
                         <Building size={18} className="text-slate-400" /> Bank Information
                      </h3>
+                     <span className="text-xs text-slate-500 italic font-normal">
+                        (Last updated by Gurpreetsingh Dhillon (BL-001) on 17-Sep-2026, 02:43 PM)
+                     </span>
                   </div>
                   <div className="p-6 space-y-4">
                      {/* Salary Pay Modes radio */}
