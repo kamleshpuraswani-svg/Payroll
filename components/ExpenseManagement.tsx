@@ -39,7 +39,9 @@ import {
     Columns,
     ListFilter,
     ChevronUp,
-    Info
+    Info,
+    Home,
+    ChevronRight
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { supabase } from '../services/supabaseClient';
@@ -846,6 +848,7 @@ const ExpenseManagement: React.FC<{
     const [showAddExpensePanel, setShowAddExpensePanel] = useState(false);
     const [showViewOptions, setShowViewOptions] = useState(false);
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+    const [statusCardFilter, setStatusCardFilter] = useState<string>('ALL');
 
     useEffect(() => {
         fetchData();
@@ -1048,10 +1051,21 @@ const ExpenseManagement: React.FC<{
         setCompletedFilters([]);
         cancelCurrentFilter();
         setSearchTerm('');
+        setStatusCardFilter('ALL');
     };
 
     const filteredClaims = useMemo(() => {
         return (claims || []).filter(c => {
+            // Summary card status filter
+            if (statusCardFilter !== 'ALL') {
+                const s = (c.status || '').toLowerCase();
+                if (statusCardFilter === 'Partially Approved') {
+                    if (!s.includes('partial')) return false;
+                } else {
+                    if (s !== statusCardFilter.toLowerCase()) return false;
+                }
+            }
+
             const matchesSearch = searchTerm ? (
                 (c.employee?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                 (c.category || '').toLowerCase().includes(searchTerm.toLowerCase())
@@ -1080,31 +1094,85 @@ const ExpenseManagement: React.FC<{
 
             return true;
         });
-    }, [claims, searchTerm, completedFilters, userRole]);
+    }, [claims, searchTerm, completedFilters, userRole, statusCardFilter]);
     const [showSuccessToast, setShowSuccessToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
     const [viewingProof, setViewingProof] = useState<ClaimProof | null>(null);
 
-    // Summary Stats
-    const stats = [
-        { 
-            label: userRole === 'HR_MANAGER' ? 'TOTAL CLAIMED' : 'TOTAL CLAIMED (FY)', 
-            val: `₹${(claims.reduce((s, c) => s + c.amount, 0)).toLocaleString('en-IN')}`, 
-            color: 'text-slate-800', 
-            subtitle: userRole === 'HR_MANAGER' ? undefined : 'Apr 2025 – Mar 2026',
-            highlight: true 
+    // Summary Metrics & Cards (matching reference image)
+    const summaryMetrics = useMemo(() => {
+        const totalCount = (claims || []).length;
+        const totalAmount = (claims || []).reduce((s, c) => s + (c.amount || 0), 0);
+
+        const pendingClaims = (claims || []).filter(c => (c.status || '').toLowerCase() === 'pending');
+        const pendingCount = pendingClaims.length;
+        const pendingAmount = pendingClaims.reduce((s, c) => s + (c.amount || 0), 0);
+
+        const approvedClaims = (claims || []).filter(c => (c.status || '').toLowerCase() === 'approved');
+        const approvedCount = approvedClaims.length;
+        const approvedAmount = approvedClaims.reduce((s, c) => s + (c.approvedAmount !== undefined ? c.approvedAmount : (c.amount || 0)), 0);
+
+        const rejectedClaims = (claims || []).filter(c => (c.status || '').toLowerCase() === 'rejected');
+        const rejectedCount = rejectedClaims.length;
+        const rejectedAmount = rejectedClaims.reduce((s, c) => s + (c.amount || 0), 0);
+
+        const partialClaims = (claims || []).filter(c => {
+            const s = (c.status || '').toLowerCase();
+            return s.includes('partial');
+        });
+        const partialCount = partialClaims.length;
+        const partialApprovedAmount = partialClaims.reduce((s, c) => s + (c.approvedAmount !== undefined ? c.approvedAmount : 0), 0);
+        const partialRequestedAmount = partialClaims.reduce((s, c) => s + (c.amount || 0), 0);
+
+        return {
+            total: { count: totalCount, amount: totalAmount },
+            pending: { count: pendingCount, amount: pendingAmount },
+            approved: { count: approvedCount, amount: approvedAmount },
+            rejected: { count: rejectedCount, amount: rejectedAmount },
+            partial: { count: partialCount, approvedAmount: partialApprovedAmount, requestedAmount: partialRequestedAmount }
+        };
+    }, [claims]);
+
+    const summaryCards = [
+        {
+            id: 'ALL',
+            title: 'Total Claim',
+            value: `${summaryMetrics.total.count} (₹ ${summaryMetrics.total.amount.toLocaleString('en-IN')})`,
+            statusKey: 'ALL'
         },
-        { label: 'Total Claims', val: claims.length.toString(), color: 'text-slate-800' },
-        { 
-            label: userRole === 'HR_MANAGER' ? 'Pending' : 'Pending Approval', 
-            val: claims.filter(c => c.status === 'Pending').length.toString(), 
-            color: 'text-orange-600' 
+        {
+            id: 'Pending',
+            title: 'Pending Claims',
+            value: `${summaryMetrics.pending.count} (₹ ${summaryMetrics.pending.amount.toLocaleString('en-IN')})`,
+            statusKey: 'Pending'
         },
-        { 
-            label: userRole === 'HR_MANAGER' ? 'Paid' : 'Approved & Paid', 
-            val: `₹${(claims.filter(c => c.status === 'Approved' || c.status === 'Partially Approved').reduce((s, c) => s + (c.approvedAmount || c.amount), 0) / 100000).toFixed(2)}L`, 
-            color: 'text-emerald-600' 
+        {
+            id: 'Approved',
+            title: 'Approved Claims',
+            value: `${summaryMetrics.approved.count} (₹ ${summaryMetrics.approved.amount.toLocaleString('en-IN')})`,
+            statusKey: 'Approved'
         },
+        {
+            id: 'Rejected',
+            title: 'Rejected Claims',
+            value: `${summaryMetrics.rejected.count} (₹ ${summaryMetrics.rejected.amount.toLocaleString('en-IN')})`,
+            statusKey: 'Rejected'
+        },
+        {
+            id: 'Partially Approved',
+            title: 'Partially Approved Claims',
+            value: `${summaryMetrics.partial.count} (₹ ${summaryMetrics.partial.approvedAmount.toLocaleString('en-IN')})`,
+            subline: `(out of ₹${summaryMetrics.partial.requestedAmount.toLocaleString('en-IN')})`,
+            statusKey: 'Partially Approved'
+        }
     ];
+
+    const handleCardClick = (statusKey: string) => {
+        if (statusCardFilter === statusKey) {
+            setStatusCardFilter('ALL');
+        } else {
+            setStatusCardFilter(statusKey);
+        }
+    };
 
     const handleActionConfirm = async (action: 'FULL' | 'PARTIAL' | 'REJECT', amount?: number, reason?: string, itemApprovals?: {[key: string | number]: number}) => {
         if (!approveClaim) return;
@@ -1198,15 +1266,49 @@ const ExpenseManagement: React.FC<{
     return (
         <div className="flex flex-col h-[calc(100vh-64px)] bg-slate-50 animate-in fade-in duration-300 relative">
 
-            {/* Top Stats Bar - updated */}
-            <div className={`bg-white border-b border-slate-200 px-6 py-5 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4 shrink-0 ${userRole === 'HR_MANAGER' ? 'max-w-4xl' : ''}`}>
-                {stats.map((stat, i) => (
-                    <div key={i} className={`flex flex-col p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:bg-slate-50/50 ${stat.highlight ? 'bg-purple-50/30' : 'bg-white'}`}>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{stat.label}</span>
-                        <span className={`text-xl font-bold ${stat.color}`}>{stat.val}</span>
-                        {stat.subtitle && <span className="text-[10px] text-slate-500 mt-1">{stat.subtitle}</span>}
-                    </div>
-                ))}
+            {/* Top Summary Cards Bar matching reference image */}
+            <div className="bg-slate-50/60 border-b border-slate-200/90 px-6 py-5 shrink-0">
+                {/* Breadcrumb */}
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-4">
+                    <Home size={14} className="text-slate-400 shrink-0" />
+                    <ChevronRight size={12} className="text-slate-400 shrink-0" />
+                    <span className="font-semibold text-indigo-600">Expense & Reimbursement</span>
+                </div>
+
+                {/* 5 Summary Cards Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 w-full">
+                    {summaryCards.map((card) => {
+                        const isActive = statusCardFilter === card.statusKey;
+                        return (
+                            <div
+                                key={card.id}
+                                onClick={() => handleCardClick(card.statusKey)}
+                                className={`rounded-2xl p-5 flex flex-col justify-between min-h-[112px] transition-all cursor-pointer select-none ${
+                                    isActive
+                                        ? 'bg-[#EFF6FF] border-2 border-[#93C5FD] shadow-xs'
+                                        : 'bg-white border border-slate-200/90 shadow-2xs hover:border-slate-300 hover:shadow-xs'
+                                }`}
+                                title={`Filter by ${card.title}`}
+                            >
+                                <div>
+                                    <span className="text-xs sm:text-sm font-medium text-slate-600 block mb-2">
+                                        {card.title}
+                                    </span>
+                                    <p className="text-2xl sm:text-[26px] font-black text-slate-900 tracking-tight leading-tight">
+                                        {card.value}
+                                    </p>
+                                </div>
+                                {card.subline ? (
+                                    <p className="text-xs text-slate-500 font-medium mt-1.5 leading-normal">
+                                        {card.subline}
+                                    </p>
+                                ) : (
+                                    <div className="h-4 mt-1.5 hidden lg:block" />
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
 
             <div className="flex-1 flex overflow-hidden">

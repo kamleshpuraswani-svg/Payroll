@@ -1319,7 +1319,7 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                   </div>
                </div>
 
-               {/* 3. Bank Details */}
+               {/* 3. Merged Section: Bank Information, Statutory & Tax Compliance, and General Information */}
                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                   <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                      <h3 className="font-bold text-slate-800 flex items-center gap-2">
@@ -1368,10 +1368,11 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                         </div>
                      </div>
                   </div>
-               </div>
 
-               {/* 4. Statutory & Tax */}
-               <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                  {/* Line Separator after Bank Information */}
+                  <div className="border-t border-slate-200" />
+
+                  {/* Statutory & Tax Compliance */}
                   <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
                      <h3 className="font-bold text-slate-800 flex items-center gap-2">
                         <ShieldCheck size={18} className="text-slate-400" /> Statutory & Tax Compliance
@@ -1463,10 +1464,11 @@ const EditEmployeeProfile: React.FC<EditEmployeeProfileProps> = ({ employeeId, o
                         </div>
                      )}
                   </div>
-               </div>
 
-               {/* 5. General Information */}
-               <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                  {/* Line Separator after Statutory & Tax Compliance */}
+                  <div className="border-t border-slate-200" />
+
+                  {/* General Information */}
                   <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
                      <h3 className="font-bold text-slate-800 flex items-center gap-2">
                         <Info size={18} className="text-slate-400" /> General Information

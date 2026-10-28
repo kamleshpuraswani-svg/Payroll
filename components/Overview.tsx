@@ -15,6 +15,8 @@ import {
   Fuel,
   BookOpen,
   Plane,
+  Car,
+  GraduationCap,
   Download,
   RotateCw,
   Info,
@@ -278,45 +280,58 @@ interface ExpenseItemData {
   iconBg: string;
   barColor: string;
   frequency: 'Monthly' | 'Yearly' | 'Once Per Tenure';
+  cycleText?: string;
   resetText: string;
 }
 
 const OVERVIEW_EXPENSE_DATA_MAP: Record<string, ExpenseItemData[]> = {
   'This Month': [
-    { id: 'med', name: 'Medical', claimed: 1250, limit: 15000, icon: Heart, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', resetText: 'Limit Resets on 1st June, 2026.' },
-    { id: 'fuel', name: 'Fuel and conveyance', claimed: 2000, limit: 24000, icon: Fuel, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Monthly', resetText: 'Limit Resets on 1st November, 2026.' },
-    { id: 'books', name: 'Books and periodicals', claimed: 0, limit: 6000, icon: BookOpen, iconColor: 'text-slate-500', iconBg: 'bg-slate-50', barColor: 'bg-blue-600', frequency: 'Monthly', resetText: 'Limit Resets on 1st November, 2026.' },
-    { id: 'lta', name: 'LTA (travel)', claimed: 0, limit: 45000, icon: Plane, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-amber-500', frequency: 'Once Per Tenure', resetText: 'Limit Resets on 31st March, 2028.' },
+    { id: 'med', name: 'Medical', claimed: 1250, limit: 15000, icon: Heart, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', cycleText: 'Jan–Dec 2026', resetText: 'Limit Resets on 1st January, 2027.' },
+    { id: 'fuel', name: 'Fuel and conveyance', claimed: 2000, limit: 24000, icon: Fuel, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Monthly', cycleText: 'October 2026', resetText: 'Limit Resets on 1st November, 2026.' },
+    { id: 'books', name: 'Books and periodicals', claimed: 0, limit: 6000, icon: BookOpen, iconColor: 'text-slate-500', iconBg: 'bg-slate-50', barColor: 'bg-blue-600', frequency: 'Monthly', cycleText: 'October 2026', resetText: 'Limit Resets on 1st November, 2026.' },
+    { id: 'driver', name: 'Driver salary', claimed: 6000, limit: 24000, icon: Car, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', cycleText: 'FY 2026-27', resetText: 'Limit Resets on 1st April, 2027.' },
+    { id: 'learn', name: 'Learning & certification', claimed: 4500, limit: 20000, icon: GraduationCap, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', cycleText: '14 July 2026 - 13 July 2027', resetText: 'Limit Resets on 14th July, 2027.' },
+    { id: 'lta', name: 'LTA (travel)', claimed: 0, limit: 45000, icon: Plane, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-amber-500', frequency: 'Once Per Tenure', cycleText: 'Since Joining', resetText: 'One-time limit for your tenure. Does not reset.' },
   ],
   'Last Month': [
-    { id: 'med', name: 'Medical', claimed: 2100, limit: 15000, icon: Heart, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', resetText: 'Limit Resets on 1st June, 2026.' },
-    { id: 'fuel', name: 'Fuel and conveyance', claimed: 3600, limit: 24000, icon: Fuel, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Monthly', resetText: 'Limit Resets on 1st November, 2026.' },
-    { id: 'books', name: 'Books and periodicals', claimed: 1000, limit: 6000, icon: BookOpen, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Monthly', resetText: 'Limit Resets on 1st November, 2026.' },
-    { id: 'lta', name: 'LTA (travel)', claimed: 0, limit: 45000, icon: Plane, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-amber-500', frequency: 'Once Per Tenure', resetText: 'Limit Resets on 31st March, 2028.' },
+    { id: 'med', name: 'Medical', claimed: 2100, limit: 15000, icon: Heart, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', cycleText: 'Jan–Dec 2026', resetText: 'Limit Resets on 1st January, 2027.' },
+    { id: 'fuel', name: 'Fuel and conveyance', claimed: 3600, limit: 24000, icon: Fuel, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Monthly', cycleText: 'September 2026', resetText: 'Limit Resets on 1st October, 2026.' },
+    { id: 'books', name: 'Books and periodicals', claimed: 1000, limit: 6000, icon: BookOpen, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Monthly', cycleText: 'September 2026', resetText: 'Limit Resets on 1st October, 2026.' },
+    { id: 'driver', name: 'Driver salary', claimed: 8000, limit: 24000, icon: Car, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', cycleText: 'FY 2026-27', resetText: 'Limit Resets on 1st April, 2027.' },
+    { id: 'learn', name: 'Learning & certification', claimed: 6500, limit: 20000, icon: GraduationCap, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', cycleText: '14 July 2026 - 13 July 2027', resetText: 'Limit Resets on 14th July, 2027.' },
+    { id: 'lta', name: 'LTA (travel)', claimed: 0, limit: 45000, icon: Plane, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-amber-500', frequency: 'Once Per Tenure', cycleText: 'Since Joining', resetText: 'One-time limit for your tenure. Does not reset.' },
   ],
   'This Quarter': [
-    { id: 'med', name: 'Medical', claimed: 3800, limit: 15000, icon: Heart, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', resetText: 'Limit Resets on 1st June, 2026.' },
-    { id: 'fuel', name: 'Fuel and conveyance', claimed: 6000, limit: 24000, icon: Fuel, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Monthly', resetText: 'Limit Resets on 1st November, 2026.' },
-    { id: 'books', name: 'Books and periodicals', claimed: 1500, limit: 6000, icon: BookOpen, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Monthly', resetText: 'Limit Resets on 1st November, 2026.' },
-    { id: 'lta', name: 'LTA (travel)', claimed: 12000, limit: 45000, icon: Plane, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-amber-500', frequency: 'Once Per Tenure', resetText: 'Limit Resets on 31st March, 2028.' },
+    { id: 'med', name: 'Medical', claimed: 3800, limit: 15000, icon: Heart, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', cycleText: 'Jan–Dec 2026', resetText: 'Limit Resets on 1st January, 2027.' },
+    { id: 'fuel', name: 'Fuel and conveyance', claimed: 6000, limit: 24000, icon: Fuel, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Monthly', cycleText: 'October 2026', resetText: 'Limit Resets on 1st November, 2026.' },
+    { id: 'books', name: 'Books and periodicals', claimed: 1500, limit: 6000, icon: BookOpen, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Monthly', cycleText: 'October 2026', resetText: 'Limit Resets on 1st November, 2026.' },
+    { id: 'driver', name: 'Driver salary', claimed: 12000, limit: 24000, icon: Car, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', cycleText: 'FY 2026-27', resetText: 'Limit Resets on 1st April, 2027.' },
+    { id: 'learn', name: 'Learning & certification', claimed: 8500, limit: 20000, icon: GraduationCap, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', cycleText: '14 July 2026 - 13 July 2027', resetText: 'Limit Resets on 14th July, 2027.' },
+    { id: 'lta', name: 'LTA (travel)', claimed: 12000, limit: 45000, icon: Plane, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-amber-500', frequency: 'Once Per Tenure', cycleText: 'Since Joining', resetText: 'One-time limit for your tenure. Does not reset.' },
   ],
   'Last Quarter': [
-    { id: 'med', name: 'Medical', claimed: 4200, limit: 15000, icon: Heart, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', resetText: 'Limit Resets on 1st June, 2026.' },
-    { id: 'fuel', name: 'Fuel and conveyance', claimed: 7200, limit: 24000, icon: Fuel, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Monthly', resetText: 'Limit Resets on 1st November, 2026.' },
-    { id: 'books', name: 'Books and periodicals', claimed: 2000, limit: 6000, icon: BookOpen, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Monthly', resetText: 'Limit Resets on 1st November, 2026.' },
-    { id: 'lta', name: 'LTA (travel)', claimed: 20000, limit: 45000, icon: Plane, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-amber-500', frequency: 'Once Per Tenure', resetText: 'Limit Resets on 31st March, 2028.' },
+    { id: 'med', name: 'Medical', claimed: 4200, limit: 15000, icon: Heart, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', cycleText: 'Jan–Dec 2026', resetText: 'Limit Resets on 1st January, 2027.' },
+    { id: 'fuel', name: 'Fuel and conveyance', claimed: 7200, limit: 24000, icon: Fuel, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Monthly', cycleText: 'September 2026', resetText: 'Limit Resets on 1st October, 2026.' },
+    { id: 'books', name: 'Books and periodicals', claimed: 2000, limit: 6000, icon: BookOpen, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Monthly', cycleText: 'September 2026', resetText: 'Limit Resets on 1st October, 2026.' },
+    { id: 'driver', name: 'Driver salary', claimed: 14000, limit: 24000, icon: Car, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', cycleText: 'FY 2026-27', resetText: 'Limit Resets on 1st April, 2027.' },
+    { id: 'learn', name: 'Learning & certification', claimed: 11000, limit: 20000, icon: GraduationCap, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', cycleText: '14 July 2026 - 13 July 2027', resetText: 'Limit Resets on 14th July, 2027.' },
+    { id: 'lta', name: 'LTA (travel)', claimed: 20000, limit: 45000, icon: Plane, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-amber-500', frequency: 'Once Per Tenure', cycleText: 'Since Joining', resetText: 'One-time limit for your tenure. Does not reset.' },
   ],
   'This Year': [
-    { id: 'med', name: 'Medical', claimed: 5200, limit: 15000, icon: Heart, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', resetText: 'Limit Resets on 1st June, 2026.' },
-    { id: 'fuel', name: 'Fuel and conveyance', claimed: 8000, limit: 24000, icon: Fuel, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Monthly', resetText: 'Limit Resets on 1st November, 2026.' },
-    { id: 'books', name: 'Books and periodicals', claimed: 0, limit: 6000, icon: BookOpen, iconColor: 'text-slate-500', iconBg: 'bg-slate-50', barColor: 'bg-blue-600', frequency: 'Monthly', resetText: 'Limit Resets on 1st November, 2026.' },
-    { id: 'lta', name: 'LTA (travel)', claimed: 32000, limit: 45000, icon: Plane, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-amber-500', frequency: 'Once Per Tenure', resetText: 'Limit Resets on 31st March, 2028.' },
+    { id: 'med', name: 'Medical', claimed: 5200, limit: 15000, icon: Heart, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', cycleText: 'Jan–Dec 2026', resetText: 'Limit Resets on 1st January, 2027.' },
+    { id: 'fuel', name: 'Fuel and conveyance', claimed: 8000, limit: 24000, icon: Fuel, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Monthly', cycleText: 'October 2026', resetText: 'Limit Resets on 1st November, 2026.' },
+    { id: 'books', name: 'Books and periodicals', claimed: 0, limit: 6000, icon: BookOpen, iconColor: 'text-slate-500', iconBg: 'bg-slate-50', barColor: 'bg-blue-600', frequency: 'Monthly', cycleText: 'October 2026', resetText: 'Limit Resets on 1st November, 2026.' },
+    { id: 'driver', name: 'Driver salary', claimed: 16000, limit: 24000, icon: Car, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', cycleText: 'FY 2026-27', resetText: 'Limit Resets on 1st April, 2027.' },
+    { id: 'learn', name: 'Learning & certification', claimed: 14000, limit: 20000, icon: GraduationCap, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', cycleText: '14 July 2026 - 13 July 2027', resetText: 'Limit Resets on 14th July, 2027.' },
+    { id: 'lta', name: 'LTA (travel)', claimed: 32000, limit: 45000, icon: Plane, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-amber-500', frequency: 'Once Per Tenure', cycleText: 'Since Joining', resetText: 'One-time limit for your tenure. Does not reset.' },
   ],
   'Last Year': [
-    { id: 'med', name: 'Medical', claimed: 14200, limit: 15000, icon: Heart, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', resetText: 'Limit Resets on 1st June, 2026.' },
-    { id: 'fuel', name: 'Fuel and conveyance', claimed: 22500, limit: 24000, icon: Fuel, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Monthly', resetText: 'Limit Resets on 1st November, 2026.' },
-    { id: 'books', name: 'Books and periodicals', claimed: 5400, limit: 6000, icon: BookOpen, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Monthly', resetText: 'Limit Resets on 1st November, 2026.' },
-    { id: 'lta', name: 'LTA (travel)', claimed: 42000, limit: 45000, icon: Plane, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-amber-500', frequency: 'Once Per Tenure', resetText: 'Limit Resets on 31st March, 2028.' },
+    { id: 'med', name: 'Medical', claimed: 14200, limit: 15000, icon: Heart, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', cycleText: 'Jan–Dec 2026', resetText: 'Limit Resets on 1st January, 2027.' },
+    { id: 'fuel', name: 'Fuel and conveyance', claimed: 22500, limit: 24000, icon: Fuel, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Monthly', cycleText: 'December 2025', resetText: 'Limit Resets on 1st January, 2026.' },
+    { id: 'books', name: 'Books and periodicals', claimed: 5400, limit: 6000, icon: BookOpen, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Monthly', cycleText: 'December 2025', resetText: 'Limit Resets on 1st January, 2026.' },
+    { id: 'driver', name: 'Driver salary', claimed: 22000, limit: 24000, icon: Car, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', cycleText: 'FY 2026-27', resetText: 'Limit Resets on 1st April, 2027.' },
+    { id: 'learn', name: 'Learning & certification', claimed: 18500, limit: 20000, icon: GraduationCap, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-blue-600', frequency: 'Yearly', cycleText: '14 July 2026 - 13 July 2027', resetText: 'Limit Resets on 14th July, 2027.' },
+    { id: 'lta', name: 'LTA (travel)', claimed: 42000, limit: 45000, icon: Plane, iconColor: 'text-blue-600', iconBg: 'bg-blue-50', barColor: 'bg-amber-500', frequency: 'Once Per Tenure', cycleText: 'Since Joining', resetText: 'One-time limit for your tenure. Does not reset.' },
   ],
 };
 
@@ -1152,17 +1167,17 @@ const Overview: React.FC<OverviewProps> = ({
                               <div className="bg-white p-3 border border-slate-200 rounded-xl shadow-xl text-xs min-w-[210px]">
                                 <p className="font-bold text-slate-800 border-b border-slate-100 pb-1.5 mb-2">{row.period}</p>
                                 <div className="space-y-1.5">
-                                  <div className="flex justify-between items-center text-slate-600">
-                                    <span className="font-medium">Gross Salary:</span>
-                                    <span className="font-bold text-slate-900">{formatINR(row.gross)}</span>
+                                  <div className="flex justify-between items-center text-blue-600">
+                                    <span className="font-medium">Net Pay:</span>
+                                    <span className="font-bold">{formatINR(row.net)}</span>
                                   </div>
                                   <div className="flex justify-between items-center text-rose-600">
                                     <span className="font-medium">Deductions:</span>
                                     <span className="font-bold">-{formatINR(row.deductions)}</span>
                                   </div>
-                                  <div className="flex justify-between items-center text-blue-600 pt-1 border-t border-slate-100">
-                                    <span className="font-bold">Net Pay:</span>
-                                    <span className="font-black text-sm">{formatINR(row.net)}</span>
+                                  <div className="flex justify-between items-center text-slate-900 pt-1.5 border-t border-slate-100">
+                                    <span className="font-bold">Gross Salary:</span>
+                                    <span className="font-black text-sm">{formatINR(row.gross)}</span>
                                   </div>
                                 </div>
                               </div>
@@ -1262,7 +1277,7 @@ const Overview: React.FC<OverviewProps> = ({
           </h3>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {currentExpenseItems.map((item) => {
             const Icon = item.icon;
             const percentage = item.limit > 0 ? Math.min(100, (item.claimed / item.limit) * 100) : 0;
@@ -1275,15 +1290,22 @@ const Overview: React.FC<OverviewProps> = ({
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <div className={`w-9 h-9 rounded-xl ${item.iconBg} ${item.iconColor} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform`}>
                         <Icon size={18} />
                       </div>
-                      <span className="text-sm font-semibold text-slate-800 truncate group-hover:text-blue-600 transition-colors">{item.name}</span>
+                      <span className="text-sm font-semibold text-slate-800 truncate group-hover:text-blue-600 transition-colors" title={item.name}>{item.name}</span>
                     </div>
-                    <span className="text-xs font-semibold px-2.5 py-0.5 bg-sky-50 text-sky-600 rounded-full shrink-0">
-                      {item.frequency}
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {item.cycleText && (
+                        <span className="text-xs font-medium text-slate-500 whitespace-nowrap">
+                          {item.cycleText}
+                        </span>
+                      )}
+                      <span className="text-xs font-semibold px-2.5 py-0.5 bg-sky-50 text-sky-600 rounded-full shrink-0">
+                        {item.frequency}
+                      </span>
+                    </div>
                   </div>
                   <p className="text-sm font-bold text-slate-700 mb-2.5">
                     {formatINR(item.claimed)} of {formatINR(item.limit)}
@@ -1294,7 +1316,11 @@ const Overview: React.FC<OverviewProps> = ({
                     <div className={`${item.barColor} h-1.5 rounded-full`} style={{ width: `${percentage.toFixed(1)}%` }}></div>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-2.5 font-medium">
-                    <RotateCw size={11} className="text-slate-400 shrink-0" />
+                    {item.frequency === 'Once Per Tenure' ? (
+                      <Info size={11} className="text-slate-400 shrink-0" />
+                    ) : (
+                      <RotateCw size={11} className="text-slate-400 shrink-0" />
+                    )}
                     <span>{item.resetText || 'Limit Resets on 1st June, 2026.'}</span>
                   </div>
                 </div>
