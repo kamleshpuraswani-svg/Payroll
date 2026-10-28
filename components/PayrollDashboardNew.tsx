@@ -419,76 +419,51 @@ const SALARY_COMPOSITION = [
   { name: 'Benefits & Perks', value: 6, fill: '#0ea5e9' },
 ];
 
-// Each entry shows N months of actual (historical) payroll cost leading up to "today" (Nov),
-// then continues as a forecast for the next 3 months. The last actual month also carries the
-// same value under `forecast` so the dashed projection visually connects to the solid trend line.
-const COST_FORECAST_MAP: Record<string, Array<{ month: string; actual: number | null; forecast: number | null }>> = {
-  'Last 6 Months': [
-    { month: 'Jun', actual: 174, forecast: null },
-    { month: 'Jul', actual: 177, forecast: null },
-    { month: 'Aug', actual: 179, forecast: null },
-    { month: 'Sep', actual: 181, forecast: null },
-    { month: 'Oct', actual: 184, forecast: null },
-    { month: 'Nov', actual: 185, forecast: 185 },
-    { month: 'Dec', actual: null, forecast: 187 },
-    { month: 'Jan', actual: null, forecast: 189 },
-    { month: 'Feb', actual: null, forecast: 196 },
-  ],
-  'Last 12 Months': [
-    { month: 'Dec', actual: 160, forecast: null },
-    { month: 'Jan', actual: 163, forecast: null },
-    { month: 'Feb', actual: 165, forecast: null },
-    { month: 'Mar', actual: 168, forecast: null },
-    { month: 'Apr', actual: 170, forecast: null },
-    { month: 'May', actual: 172, forecast: null },
-    { month: 'Jun', actual: 174, forecast: null },
-    { month: 'Jul', actual: 177, forecast: null },
-    { month: 'Aug', actual: 179, forecast: null },
-    { month: 'Sep', actual: 181, forecast: null },
-    { month: 'Oct', actual: 184, forecast: null },
-    { month: 'Nov', actual: 185, forecast: 185 },
-    { month: 'Dec ', actual: null, forecast: 187 },
-    { month: 'Jan ', actual: null, forecast: 189 },
-    { month: 'Feb ', actual: null, forecast: 196 },
-  ],
-  'This Year': [
-    { month: 'Jan', actual: 163, forecast: null },
-    { month: 'Feb', actual: 165, forecast: null },
-    { month: 'Mar', actual: 168, forecast: null },
-    { month: 'Apr', actual: 170, forecast: null },
-    { month: 'May', actual: 172, forecast: null },
-    { month: 'Jun', actual: 174, forecast: null },
-    { month: 'Jul', actual: 177, forecast: null },
-    { month: 'Aug', actual: 179, forecast: null },
-    { month: 'Sep', actual: 181, forecast: null },
-    { month: 'Oct', actual: 184, forecast: null },
-    { month: 'Nov', actual: 185, forecast: 185 },
-    { month: 'Dec', actual: null, forecast: 187 },
-    { month: 'Jan ', actual: null, forecast: 189 },
-    { month: 'Feb ', actual: null, forecast: 196 },
-  ],
-  // Last Year is a fully closed period, so it's shown as pure historical trend with no forecast segment.
-  'Last Year': [
-    { month: 'Jan', actual: 140, forecast: null },
-    { month: 'Feb', actual: 142, forecast: null },
-    { month: 'Mar', actual: 144, forecast: null },
-    { month: 'Apr', actual: 146, forecast: null },
-    { month: 'May', actual: 148, forecast: null },
-    { month: 'Jun', actual: 150, forecast: null },
-    { month: 'Jul', actual: 152, forecast: null },
-    { month: 'Aug', actual: 154, forecast: null },
-    { month: 'Sep', actual: 156, forecast: null },
-    { month: 'Oct', actual: 158, forecast: null },
-    { month: 'Nov', actual: 159, forecast: null },
-    { month: 'Dec', actual: 160, forecast: null },
-  ],
+// Payroll Cost Projection: actual cost for processed months, then a fixed 3-month forecast.
+// The filter only decides how much history is shown; the forecast is always the next 3 months.
+// Mock timeline: Nov 2026 is the last processed month, matching the rest of this dashboard's mock data.
+const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const LAST_PROCESSED_MONTH = { y: 2026, m: 10 }; // Nov 2026 (0-based month)
+const FORECAST_MONTHS = 3;
+// Lakh units, oldest first: Dec 2025 to Nov 2026 (12 months, the longest filter)
+const ACTUAL_PAYROLL_COST_HISTORY = [160, 163, 165, 168, 170, 172, 174, 177, 179, 181, 184, 185];
+const PROJECTED_PAYROLL_COST = [187, 189, 196]; // next 3 months after the last processed month
+const COST_PROJECTION_PRESETS = ['Last 3 Months', 'Last 6 Months', 'Last 12 Months'];
+
+const shiftMonth = (y: number, m: number, n: number) => {
+  const d = new Date(y, m + n, 1);
+  return { y: d.getFullYear(), m: d.getMonth() };
+};
+
+// Number of actual months to show for a filter value
+const getProjectionHistoryMonths = (range: string) => {
+  if (range === 'Last 3 Months') return 3;
+  if (range === 'Last 12 Months') return 12;
+  return 6;
 };
 
 const getCostForecastData = (range: string) => {
-  return COST_FORECAST_MAP[range] || COST_FORECAST_MAP['Last 6 Months'];
-};
+  const total = ACTUAL_PAYROLL_COST_HISTORY.length;
+  const historyMonths = Math.min(total, Math.max(1, getProjectionHistoryMonths(range)));
+  // Add the year to labels when the chart crosses a year boundary, so month names stay unique
+  const first = shiftMonth(LAST_PROCESSED_MONTH.y, LAST_PROCESSED_MONTH.m, -(historyMonths - 1));
+  const lastForecast = shiftMonth(LAST_PROCESSED_MONTH.y, LAST_PROCESSED_MONTH.m, FORECAST_MONTHS);
+  const spansYears = first.y !== lastForecast.y;
+  const label = (y: number, m: number) => (spansYears ? `${MONTH_SHORT[m]} '${String(y).slice(2)}` : MONTH_SHORT[m]);
 
-const COST_FORECAST = COST_FORECAST_MAP['Last 6 Months'];
+  const rows: Array<{ month: string; actual: number | null; forecast: number | null }> = [];
+  for (let i = historyMonths - 1; i >= 0; i--) {
+    const p = shiftMonth(LAST_PROCESSED_MONTH.y, LAST_PROCESSED_MONTH.m, -i);
+    rows.push({ month: label(p.y, p.m), actual: ACTUAL_PAYROLL_COST_HISTORY[total - 1 - i], forecast: null });
+  }
+  // The last actual month also carries a forecast value so the dashed line connects to the solid one
+  rows[rows.length - 1].forecast = rows[rows.length - 1].actual;
+  PROJECTED_PAYROLL_COST.slice(0, FORECAST_MONTHS).forEach((value, k) => {
+    const p = shiftMonth(LAST_PROCESSED_MONTH.y, LAST_PROCESSED_MONTH.m, k + 1);
+    rows.push({ month: label(p.y, p.m), actual: null, forecast: value });
+  });
+  return rows;
+};
 
 const TDS_TREND = [
   { month: 'Jun', tds: 16.2 },
@@ -1485,10 +1460,12 @@ const DateRangeFilterDropdown: React.FC<{
   value: string;
   onChange: (val: string) => void;
   presets?: string[];
+  showCustomRange?: boolean; // false hides the custom From/To month picker (presets only)
 }> = ({
   value,
   onChange,
   presets = ['This Month', 'Last Month', 'This Quarter', 'Last Quarter', 'This Year', 'Last Year'],
+  showCustomRange = true,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState(value);
@@ -1572,7 +1549,7 @@ const DateRangeFilterDropdown: React.FC<{
         <div className="absolute right-0 top-full mt-2 w-[310px] bg-white rounded-2xl border border-slate-200 shadow-2xl p-4 z-50 animate-in fade-in zoom-in-95 duration-150 origin-top-right">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5">Date Range</p>
 
-          <div className={`grid ${presets.length <= 4 ? 'grid-cols-2' : 'grid-cols-3'} gap-1.5 mb-3`}>
+          <div className={`grid ${presets.length <= 4 ? 'grid-cols-2' : 'grid-cols-3'} gap-1.5 ${showCustomRange ? 'mb-3' : ''}`}>
             {presets.map((preset) => (
               <button
                 key={preset}
@@ -1590,6 +1567,7 @@ const DateRangeFilterDropdown: React.FC<{
           </div>
 
           {/* Custom Date Range Picker */}
+          {showCustomRange && (
           <div className="pt-3 border-t border-slate-100 space-y-2.5">
             <div className="flex items-center justify-between">
               <span className={`text-[10px] font-bold uppercase tracking-wider ${isCustomActive ? 'text-indigo-600' : 'text-slate-400'}`}>
@@ -1636,6 +1614,7 @@ const DateRangeFilterDropdown: React.FC<{
               <span>Apply</span>
             </button>
           </div>
+          )}
         </div>
       )}
     </div>
@@ -2815,7 +2794,8 @@ const PayrollDashboardNew: React.FC<{ onNavigateToPayrollRun?: () => void }> = (
             <DateRangeFilterDropdown
               value={forecastTimeRange}
               onChange={setForecastTimeRange}
-              presets={['Last 6 Months', 'Last 12 Months', 'This Year', 'Last Year']}
+              presets={COST_PROJECTION_PRESETS}
+              showCustomRange={false}
             />
           }
         >
@@ -2850,11 +2830,10 @@ const PayrollDashboardNew: React.FC<{ onNavigateToPayrollRun?: () => void }> = (
                   ) : null;
                 })()}
                 <Line type="monotone" dataKey="actual" stroke="#4f46e5" strokeWidth={2.5} dot={{ r: 4 }} connectNulls name="Actual" />
-                <Line type="monotone" dataKey="forecast" stroke="#a5b4fc" strokeWidth={2.5} strokeDasharray="5 4" dot={{ r: 4 }} connectNulls name="Forecast" />
+                <Line type="monotone" dataKey="forecast" stroke="#a5b4fc" strokeWidth={2.5} strokeDasharray="5 4" dot={{ r: 4 }} connectNulls name="Forecast (next 3 months)" />
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <p className="text-xs text-slate-400 mt-3 text-center">Based on confirmed increments, new joiners, and exits</p>
         </Card>
       </div>
 
