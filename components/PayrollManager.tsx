@@ -40,9 +40,11 @@ import {
     PauseCircle,
     Calculator,
     Minus,
-    Receipt
+    Receipt,
+    ArrowDownCircle
 } from 'lucide-react';
 import { RunPayrollModal, PayrollAlertsModal, PayrollOnHoldPanel } from './CompanyActionModals';
+import SendPayslipsModal from './SendPayslipsModal';
 import { MOCK_COMPANIES } from '../constants';
 import { supabase } from '../services/supabaseClient';
 import { generateTaxSlipPDF } from './taxSlipGenerator';
@@ -963,6 +965,15 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
     const [showLockModal, setShowLockModal] = useState<string | null>(null);
     const [showDetailsModal, setShowDetailsModal] = useState<PastPayroll | null>(null);
     const [showDownloadModal, setShowDownloadModal] = useState<PastPayroll | null>(null);
+    const [sendPayslipsFor, setSendPayslipsFor] = useState<PastPayroll | null>(null);
+    // Employees whose payslips & taxslips were sent in this session, keyed by payroll id
+    const [sentPayslipsByPayroll, setSentPayslipsByPayroll] = useState<Record<string, string[]>>({});
+    const recordSentPayslips = (payrollId: string, employeeIds: string[]) => {
+        setSentPayslipsByPayroll(prev => ({
+            ...prev,
+            [payrollId]: [...new Set([...(prev[payrollId] || []), ...employeeIds])],
+        }));
+    };
     const [showAlertsModal, setShowAlertsModal] = useState(false);
     const [showOnHoldPanel, setShowOnHoldPanel] = useState(false);
     const [showForm24QModal, setShowForm24QModal] = useState(false);
@@ -1227,6 +1238,7 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
                 onTypeChange={setNovPayrollType}
                 initialStep={wizardInitialStep}
                 unlockedRegularMonthly={unlockedRegularMonthly}
+                onPayslipsReleased={ids => recordSentPayslips('Nov-2025-Pending', ids)}
             />
         );
     }
@@ -2140,53 +2152,54 @@ const PayrollManager: React.FC<PayrollManagerProps> = ({ userRole }) => {
             {/* Download Options Modal */}
             {showDownloadModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
-                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                            <h3 className="font-bold text-slate-800">Download Reports: {showDownloadModal.month}</h3>
-                            <button onClick={() => setShowDownloadModal(null)}><X size={20} className="text-slate-400 hover:text-slate-600" /></button>
-                        </div>
-                        <div className="p-6 space-y-3">
-                            <button className="w-full flex items-center gap-4 p-4 border border-slate-200 rounded-xl hover:bg-indigo-50 hover:border-indigo-200 transition-all group text-left">
-                                <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg group-hover:bg-indigo-200 transition-colors"><FileText size={20} /></div>
-                                <div className="flex-1">
-                                    <p className="text-sm font-bold text-slate-700">Payroll Register (Excel)</p>
-                                    <p className="text-xs text-slate-400">Complete summary of earnings & deductions</p>
-                                </div>
-                                <Download size={16} className="text-slate-300 group-hover:text-indigo-500" />
-                            </button>
-                            <button className="w-full flex items-center gap-4 p-4 border border-slate-200 rounded-xl hover:bg-emerald-50 hover:border-emerald-200 transition-all group text-left">
-                                <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg group-hover:bg-emerald-200 transition-colors"><FileSpreadsheet size={20} /></div>
-                                <div className="flex-1">
-                                    <p className="text-sm font-bold text-slate-700">Bank Transfer File (CSV)</p>
-                                    <p className="text-xs text-slate-400">Standard format for bank bulk transfers</p>
-                                </div>
-                                <Download size={16} className="text-slate-300 group-hover:text-emerald-500" />
-                            </button>
-                            <button className="w-full flex items-center gap-4 p-4 border border-slate-200 rounded-xl hover:bg-orange-50 hover:border-orange-200 transition-all group text-left">
-                                <div className="p-2 bg-orange-100 text-orange-600 rounded-lg group-hover:bg-orange-200 transition-colors"><FileArchive size={20} /></div>
-                                <div className="flex-1">
-                                    <p className="text-sm font-bold text-slate-700">All Payslips (ZIP)</p>
-                                    <p className="text-xs text-slate-400">Bundled PDFs for all 452 employees</p>
-                                </div>
-                                <Download size={16} className="text-slate-300 group-hover:text-orange-500" />
-                            </button>
-                            <button 
-                                className="w-full flex items-center gap-4 p-4 border border-slate-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all group text-left"
-                                onClick={() => generateTaxSlipPDF(showDownloadModal.month)}
-                            >
-                                <div className="p-2 bg-blue-100 text-blue-600 rounded-lg group-hover:bg-blue-200 transition-colors"><Receipt size={20} /></div>
-                                <div className="flex-1">
-                                    <p className="text-sm font-bold text-slate-700">Tax Slip</p>
-                                    <p className="text-xs text-slate-400">Detailed tax deduction summary for employees</p>
-                                </div>
-                                <Download size={16} className="text-slate-300 group-hover:text-blue-500" />
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col px-4">
+                        <div className="py-4 border-b border-slate-200 flex justify-between items-center">
+                            <h3 className="text-lg font-bold text-slate-800">Download Reports: {showDownloadModal.month}</h3>
+                            <button onClick={() => setShowDownloadModal(null)} aria-label="Close" className="p-1 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors">
+                                <X size={22} />
                             </button>
                         </div>
-                        <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
-                            <button onClick={() => setShowDownloadModal(null)} className="px-4 py-2 text-slate-600 font-medium text-sm hover:bg-white rounded-lg transition-all">Close</button>
+                        <div className="py-4 space-y-4">
+                            <div className="flex items-center gap-4 p-4 border border-slate-200 rounded-xl">
+                                <div className="w-11 h-11 shrink-0 flex items-center justify-center border border-slate-200 rounded-lg bg-white text-orange-500"><FileText size={20} /></div>
+                                <p className="flex-1 text-base font-semibold text-slate-800">Bank disbursal sheet</p>
+                                <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
+                                    <ArrowDownCircle size={16} /> Download
+                                </button>
+                            </div>
+                            <div className="flex items-center gap-4 p-4 border border-slate-200 rounded-xl">
+                                <div className="w-11 h-11 shrink-0 flex items-center justify-center border border-slate-200 rounded-lg bg-white text-purple-500"><FileText size={20} /></div>
+                                <p className="flex-1 text-base font-semibold text-slate-800">Generate & distribute payslips & taxslips</p>
+                                <button
+                                    onClick={() => setSendPayslipsFor(showDownloadModal)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+                                >
+                                    <Send size={16} /> Send
+                                </button>
+                            </div>
+                            <div className="flex items-center gap-4 p-4 border border-slate-200 rounded-xl">
+                                <div className="w-11 h-11 shrink-0 flex items-center justify-center border border-slate-200 rounded-lg bg-white text-emerald-500"><FileText size={20} /></div>
+                                <p className="flex-1 text-base font-semibold text-slate-800">Salary register</p>
+                                <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
+                                    <ArrowDownCircle size={16} /> Download
+                                </button>
+                            </div>
+                        </div>
+                        <div className="pt-2 pb-4 flex justify-end">
+                            <button onClick={() => setShowDownloadModal(null)} className="px-5 py-2.5 border border-slate-300 text-slate-700 font-semibold text-sm rounded-lg hover:bg-slate-50 transition-colors">Close</button>
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Send Payslips & Taxslips — employee selection */}
+            {sendPayslipsFor && (
+                <SendPayslipsModal
+                    payroll={sendPayslipsFor}
+                    previouslySentIds={sentPayslipsByPayroll[sendPayslipsFor.id] || []}
+                    onClose={() => setSendPayslipsFor(null)}
+                    onSent={ids => recordSentPayslips(sendPayslipsFor.id, ids)}
+                />
             )}
 
         </div>

@@ -493,7 +493,7 @@ const MultiSelect: React.FC<{
 };
 
 // --- Mock employees for payroll run (fallback when Supabase is empty) ---
-const MOCK_PAYROLL_EMPLOYEES = [
+export const MOCK_PAYROLL_EMPLOYEES: any[] = [
    // Mindinventory — 10 employees
    { id: 'mi-1', employee_id: 'MI00101', first_name: 'Priya', last_name: 'Sharma', department: 'Engineering', designation: 'Senior Engineer', business_unit: 'Mindinventory', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Priya', payrollStatus: 'Eligible', holdReason: '' },
    { id: 'mi-2', employee_id: 'MI00102', first_name: 'Rohan', last_name: 'Verma', department: 'Engineering', designation: 'Backend Developer', business_unit: 'Mindinventory', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rohan', payrollStatus: 'Eligible', holdReason: '' },
@@ -553,6 +553,8 @@ export const RunPayrollModal: React.FC<{
    onTypeChange?: (type: 'Regular Monthly' | 'F&F Settlement') => void;
    initialStep?: number;
    unlockedRegularMonthly?: boolean;
+   /** Called with the employee ids whose payslips & taxslips were released in Step 6 */
+   onPayslipsReleased?: (employeeIds: string[]) => void;
 }> = ({
    isOpen = false,
    onClose,
@@ -563,7 +565,8 @@ export const RunPayrollModal: React.FC<{
    onStatusChange,
    onTypeChange,
    initialStep = 1,
-   unlockedRegularMonthly = false
+   unlockedRegularMonthly = false,
+   onPayslipsReleased
 }) => {
       const [currentStep, setCurrentStep] = useState(initialStep);
       const [isConfirmed, setIsConfirmed] = useState(false);
@@ -1187,6 +1190,7 @@ export const RunPayrollModal: React.FC<{
                clearInterval(interval);
                setIsGenerating(false);
                setPayslipsGenerated(true);
+               if (idsToRelease.length > 0) onPayslipsReleased?.(idsToRelease);
                finalizePayrollRun(idsToRelease);
             }
          }, 200);
