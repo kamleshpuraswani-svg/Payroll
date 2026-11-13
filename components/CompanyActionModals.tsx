@@ -858,6 +858,9 @@ export const RunPayrollModal: React.FC<{
       const [payslipsGenerated, setPayslipsGenerated] = useState(false);
       const [emailsSent, setEmailsSent] = useState(false);
       const [bankFileDownloaded, setBankFileDownloaded] = useState(false);
+      // Step 6: "Mark Payroll as Paid" — optional release of payslips & taxslips to selected employees
+      const [releaseSlips, setReleaseSlips] = useState(false);
+      const [releaseEmpIds, setReleaseEmpIds] = useState<string[]>([]);
 
       // Step 3 State & Modals
       const [adjustmentSearch, setAdjustmentSearch] = useState('');
@@ -1147,7 +1150,34 @@ export const RunPayrollModal: React.FC<{
          setCurrentStep(prev => Math.max(prev - 1, 1));
       };
 
-      const handleGeneratePayslips = async () => {
+      // Same formula as the Net Pay column in the Review step's salary register
+      const getRowNetPay = (row: any) => {
+         const customImpact = (row.customComponents || []).reduce((acc: number, c: any) =>
+            acc + (c.type === 'Earning' ? c.amount : -c.amount), 0
+         );
+         return (row.gross || 0) + (row.lopReversal || 0) + (row.bonus || 0) + (row.expenseReimbursement || 0) + (row.arrears || 0)
+            - (row.loanRecovery || 0) - (row.salaryAdvanceRecovery || 0) - (row.actualTds || 0) + customImpact;
+      };
+
+      const toggleReleaseSlips = (checked: boolean) => {
+         setReleaseSlips(checked);
+         // Pre-select every employee in the run when the list is first opened
+         if (checked && releaseEmpIds.length === 0) {
+            setReleaseEmpIds(adjustments.map(a => a.id));
+         }
+      };
+
+      const toggleReleaseEmp = (id: string) => {
+         setReleaseEmpIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+      };
+
+      const toggleReleaseAll = () => {
+         setReleaseEmpIds(prev => prev.length === adjustments.length ? [] : adjustments.map(a => a.id));
+      };
+
+      const handleMarkAsPaid = async () => {
+         if (releaseSlips && releaseEmpIds.length === 0) return;
+         const idsToRelease = releaseSlips ? [...releaseEmpIds] : [];
          setIsGenerating(true);
          let progress = 0;
          const interval = setInterval(() => {
@@ -1157,12 +1187,12 @@ export const RunPayrollModal: React.FC<{
                clearInterval(interval);
                setIsGenerating(false);
                setPayslipsGenerated(true);
-               finalizePayrollRun();
+               finalizePayrollRun(idsToRelease);
             }
          }, 200);
       };
 
-      const finalizePayrollRun = async () => {
+      const finalizePayrollRun = async (releaseIds: string[]) => {
          if (!currentRunId) {
             onStatusChange?.('Locked');
             return;
@@ -1177,8 +1207,8 @@ export const RunPayrollModal: React.FC<{
             if (runError) throw runError;
             onStatusChange?.('Locked');
 
-            // 2. Generate and Insert Individual Payslips
-            const payslipRecords = adjustments.map(adj => {
+            // 2. Generate and Insert Payslips — only for employees selected for release
+            const payslipRecords = adjustments.filter(adj => releaseIds.includes(adj.id)).map(adj => {
                const netPay = (adj.gross || 0) + (adj.bonus || 0) + (adj.arrears || 0) + (adj.expenseReimbursement || 0) - (adj.lop || 0) - (adj.loanRecovery || 0) - (adj.salary_advance_recovery || 0) - (adj.actual_tds || 0) + (adj.other || 0);
 
                return {
@@ -1214,16 +1244,20 @@ export const RunPayrollModal: React.FC<{
                };
             });
 
-            const { error: payslipError } = await supabase
-               .from('payslips')
-               .insert(payslipRecords);
+            if (payslipRecords.length > 0) {
+               const { error: payslipError } = await supabase
+                  .from('payslips')
+                  .insert(payslipRecords);
 
-            if (payslipError) throw payslipError;
+               if (payslipError) throw payslipError;
+            }
 
             // 3. Log Audit
             await supabase.from('audit_logs').insert({
                id: crypto.randomUUID(),
-               action: `Payroll & Payslips Generated for ${selectedPayrollMonth}`,
+               action: payslipRecords.length > 0
+                  ? `Payroll marked as Paid for ${selectedPayrollMonth}; payslips & taxslips released to ${payslipRecords.length} employee(s)`
+                  : `Payroll marked as Paid for ${selectedPayrollMonth} (payslips not released)`,
                user_name: 'HR Manager',
                severity: 'High',
                timestamp_label: new Date().toLocaleString()
@@ -3373,7 +3407,7 @@ export const RunPayrollModal: React.FC<{
                         <h2 className="text-2xl font-bold text-emerald-900">November 2025 Payroll Successfully Locked!</h2>
                      </div>
 
-                     <div className="grid grid-cols-2 gap-6">
+                     <div className="grid grid-cols-2 gap-6 items-start">
                         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
                            <div className="flex items-start justify-between mb-4">
                               <div className="p-2 bg-orange-50 text-orange-600 rounded-lg"><Download size={20} /></div>
@@ -3391,46 +3425,115 @@ export const RunPayrollModal: React.FC<{
 
                         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
                            <div className="flex items-start justify-between mb-4">
-                              <div className="flex gap-2">
-                                 <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><FileText size={20} /></div>
-                                 <div className="p-2 bg-sky-50 text-sky-600 rounded-lg"><Mail size={20} /></div>
-                              </div>
-                              <div className="flex gap-1.5">
-                                 {(payslipsGenerated || emailsSent) && <span className="text-xs font-bold bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full border border-emerald-100 flex items-center gap-1"><Check size={10} /> Sent</span>}
-                              </div>
+                              <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><FileText size={20} /></div>
+                              {payslipsGenerated && <span className="text-xs font-bold bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full border border-emerald-100 flex items-center gap-1"><Check size={10} /> Paid</span>}
                            </div>
-                           <h3 className="font-bold text-slate-800">2. Generate & Distribute Payslips</h3>
-                           <p className="text-xs text-slate-500 mt-2 mb-4">Payslip will be uploaded to Employees account in People module.</p>
+                           <h3 className="font-bold text-slate-800">2. Mark Payroll as Paid</h3>
+                           <p className="text-xs text-slate-500 mt-2 mb-4">Update the payroll status to paid and choose whether to release payslips & taxslips to employees.</p>
 
                            <div className="mt-auto space-y-3">
+                              <label className={`flex items-center gap-3 ${readOnly || isGenerating || payslipsGenerated ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                                 <input
+                                    type="checkbox"
+                                    checked={releaseSlips}
+                                    onChange={e => toggleReleaseSlips(e.target.checked)}
+                                    disabled={readOnly || isGenerating || payslipsGenerated}
+                                    className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer disabled:opacity-50 border-slate-300"
+                                 />
+                                 <span className="text-sm font-medium text-slate-700">Release payslips & taxslips to employees</span>
+                              </label>
+
                               {!payslipsGenerated ? (
                                  !isGenerating ? (
-                                    <button onClick={handleGeneratePayslips} disabled={readOnly} className="w-full py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                                       Send
+                                    <button
+                                       onClick={handleMarkAsPaid}
+                                       disabled={readOnly || (releaseSlips && releaseEmpIds.length === 0)}
+                                       className="w-full py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                       Mark as Paid
                                     </button>
                                  ) : (
                                     <div className="space-y-2">
                                        <div className="flex justify-between text-xs font-medium text-slate-600">
-                                          <span>Generating PDFs...</span>
+                                          <span>{releaseSlips ? 'Marking as paid & releasing payslips...' : 'Marking as paid...'}</span>
                                           <span>{generationProgress}%</span>
-                                        </div>
-                                        <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                                           <div className="bg-purple-600 h-full transition-all duration-200" style={{ width: `${generationProgress}%` }}></div>
-                                        </div>
-                                     </div>
+                                       </div>
+                                       <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                          <div className="bg-purple-600 h-full transition-all duration-200" style={{ width: `${generationProgress}%` }}></div>
+                                       </div>
+                                    </div>
                                  )
                               ) : (
-                                 <button
-                                    onClick={() => setEmailsSent(true)}
-                                    disabled={emailsSent || readOnly}
-                                    className={`w-full py-2 rounded-lg text-sm font-medium transition-colors ${emailsSent ? 'bg-slate-50 text-slate-400 border border-slate-200 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
-                                 >
-                                    {emailsSent ? 'Notifications Sent' : 'Send'}
+                                 <button disabled className="w-full py-2 rounded-lg text-sm font-medium bg-slate-50 text-slate-400 border border-slate-200 cursor-not-allowed flex items-center justify-center gap-2">
+                                    <CheckCircle size={16} /> Marked as Paid
                                  </button>
                               )}
                            </div>
                         </div>
                      </div>
+
+                     {releaseSlips && (
+                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                           <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
+                              <div>
+                                 <h3 className="font-bold text-slate-800">Release Payslips & Taxslips</h3>
+                                 <p className="text-xs text-slate-500 mt-1">Select the employees who should receive their payslips & taxslips.</p>
+                              </div>
+                              <span className="text-xs font-semibold bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full border border-indigo-100 whitespace-nowrap">
+                                 {releaseEmpIds.length} of {adjustments.length} selected
+                              </span>
+                           </div>
+                           {adjustments.length === 0 ? (
+                              <p className="px-5 py-8 text-center text-sm text-slate-400">No employees in this payroll run.</p>
+                           ) : (
+                              <div className="max-h-96 overflow-y-auto">
+                                 <table className="w-full text-sm">
+                                    <thead className="bg-slate-50 sticky top-0 z-10">
+                                       <tr className="text-left text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                                          <th className="px-5 py-3 w-12">
+                                             <input
+                                                type="checkbox"
+                                                aria-label="Select all employees"
+                                                checked={releaseEmpIds.length === adjustments.length}
+                                                ref={el => { if (el) el.indeterminate = releaseEmpIds.length > 0 && releaseEmpIds.length < adjustments.length; }}
+                                                onChange={toggleReleaseAll}
+                                                disabled={readOnly || isGenerating || payslipsGenerated}
+                                                className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer disabled:opacity-50 border-slate-300"
+                                             />
+                                          </th>
+                                          <th className="px-5 py-3">Employee Name</th>
+                                          <th className="px-5 py-3">Department</th>
+                                          <th className="px-5 py-3 text-right">Net Pay</th>
+                                       </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                       {adjustments.map(row => {
+                                          const isSelected = releaseEmpIds.includes(row.id);
+                                          const department = payrollEmployees.find(e => e.id === row.id)?.department || '—';
+                                          return (
+                                             <tr key={row.id} className={isSelected ? 'bg-indigo-50/40' : 'hover:bg-slate-50'}>
+                                                <td className="px-5 py-3">
+                                                   <input
+                                                      type="checkbox"
+                                                      aria-label={`Select ${row.name}`}
+                                                      checked={isSelected}
+                                                      onChange={() => toggleReleaseEmp(row.id)}
+                                                      disabled={readOnly || isGenerating || payslipsGenerated}
+                                                      className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer disabled:opacity-50 border-slate-300"
+                                                   />
+                                                </td>
+                                                <td className="px-5 py-3 font-medium text-slate-800">{row.name}</td>
+                                                <td className="px-5 py-3 text-slate-600">{department}</td>
+                                                <td className="px-5 py-3 text-right font-semibold text-slate-800 tabular-nums">₹{getRowNetPay(row).toLocaleString('en-IN')}</td>
+                                             </tr>
+                                          );
+                                       })}
+                                    </tbody>
+                                 </table>
+                              </div>
+                           )}
+                        </div>
+                     )}
 
                   </div>
                );
