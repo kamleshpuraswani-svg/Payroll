@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { Edit2, Save, Calendar, ChevronDown, Bell, Check, Info, AlertCircle, Clock, FileText, History, AlertTriangle, Plus, Trash2, X, ArrowUp, ArrowDown, UserCheck, ShieldCheck, Calculator, PieChart as PieChartIcon, Percent, Building2 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
@@ -480,6 +480,43 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
         });
         return initialWeights;
     });
+
+    // Allowed TDS deduction months when Declaration Window Type is Custom:
+    // only the selected custom months and months after them (financial year order).
+    const allowedTdsMonths = useMemo(() => {
+        if (declWindowType !== 'Custom' || customMonths.length === 0) return months;
+        const minIdx = Math.min(...customMonths.map(cm => months.indexOf(cm)));
+        return months.filter((_, i) => i >= minIdx);
+    }, [declWindowType, customMonths]);
+
+    useEffect(() => {
+        if (declWindowType === 'Custom' && customMonths.length > 0) {
+            const minIdx = Math.min(...customMonths.map(cm => months.indexOf(cm)));
+
+            // Default deduction pattern to Custom when window type is Custom with months selected.
+            setDeductionPattern('Custom');
+
+            // Auto-select custom months; user can add months after, not before.
+            setSelectedTdsMonths(prev => {
+                const combined = [...new Set([...prev, ...customMonths])];
+                return combined.filter(m => months.indexOf(m) >= minIdx);
+            });
+        }
+    }, [declWindowType, customMonths, months]);
+
+    // Keep Deduction Pattern = Monthly in sync with all months ticked.
+    useEffect(() => {
+        if (deductionPattern === 'Monthly') {
+            setSelectedTdsMonths([...months]);
+        }
+    }, [deductionPattern, months]);
+
+    // Reset proof cutoff month if not in selected custom months when window type is Custom.
+    useEffect(() => {
+        if (declWindowType === 'Custom' && customMonths.length > 0 && !customMonths.includes(proofCutoffMonth)) {
+            setProofCutoffMonth(customMonths[0]);
+        }
+    }, [declWindowType, customMonths, proofCutoffMonth]);
 
     // --- Proof of Investment State ---
     const [isEditingProof, setIsEditingProof] = useState(false);
@@ -1094,11 +1131,11 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                 </optgroup>
                             </select>
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                        </div>
-                    </div>
-                </div>
-                
-                {/* 1. Investment Declaration Section */}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 1. Investment Declaration Section */}
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="p-6 border-b border-slate-200 flex justify-between items-center">
                         <div>
@@ -1138,11 +1175,14 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
 
                             {/* Declaration Settings Overhaul */}
                             <div className="pt-2">
-                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6 border-b border-slate-200 pb-2">Tax Declaration Due Date</h4>
+                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6 border-b border-slate-200 pb-2">Declaration Window</h4>
 
                                 {/* Declaration Window Type */}
                                 <div className="mb-6">
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Declaration Window Type</label>
+                                    {/* Declaration Window Type label hidden */}
+                                    {false && (
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Declaration Window Type</label>
+                                    )}
                                     <div className="flex items-center gap-6">
                                         {(['Monthly', 'Custom'] as const).map(opt => (
                                             <label key={opt} className="flex items-center gap-2 cursor-pointer group">
@@ -1166,13 +1206,22 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                             {["January","February","March","April","May","June","July","August","September","October","November","December"].map(m => {
                                                 const selected = customMonths.includes(m);
                                                 return (
-                                                    <button
-                                                        key={m}
-                                                        type="button"
-                                                        disabled={!isEditingInv}
-                                                        onClick={() => setCustomMonths(prev => selected ? prev.filter(x => x !== m) : [...prev, m])}
-                                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${selected ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'} disabled:cursor-not-allowed disabled:opacity-60`}
-                                                    >
+                                                        <button
+                                                            key={m}
+                                                            type="button"
+                                                            disabled={!isEditingInv}
+                                                            onClick={() => {
+                                                                if (!isEditingInv) return;
+                                                                const next = selected
+                                                                    ? customMonths.filter(x => x !== m)
+                                                                    : [...customMonths, m];
+                                                                setCustomMonths(next);
+                                                                if (next.length >= 12) {
+                                                                    setDeclWindowType('Monthly');
+                                                                }
+                                                            }}
+                                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${selected ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'} disabled:cursor-not-allowed disabled:opacity-60`}
+                                                        >
                                                         {m.slice(0, 3)}
                                                     </button>
                                                 );
@@ -1226,6 +1275,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                         </div>
                                     </div>
                                     {/* Financial Year Cutoff Date */}
+                                    {declWindowType !== 'Custom' && (
                                     <div className="space-y-6">
                                         <div className="flex items-center gap-2 mb-2">
                                             <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center">
@@ -1270,6 +1320,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
+                                    )}
                                 </div>
 
                                 {/* Dynamic info text box */}
@@ -1280,7 +1331,7 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                     <div>
                                         <h5 className="text-[11px] font-black text-amber-700 uppercase tracking-widest mb-1">Investment Declaration Period</h5>
                                         <p className="text-sm font-medium text-amber-900/80 leading-relaxed">
-                                            Employees can declare investments from the <span className="font-bold underline decoration-amber-300 underline-offset-2">{getOrdinalDay(new Date(2026, 0, parseInt(invStartDay)))}</span> to <span className="font-bold underline decoration-amber-300 underline-offset-2">{getOrdinalDay(new Date(2026, 0, parseInt(invEndDay)))}</span> of every month until the yearly cutoff period from the <span className="font-bold underline decoration-amber-300 underline-offset-2">1st</span> to <span className="font-bold underline decoration-amber-300 underline-offset-2">{getOrdinalDay(new Date(2026, 0, parseInt(cutoffDay)))} {cutoffMonth}</span>. After this period, no further declarations will be accepted for the current financial year.
+                                            Employees can declare investments from the <span className="font-bold underline decoration-amber-300 underline-offset-2">{getOrdinalDay(new Date(2026, 0, parseInt(invStartDay)))}</span> to <span className="font-bold underline decoration-amber-300 underline-offset-2">{getOrdinalDay(new Date(2026, 0, parseInt(invEndDay)))}</span> of every month{declWindowType === 'Custom' ? <span className="font-bold underline decoration-amber-300 underline-offset-2"> during selected months: {customMonths.join(', ')}.</span> : <><span className="font-bold underline decoration-amber-300 underline-offset-2"> until the yearly cutoff period from the </span><span className="font-bold underline decoration-amber-300 underline-offset-2">1st</span><span className="font-bold underline decoration-amber-300 underline-offset-2"> to </span><span className="font-bold underline decoration-amber-300 underline-offset-2">{getOrdinalDay(new Date(2026, 0, parseInt(cutoffDay)))} {cutoffMonth}</span><span className="font-bold underline decoration-amber-300 underline-offset-2">.</span></>} <span className="font-bold underline decoration-amber-300 underline-offset-2">After this period, no further declarations will be accepted for the current financial year.</span>
                                         </p>
                                     </div>
                                 </div>
@@ -1316,6 +1367,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                     <input type="checkbox" className="hidden" checked={allowSwitch} onChange={() => isEditingInv && setAllowSwitch(!allowSwitch)} disabled={!isEditingInv} />
                                     <span className="text-sm font-semibold text-slate-700">Allow employees to switch tax regime until financial year cutoff date</span>
                                 </label>
+                                {/* Lock declarations checkbox hidden */}
+                                {false && (
                                 <label className={`flex items-center gap-3 cursor-pointer group pt-2 ${!isEditingInv ? 'opacity-70' : ''}`}>
                                     <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${lockDeclarationsAfterCutoff ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300'}`}>
                                         {lockDeclarationsAfterCutoff && <Check size={14} className="text-white" />}
@@ -1323,7 +1376,8 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                     <input type="checkbox" className="hidden" checked={lockDeclarationsAfterCutoff} onChange={() => isEditingInv && setLockDeclarationsAfterCutoff(!lockDeclarationsAfterCutoff)} disabled={!isEditingInv} />
                                     <span className="text-sm font-semibold text-slate-700">Lock declarations after Financial year cutoff date</span>
                                 </label>
-                            </div>
+                                )}
+                                </div>
 
                             {/* Approval Hierarchy Section */}
                             {false && (
@@ -1420,51 +1474,58 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                 <div className="mt-4 pl-1">
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-3 tracking-wider">Deduction Pattern <span className="text-rose-500">*</span></label>
                                     <div className="flex gap-6 mb-4">
-                                        {['Monthly', 'Custom'].map((p) => (
-                                            <label key={p} className={`flex items-center gap-2 cursor-pointer group ${!isEditingInv ? 'opacity-70' : ''}`}>
-                                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${deductionPattern === p ? 'border-indigo-600' : 'border-slate-300 group-hover:border-indigo-400'}`}>
-                                                    {deductionPattern === p && <div className="w-2 h-2 rounded-full bg-indigo-600" />}
-                                                </div>
-                                                <input 
-                                                    type="radio" 
-                                                    name="deductionPattern" 
-                                                    className="hidden" 
-                                                    checked={deductionPattern === p} 
-                                                    onChange={() => {
-                                                        if (!isEditingInv) return;
-                                                        setDeductionPattern(p as any);
-                                                        if (p === 'Monthly') {
-                                                            setSelectedTdsMonths([...months]);
-                                                        }
-                                                    }} 
-                                                />
-                                                <span className="text-sm text-slate-700">{p}</span>
-                                            </label>
-                                        ))}
+                                        {['Monthly', 'Custom'].map((p) => {
+                                            const monthlyLocked = declWindowType === 'Custom' && p === 'Monthly';
+                                            return (
+                                                <label key={p} className={`flex items-center gap-2 cursor-pointer group ${!isEditingInv || monthlyLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${deductionPattern === p ? 'border-indigo-600' : 'border-slate-300 group-hover:border-indigo-400'}`}>
+                                                        {deductionPattern === p && <div className="w-2 h-2 rounded-full bg-indigo-600" />}
+                                                    </div>
+                                                    <input 
+                                                        type="radio" 
+                                                        name="deductionPattern" 
+                                                        className="hidden" 
+                                                        checked={deductionPattern === p} 
+                                                        onChange={() => {
+                                                            if (!isEditingInv || monthlyLocked) return;
+                                                            setDeductionPattern(p as any);
+                                                            if (p === 'Monthly') {
+                                                                setSelectedTdsMonths([...months]);
+                                                            }
+                                                        }} 
+                                                        disabled={monthlyLocked}
+                                                    />
+                                                    <span className={`text-sm text-slate-700 ${monthlyLocked ? 'text-slate-400' : ''}`}>{p}</span>
+                                                </label>
+                                            );
+                                        })}
                                     </div>
 
                                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
-                                        {months.map(m => (
-                                            <label key={m} className={`flex items-center gap-2 group ${isEditingInv ? 'cursor-pointer' : 'cursor-default'}`}>
-                                                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedTdsMonths.includes(m) ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300 group-hover:border-indigo-400'}`}>
-                                                    {selectedTdsMonths.includes(m) && <Check size={12} className="text-white" />}
-                                                </div>
-                                                <input 
-                                                    type="checkbox" 
-                                                    className="hidden" 
-                                                    checked={selectedTdsMonths.includes(m)}
-                                                    onChange={() => {
-                                                        if (!isEditingInv) return;
-                                                        setDeductionPattern('Custom');
-                                                        setSelectedTdsMonths(prev => 
-                                                            prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]
-                                                        );
-                                                    }}
-                                                    disabled={!isEditingInv}
-                                                />
-                                                <span className="text-xs font-medium text-slate-600">{m}</span>
-                                            </label>
-                                        ))}
+                                        {months.map(m => {
+                                            const isAllowed = allowedTdsMonths.includes(m);
+                                            return (
+                                                <label key={m} className={`flex items-center gap-2 group ${!isAllowed ? 'opacity-50 cursor-not-allowed' : isEditingInv ? 'cursor-pointer' : 'cursor-default'}`}>
+                                                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedTdsMonths.includes(m) ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300 group-hover:border-indigo-400'}`}>
+                                                        {selectedTdsMonths.includes(m) && <Check size={12} className="text-white" />}
+                                                    </div>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        className="hidden" 
+                                                        checked={selectedTdsMonths.includes(m)}
+                                                        onChange={() => {
+                                                            if (!isEditingInv || !isAllowed) return;
+                                                            setDeductionPattern('Custom');
+                                                            setSelectedTdsMonths(prev => 
+                                                                prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]
+                                                            );
+                                                        }}
+                                                        disabled={!isEditingInv || !isAllowed}
+                                                    />
+                                                    <span className="text-xs font-medium text-slate-600">{m}</span>
+                                                </label>
+                                            );
+                                        })}
                                     </div>
                                 </div>
 
@@ -1805,9 +1866,13 @@ const IncomeTaxDeclarationSettings: React.FC = () => {
                                                 onChange={(e) => setProofVerificationMonth(e.target.value)}
                                                 className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-slate-50/50 disabled:text-slate-400 shadow-sm"
                                             >
-                                                {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
-                                                    <option key={m} value={m}>{m}</option>
-                                                ))}
+                                                {declWindowType === 'Custom' && customMonths.length > 0
+                                                    ? customMonths.map(m => (
+                                                        <option key={m} value={m}>{m}</option>
+                                                    ))
+                                                    : ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
+                                                        <option key={m} value={m}>{m}</option>
+                                                    ))}
                                             </select>
                                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                                         </div>

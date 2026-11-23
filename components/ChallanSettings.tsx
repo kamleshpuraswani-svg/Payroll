@@ -3,7 +3,7 @@ import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { supabase } from '../services/supabaseClient';
-import { Save, Edit2, FileText, ChevronDown, ChevronUp, Check, AlertCircle, Info, Landmark, User, CreditCard, Shield, Activity, Briefcase, Building2 } from 'lucide-react';
+import { Save, Edit2, FileText, ChevronDown, ChevronUp, Check, AlertCircle, Info, Landmark, User, CreditCard, Shield, Activity, Briefcase, Building2, Home, ChevronRight, ChevronsUpDown, FilePlus } from 'lucide-react';
 
 const BUSINESS_UNITS = [
     "MindInventory",
@@ -18,6 +18,21 @@ const ChallanSettings: React.FC = () => {
     const [activeTab, setActiveTab] = useState('Professional Tax');
     const TABS = ['Professional Tax', 'ESI', 'Provident Fund', 'TDS'];
     
+    // TDS View state (Monthly / Quarterly)
+    const [tdsPeriodType, setTdsPeriodType] = useState<'Monthly' | 'Quarterly'>('Monthly');
+    const [selectedFY, setSelectedFY] = useState('2026-27');
+
+    const getFYYears = (fy: string) => {
+        const parts = fy.split('-');
+        const startY = parseInt(parts[0], 10) || 2026;
+        const endY = parts[1]?.length === 2 
+            ? Math.floor(startY / 100) * 100 + parseInt(parts[1], 10)
+            : parseInt(parts[1], 10) || (startY + 1);
+        return { startYear: startY, endYear: endY };
+    };
+
+    const { startYear, endYear } = getFYYears(selectedFY);
+
     // RSP state
     const [isRspOpen, setIsRspOpen] = useState(false);
     const [selectedMonthForRsp, setSelectedMonthForRsp] = useState('');
@@ -39,22 +54,104 @@ const ChallanSettings: React.FC = () => {
     
     const autoFillTdsForm = () => {
         setTdsForm({
-            challanAlias: 'TDS_APR_2025',
+            challanAlias: tdsPeriodType === 'Quarterly' ? `TDS_Q1_${startYear}` : `TDS_APR_${startYear}`,
             natureOfPayment: '92B - Salary',
             challanNumber: 'CHL9988776655',
             paymentMode: 'Net Banking',
             bank: 'HDFC Bank',
             branch: 'Main Branch',
             bsrCode: '0001234',
-            challanDate: '2025-04-15',
+            challanDate: `${startYear}-04-15`,
             penaltyPaid: '150'
         });
     };
 
     
-    const dummyMonths = [
-        'April 2025', 'May 2025', 'June 2025', 'July 2025', 'August 2025', 'September 2025',
-        'October 2025', 'November 2025', 'December 2025', 'January 2026', 'February 2026', 'March 2026'
+    const dummyMonthsData = [
+        {
+            month: `October ${startYear}`,
+            subscribers: 2,
+            status: 'Pending',
+            lastActionBy: 'Gurpreetsingh Dhillon',
+            lastActionDate: '02-Nov-2026, 02:17 PM'
+        },
+        {
+            month: `September ${startYear}`,
+            subscribers: 0,
+            status: 'Pending',
+            lastActionBy: 'Gurpreetsingh Dhillon',
+            lastActionDate: '29-Oct-2026, 04:39 PM'
+        },
+        {
+            month: `August ${startYear}`,
+            subscribers: 0,
+            status: 'Pending',
+            lastActionBy: 'Gurpreetsingh Dhillon',
+            lastActionDate: '29-Oct-2026, 01:49 PM'
+        },
+        {
+            month: `July ${startYear}`,
+            subscribers: 0,
+            status: 'Pending',
+            lastActionBy: 'Gurpreetsingh Dhillon',
+            lastActionDate: '29-Oct-2026, 01:33 PM'
+        },
+        {
+            month: `June ${startYear}`,
+            subscribers: 0,
+            status: 'Pending',
+            lastActionBy: 'Gurpreetsingh Dhillon',
+            lastActionDate: '29-Oct-2026, 01:22 PM'
+        },
+        {
+            month: `May ${startYear}`,
+            subscribers: 0,
+            status: 'Pending',
+            lastActionBy: 'Gurpreetsingh Dhillon',
+            lastActionDate: '29-Oct-2026, 12:24 PM'
+        },
+        {
+            month: `April ${startYear}`,
+            subscribers: 0,
+            status: 'Pending',
+            lastActionBy: 'Gurpreetsingh Dhillon',
+            lastActionDate: '26-Oct-2026, 04:36 PM'
+        }
+    ];
+
+    const dummyQuartersData = [
+        {
+            name: `April ${startYear} to June ${startYear}`,
+            quarter: 'Q1',
+            subscribers: 2,
+            status: 'Pending',
+            lastActionBy: 'Gurpreetsingh Dhillon',
+            lastActionDate: '02-Nov-2026, 02:17 PM'
+        },
+        {
+            name: `July ${startYear} to September ${startYear}`,
+            quarter: 'Q2',
+            subscribers: 0,
+            status: 'Pending',
+            lastActionBy: 'Gurpreetsingh Dhillon',
+            lastActionDate: '29-Oct-2026, 04:39 PM'
+        },
+        {
+            name: `October ${startYear} to December ${startYear}`,
+            quarter: 'Q3',
+            subscribers: 0,
+            status: 'Pending',
+            lastActionBy: 'Gurpreetsingh Dhillon',
+            lastActionDate: '29-Oct-2026, 01:49 PM'
+        },
+        {
+            name: `January ${endYear} to March ${endYear}`,
+            quarter: 'Q4',
+            subscribers: 0,
+            status: 'Pending',
+            lastActionBy: 'Gurpreetsingh Dhillon',
+            lastActionDate: '26-Oct-2026, 04:36 PM'
+        }
     ];
     
     // Global edit state
@@ -378,10 +475,28 @@ const ChallanSettings: React.FC = () => {
             'MONTH', 'YEAR', 'PAN', 'SALARY', 'IT', 'SURCHARGE', 'EDUCATION CESS CHARGE',
             'PERQAMOUNT', 'PERQTDS', 'PERQECESS', 'EFFECTIVEDATE'
         ];
-        const monthParts = selectedMonthForRsp.split(' ');
-        const monthName = monthParts[0] || 'April';
-        const yearStr = monthParts[1] || '2025';
         
+        let monthName = selectedMonthForRsp;
+        let yearStr = startYear.toString();
+
+        if (selectedMonthForRsp.includes('to')) {
+            monthName = selectedMonthForRsp;
+            const matchYear = selectedMonthForRsp.match(/\b(20\d{2})\b/g);
+            if (matchYear && matchYear.length > 0) {
+                yearStr = matchYear[matchYear.length - 1];
+            } else {
+                yearStr = selectedMonthForRsp.includes('January') ? endYear.toString() : startYear.toString();
+            }
+        } else {
+            const monthParts = selectedMonthForRsp.split(' ');
+            monthName = monthParts[0] || 'April';
+            yearStr = monthParts[1] || startYear.toString();
+        }
+
+        const effectiveDateStr = selectedMonthForRsp.includes('to')
+            ? `30-${monthName.split('to')[1]?.trim().split(' ')[0]?.substring(0,3) || 'Jun'}-${yearStr}`
+            : `01-${monthName.substring(0,3)}-${yearStr}`;
+
         const dummyData = selectedEmployees.map(num => [
             `EMP00${num}`, 
             `John Doe ${num}`, 
@@ -398,13 +513,16 @@ const ChallanSettings: React.FC = () => {
             '0', 
             '0', 
             '0', 
-            `01-${monthName.substring(0,3)}-${yearStr}`
+            effectiveDateStr
         ]);
         
         const ws = XLSX.utils.aoa_to_sheet([headers, ...dummyData]);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "TDS Return");
-        XLSX.writeFile(wb, "TDS_Return_Report.xlsx");
+        const fileName = tdsPeriodType === 'Quarterly'
+            ? `TDS_Return_${selectedMonthForRsp.replace(/\s+/g, '_')}.xlsx`
+            : "TDS_Return_Report.xlsx";
+        XLSX.writeFile(wb, fileName);
         setIsRspOpen(false);
         setTdsStep(1);
         setSelectedEmployees([]);
@@ -720,100 +838,194 @@ const ChallanSettings: React.FC = () => {
     };
 
     return (
-        <div className="p-4 lg:p-6 w-full space-y-6 bg-slate-50 min-h-screen pb-20">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-800">Challan</h1>
-                </div>
-                <div className="flex items-center gap-3">
-                    {/* Edit settings removed as requested */}
-                </div>
+        <div className="p-4 lg:p-6 w-full space-y-4 bg-slate-50 min-h-screen pb-20">
+            {/* Breadcrumb Header */}
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-2">
+                <Home size={14} className="text-slate-400" />
+                <ChevronRight size={12} className="text-slate-300" />
+                <span className="hover:text-slate-700 cursor-pointer">Challan</span>
+                <ChevronRight size={12} className="text-slate-300" />
+                <span className="text-indigo-600 font-semibold">{activeTab}</span>
             </div>
 
-            {/* Business Unit Selector */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-4 flex-1">
-                    <div className="relative flex-1 max-w-xs">
-                        <select
-                            value={selectedTarget}
-                            onChange={(e) => setSelectedTarget(e.target.value)}
-                            disabled={isSaving || isEditing}
-                            className="w-full pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all appearance-none cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed"
-                        >
-                            {BUSINESS_UNITS.map(bu => (
-                                <option key={bu} value={`bu:${bu}`}>{bu}</option>
-                            ))}
-                        </select>
-                        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400">
-                            <ChevronDown size={18} />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Tabs Container */}
-            <div className="w-full bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                {/* Tabs Header */}
-                <div className="w-full bg-white border-b border-slate-200 px-4 lg:px-6 py-2 flex items-center justify-between">
-                    <div className="flex items-center gap-2 overflow-x-auto">
+            {/* Main Container Card */}
+            <div className="w-full bg-white rounded-xl border border-slate-200/90 shadow-sm overflow-hidden">
+                {/* Tabs & Business Unit Header Bar */}
+                <div className="w-full bg-white border-b border-slate-200/80 px-4 lg:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+                    {/* Left: Navigation Tabs */}
+                    <div className="flex items-center gap-1 overflow-x-auto">
                         {TABS.map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`px-4 py-2 text-sm font-semibold rounded-lg whitespace-nowrap transition-colors ${
+                                className={`px-3 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-colors ${
                                     activeTab === tab
-                                        ? 'bg-indigo-100 text-indigo-700'
-                                        : 'bg-slate-100 text-slate-600 hover:text-slate-800 hover:bg-slate-200'
+                                        ? 'bg-indigo-50 text-indigo-600'
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                                 }`}
                             >
                                 {tab}
                             </button>
                         ))}
                     </div>
-                    {/* Edit Deal button removed */}
+
+                    {/* Right: Monthly/Quarterly (for TDS) + Business Unit Selector */}
+                    <div className="flex items-center gap-3 shrink-0">
+                        {activeTab === 'TDS' && (
+                            <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200/70">
+                                <button
+                                    type="button"
+                                    onClick={() => setTdsPeriodType('Monthly')}
+                                    className={`px-3 py-1 text-xs font-semibold rounded-md whitespace-nowrap transition-all ${
+                                        tdsPeriodType === 'Monthly'
+                                            ? 'bg-white text-indigo-600 shadow-xs'
+                                            : 'text-slate-500 hover:text-slate-800'
+                                    }`}
+                                >
+                                    Monthly
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setTdsPeriodType('Quarterly')}
+                                    className={`px-3 py-1 text-xs font-semibold rounded-md whitespace-nowrap transition-all ${
+                                        tdsPeriodType === 'Quarterly'
+                                            ? 'bg-white text-indigo-600 shadow-xs'
+                                            : 'text-slate-500 hover:text-slate-800'
+                                    }`}
+                                >
+                                    Quarterly
+                                </button>
+                            </div>
+                        )}
+
+                        <div className="relative">
+                            <select
+                                value={selectedTarget}
+                                onChange={(e) => setSelectedTarget(e.target.value)}
+                                disabled={isSaving || isEditing}
+                                className="pl-3 pr-8 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-700 font-medium text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed shadow-xs min-w-[190px]"
+                            >
+                                {BUSINESS_UNITS.map(bu => (
+                                    <option key={bu} value={`bu:${bu}`}>{bu}</option>
+                                ))}
+                            </select>
+                            <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none text-slate-400">
+                                <ChevronDown size={14} />
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div className="p-4 lg:p-6 w-full min-h-[400px]">
-                    <div className="overflow-x-auto rounded-lg border border-slate-200">
-                        <table className="w-full text-left text-sm text-slate-600">
-                            <thead className="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200 uppercase text-xs tracking-wider">
-                                <tr>
-                                    <th className="px-6 py-4">No.</th>
-                                    <th className="px-6 py-4">Month</th>
-                                    <th className="px-6 py-4">Last Action By</th>
-                                    <th className="px-6 py-4">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100 bg-white">
-                                {dummyMonths.map((month, index) => (
-                                    <tr key={month} className="hover:bg-slate-50/50 transition-colors">
-                                        <td className="px-6 py-4 font-medium">{index + 1}</td>
-                                        <td className="px-6 py-4">{month}</td>
+                {/* Table */}
+                <div className="w-full overflow-x-auto min-h-[400px]">
+                    <table className="w-full text-left text-xs text-slate-600">
+                        <thead className="bg-white text-slate-500 font-semibold border-b border-slate-100 text-xs tracking-tight">
+                            <tr>
+                                <th className="px-6 py-3.5 w-16">No.</th>
+                                <th className="px-6 py-3.5">
+                                    <span className="inline-flex items-center gap-1 cursor-pointer select-none hover:text-slate-700">
+                                        {activeTab === 'TDS' && tdsPeriodType === 'Quarterly' ? 'Quarter' : 'Month'}
+                                        <ChevronsUpDown size={12} className="text-slate-400" />
+                                    </span>
+                                </th>
+                                <th className="px-6 py-3.5">
+                                    <span className="inline-flex items-center gap-1 cursor-pointer select-none hover:text-slate-700">
+                                        Subscriber
+                                        <ChevronsUpDown size={12} className="text-slate-400" />
+                                    </span>
+                                </th>
+                                <th className="px-6 py-3.5">
+                                    <span className="inline-flex items-center gap-1 cursor-pointer select-none hover:text-slate-700">
+                                        Status
+                                        <ChevronsUpDown size={12} className="text-slate-400" />
+                                    </span>
+                                </th>
+                                <th className="px-6 py-3.5">
+                                    <span className="inline-flex items-center gap-1 cursor-pointer select-none hover:text-slate-700">
+                                        Last Action By
+                                        <ChevronsUpDown size={12} className="text-slate-400" />
+                                    </span>
+                                </th>
+                                <th className="px-6 py-3.5 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 bg-white">
+                            {activeTab === 'TDS' && tdsPeriodType === 'Quarterly' ? (
+                                dummyQuartersData.map((item, index) => (
+                                    <tr key={item.name} className="hover:bg-slate-50/60 transition-colors">
+                                        <td className="px-6 py-4 text-slate-600 font-normal">{index + 1}</td>
                                         <td className="px-6 py-4">
-                                            <div className="flex flex-col">
-                                                <span className="font-semibold text-slate-700">John Doe</span>
-                                                <span className="text-xs text-slate-400">12 Aug 2025, 10:30 AM</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-normal text-slate-800 text-sm">{item.name}</span>
+                                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100/80">
+                                                    {item.quarter}
+                                                </span>
                                             </div>
                                         </td>
+                                        <td className="px-6 py-4 text-slate-700 font-normal text-sm">{item.subscribers}</td>
                                         <td className="px-6 py-4">
-                                            <button 
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/80">
+                                                {item.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col">
+                                                <span className="text-slate-700 font-normal text-sm">{item.lastActionBy}</span>
+                                                <span className="text-xs text-slate-400 mt-0.5">{item.lastActionDate}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <button
+                                                type="button"
                                                 onClick={() => {
-                                                    setSelectedMonthForRsp(month);
+                                                    setSelectedMonthForRsp(item.name);
                                                     setIsRspOpen(true);
                                                 }}
-                                                style={{ backgroundColor: '#444CE7' }}
-                                                className="hover:opacity-90 text-white px-4 py-2 rounded-lg font-semibold text-xs transition-colors shadow-sm"
+                                                className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer inline-flex items-center justify-center"
+                                                title="Generate Challan"
                                             >
-                                                Generate
+                                                <FilePlus size={18} />
                                             </button>
                                         </td>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                ))
+                            ) : (
+                                dummyMonthsData.map((item, index) => (
+                                    <tr key={item.month} className="hover:bg-slate-50/60 transition-colors">
+                                        <td className="px-6 py-4 text-slate-600 font-normal">{index + 1}</td>
+                                        <td className="px-6 py-4 font-normal text-slate-800 text-sm">{item.month}</td>
+                                        <td className="px-6 py-4 text-slate-700 font-normal text-sm">{item.subscribers}</td>
+                                        <td className="px-6 py-4">
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/80">
+                                                {item.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col">
+                                                <span className="text-slate-700 font-normal text-sm">{item.lastActionBy}</span>
+                                                <span className="text-xs text-slate-400 mt-0.5">{item.lastActionDate}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setSelectedMonthForRsp(item.month);
+                                                    setIsRspOpen(true);
+                                                }}
+                                                className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer inline-flex items-center justify-center"
+                                                title="Generate Challan"
+                                            >
+                                                <FilePlus size={18} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
                 </div>
+            </div>
             
             {/* Right Side Panel (RSP) */}
             {isRspOpen && (
@@ -835,7 +1047,11 @@ const ChallanSettings: React.FC = () => {
                                                 </button>
                                             </div>
                                         </div>
-                                        <p className="mt-1 text-sm text-slate-500">For the month of {selectedMonthForRsp}</p>
+                                        <p className="mt-1 text-sm text-slate-500">
+                                            {activeTab === 'TDS' && tdsPeriodType === 'Quarterly'
+                                                ? `For the quarter of ${selectedMonthForRsp}`
+                                                : `For the month of ${selectedMonthForRsp}`}
+                                        </p>
                                     </div>
                                     <div className="relative flex-1 px-6 py-6 space-y-6">
                                         {/* RSP Fields */}
@@ -1150,7 +1366,6 @@ const ChallanSettings: React.FC = () => {
                     </div>
                 </div>
             )}
-            </div>
         </div>
     );
 };
